@@ -1,0 +1,20 @@
+# Install into a venv OUTSIDE OneDrive, e.g.:
+#   uv venv %USERPROFILE%\.venvs\miraca_uq --python 3.12
+#   uv pip install --python %USERPROFILE%\.venvs\miraca_uq\Scripts\python.exe -r requirements.txt
+damagescanner
+ema_workbench
+geopandas
+rasterio
+rioxarray
+xarray
+netcdf4
+pyarrow
+exactextract
+scipy
+SALib
+matplotlib
+seaborn
+openpyxl
+pyyaml
+tqdm
+ipykernel

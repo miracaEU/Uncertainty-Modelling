@@ -1,0 +1,34 @@
+# Configuration for the MIRACA uncertainty-modeling pipeline.
+# Paths point at the SCISTOR storage mounted as S:\ on Windows
+# (equivalent to /scistor/ivm/eks510 on the cluster).
+
+# --- case study selection (minimal example) ---------------------------------
+country: LUX          # ISO3 code, matches exposure file naming
+asset_type: roads     # matches exposure file naming + curve/maxdam tables
+
+# --- input data --------------------------------------------------------------
+exposure_dir: "S:/eks510/MIRACA_EXPOSURE"
+vulnerability_path: "S:/eks510/projects/AssetRisk_PanEU/data/Table_D2_Hazard_Fragility_and_Vulnerability_Curves_V1.1.0_conversions.xlsx"
+fragility_path: "S:/eks510/projects/AssetRisk_PanEU/data/EQ_fragility.xlsx"
+protection_standard_path: "S:/eks510/projects/AssetRisk_PanEU/data/floodProtection_v2019_paper3.tif"
+basin_data_path: "S:/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_return_periods.parquet"
+
+# --- hazards -----------------------------------------------------------------
+# Only hazards with non-trivial vulnerability/fragility curves for the chosen
+# asset type. For roads: river floods (F7.x) and earthquakes (E7.x).
+# Windstorm is excluded on purpose: the roads wind curve (W7.2) is identically
+# zero in the MIRACA database, so windstorm EAD for roads is always 0.
+# Coastal flooding does not apply to landlocked Luxembourg.
+hazards:
+  river:
+    dir: "S:/eks510/Hazard_data/River_floods"
+    filename_template: "Europe_RP{rp}_filled_depth.tif"
+    return_periods: [10, 20, 30, 40, 50, 75, 100, 200, 500]
+  earthquake:
+    dir: "S:/eks510/Hazard_data/Earthquakes"
+    filename_template: "PGA_1_{rp}_vs30.tif"
+    return_periods: [50, 101, 476, 976, 2500, 5000]
+
+# --- outputs (relative to this project folder) -------------------------------
+intermediate_dir: "data/intermediate"
+results_dir: "results"
