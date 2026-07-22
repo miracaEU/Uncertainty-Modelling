@@ -180,3 +180,65 @@
 {"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_no_protection", "ok": true, "elapsed_s": 6.7, "ts": "2026-07-22T14:00:01.086980+00:00"}
 {"combo": "LUX/power", "step": "run_experiments_sobol", "scenario": "flood_no_protection", "n": 8192, "ok": true, "elapsed_s": 365.5, "ts": "2026-07-22T14:06:06.565956+00:00"}
 {"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_no_protection", "ok": true, "elapsed_s": 8.1, "ts": "2026-07-22T14:06:14.653767+00:00"}
+{"combo": "LUX/roads", "step": "preprocess", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.187857+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_baseline", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.191699+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.192976+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.193481+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.193481+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_baseline_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.197378+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.197680+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.198480+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.199108+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_absprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.200153+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.200153+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.203754+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.204258+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_absprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.204830+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.204830+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.208461+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.208964+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_noprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.211507+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.211507+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.213246+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.213246+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "flood_noprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.217173+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.217173+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.217173+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.217173+00:00"}
+{"combo": "LUX/roads", "step": "run_experiments_lhs", "scenario": "earthquake", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.221372+00:00"}
+{"combo": "LUX/roads", "step": "analyze_lhs", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.222668+00:00"}
+{"combo": "LUX/roads", "step": "adaptive_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.223171+00:00"}
+{"combo": "LUX/roads", "step": "analyze_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.223171+00:00"}
+{"combo": "LUX/power", "step": "preprocess", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.223912+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_baseline", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.228110+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.229857+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.230801+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.231372+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_baseline_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.231372+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.231372+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.231372+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.231372+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_absprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.239964+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.239964+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.239964+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.239964+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_absprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.244568+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.246313+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.246313+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.247318+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_noprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.251695+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.252029+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.252533+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.253119+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_noprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.256763+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.256763+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.256763+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.256763+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "earthquake", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.260415+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.260415+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.260415+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.260415+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "windstorm", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}

@@ -26,6 +26,9 @@ Produces MIRACA_uncertainty_study_summary.xlsx in the project root with:
                         yourself in Excel for anything not already covered
   All_Feature_Scores  - the same, for the LHS extra-trees importance scores
                         (a quicker, less rigorous complement to Sobol)
+  Sobol_Convergence   - one row per adaptive-Sobol search: the N sequence it
+                        stepped through, where it stopped and why (from
+                        results/sobol_convergence_log.jsonl)
   Reruns_Overview     - only present once some combination has been re-run
                         at a higher Sobol sample size N: one row per combo,
                         old vs new #1 driver and its ST - "did more runs
@@ -185,18 +188,31 @@ COLUMN_DESCRIPTIONS = [
 ]
 
 SCENARIO_DESCRIPTIONS = [
-    ("baseline", "Full model, both hazards. Flood protection = FLOPROS design standard x "
-                 "protection_scale (a multiplier sampled in [0, 2])."),
-    ("abs_protection", "Full model, both hazards. Flood protection sampled as an ABSOLUTE return "
-                        "period (protection_abs_rp, 5-200 years) applied uniformly to every "
-                        "feature, replacing protection_scale entirely. Needed because the "
-                        "multiplier can never move protection for a feature whose FLOPROS "
-                        "baseline is exactly 0 (0 x anything = 0)."),
-    ("flood_no_protection", "River flood only. protection_scale is held FIXED at exactly 1.0 (the "
-                             "recorded FLOPROS design standards), not sampled - isolates how much "
-                             "the other flood factors matter once protection uncertainty is set "
-                             "aside. Earthquake is not computed at all for this scenario."),
-    ("earthquake_only", "Earthquake only. River flood is not computed at all for this scenario."),
+    ("(each scenario = ONE hazard)", "Hazards are never combined - every scenario computes exactly "
+                                      "one of river flood / earthquake / windstorm, so their "
+                                      "uncertainty structures are studied independently. The '_ds' "
+                                      "suffix means depth error is MULTIPLICATIVE (depth_scale, "
+                                      "x0.9-1.1) instead of the additive +/-0.5 m depth_offset - "
+                                      "the two are otherwise identical, so a scenario and its _ds "
+                                      "twin isolate the effect of how flood-depth error is modelled."),
+    ("flood_baseline", "River flood only. Protection = FLOPROS design standard x protection_scale "
+                        "(multiplier in [0, 2]). Additive depth error (depth_offset, +/-0.5 m)."),
+    ("flood_baseline_ds", "As flood_baseline but depth error is multiplicative (depth_scale, x0.9-1.1)."),
+    ("flood_absprot", "River flood only. Protection sampled as an ABSOLUTE return period "
+                       "(protection_abs_rp, 5-200 years) applied uniformly to every feature, "
+                       "replacing protection_scale - the only treatment that can move protection "
+                       "for a feature whose FLOPROS baseline is 0 (0 x anything = 0). Additive depth."),
+    ("flood_absprot_ds", "As flood_absprot but depth error is multiplicative (depth_scale, x0.9-1.1)."),
+    ("flood_noprot", "River flood only. protection_scale held FIXED at 1.0 (exactly the FLOPROS "
+                      "standards), not sampled - isolates how much the other flood factors matter "
+                      "once protection uncertainty is set aside. Additive depth."),
+    ("flood_noprot_ds", "As flood_noprot but depth error is multiplicative (depth_scale, x0.9-1.1)."),
+    ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
+                    "curve choice(s), cost_level, pga_scale, aggregation."),
+    ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826). Factors: "
+                   "wind curve choice(s), cost_level, gust_scale, aggregation. Only defined for "
+                   "airports/education/power - roads carry no windstorm damage (the roads wind "
+                   "curve is identically zero) so the scenario is skipped for them."),
 ]
 
 ASSET_DESCRIPTIONS = [
@@ -218,13 +234,19 @@ FACTOR_DESCRIPTIONS = [
     ("protection_abs_rp", "Absolute flood protection design standard in years, [5, 200], applied "
                            "uniformly regardless of the FLOPROS baseline. abs_protection scenario only."),
     ("depth_offset", "Additive bias on river flood water depth, [-0.5, 0.5] metres. Can only shrink "
-                      "or intensify damage within the already-mapped flood extent, not expand it."),
+                      "or intensify damage within the already-mapped flood extent, not expand it. "
+                      "Used by the non-'_ds' flood scenarios."),
+    ("depth_scale", "Multiplicative factor on river flood water depth, [0.9, 1.1] (i.e. +/-10%). The "
+                     "'_ds' flood scenarios use this INSTEAD of depth_offset, to test whether a "
+                     "proportional depth error changes the sensitivity picture versus an additive one."),
     ("pga_scale", "Multiplier on earthquake ground motion (PGA), [0.8, 1.2] - a hazard-map "
                   "uncertainty factor, distinct from the fragility curve choice itself."),
+    ("gust_scale", "Multiplier on windstorm 3-sec gust speed, [0.9, 1.1] - the windstorm hazard-map "
+                    "uncertainty factor, analogous to pga_scale for earthquake."),
     ("aggregation", "Exposure aggregation order: 'per_cell' applies the damage curve to each "
                     "raster cell then sums (damagescanner's own approach); 'mean_depth' averages "
                     "intensity over the feature first, then applies the curve once."),
-    ("Flood: ... / Earthquake: ...", "A curve-choice factor. Shows which report classes or object "
+    ("Flood/Earthquake/Windstorm: ...", "A curve-choice factor. Shows which report classes or object "
                                       "types use this curve group, then in parentheses the "
                                       "group's lowest curve ID and how many curve options it "
                                       "offers - e.g. 'Flood: motorway_trunk/primary (F7.4, 4 "
@@ -283,15 +305,43 @@ RERUN_DESCRIPTIONS = [
                          "ratio is still above 0.3 - a candidate for yet another rerun at even higher N."),
 ]
 
+CONVERGENCE_DESCRIPTIONS = [
+    ("What Sobol_Convergence is", "One row per (country, asset, scenario) adaptive-Sobol search. "
+                                   "Instead of a fixed sample size, the Sobol base N is doubled from "
+                                   "--sobol-min-n (default 128) until the result is precise enough on "
+                                   "total_EAD_MEUR, or --sobol-max-n (default 8192) is reached. Only "
+                                   "combinations run through src.adaptive_sobol appear here."),
+    ("stop_n / stop_reason", "The base sample size the search stopped at, and why: 'converged' (the "
+                              "precision target below was met), 'max_n_reached' (hit the cap still "
+                              "above target - treat its ranking as provisional), or "
+                              "'no_relevant_factors' (no factor had ST>0.05, e.g. a hazard with no "
+                              "exposure - nothing to resolve, stopped immediately)."),
+    ("threshold / worst_ratio_at_stop", "The search stops once the worst ST_conf/ST among relevant "
+                                          "factors (ST>0.05) drops below `threshold` (default 0.2). "
+                                          "worst_ratio_at_stop is that worst ratio at the stopping N - "
+                                          "if it's still above threshold, the run hit the N cap."),
+    ("ratio_by_n", "The whole search in one cell: 'N:worst_ratio' for every N tried, e.g. "
+                    "'128:0.41, 256:0.29, 512:0.18' means it converged at N=512. 'n/a' means no "
+                    "relevant factor at that N."),
+    ("n_factors / total_runs / elapsed_s", "n_factors = number of uncertainty factors (k). total_runs "
+                                            "= model evaluations summed across every N tried "
+                                            "(each N costs N x (2k+2) runs). elapsed_s = wall-clock for "
+                                            "the whole adaptive search."),
+]
+
 OUTCOME_DESCRIPTIONS = [
-    ("total_EAD_MEUR", "Total expected annual damage across whichever hazards this scenario "
-                        "computes, million EUR/year."),
-    ("EAD_river_MEUR", "Expected annual damage from river flooding only."),
-    ("EAD_earthquake_MEUR", "Expected annual damage from earthquake only."),
+    ("total_EAD_MEUR", "Total expected annual damage for this scenario's single hazard, million "
+                        "EUR/year. (Scenarios are single-hazard, so this equals the one EAD_*_MEUR "
+                        "hazard column below that the scenario computes.)"),
+    ("EAD_river_MEUR", "Expected annual damage from river flooding (flood_* scenarios)."),
+    ("EAD_earthquake_MEUR", "Expected annual damage from earthquake (earthquake scenario)."),
+    ("EAD_windstorm_MEUR", "Expected annual damage from windstorm (windstorm scenario)."),
     ("damage_RP100_river_MEUR", "Total damage from a single simulated 1-in-100-year flood event "
                                  "(not annualised - a snapshot, not an expectation)."),
+    ("damage_RP100_windstorm_MEUR", "As above for a 1-in-100-year windstorm event."),
     ("exposed_qty_RP100_river", "Total exposed quantity at the RP100 flood extent, in the "
                                  "asset's native units (metres/m^2/count depending on geometry mix)."),
+    ("exposed_qty_RP100_windstorm", "As above for the RP100 windstorm extent."),
     ("EAD_<class>_MEUR", "Expected annual damage broken down by report class: for roads, a "
                           "5-class road hierarchy (motorway_trunk/primary/secondary/tertiary/other); "
                           "for other assets, the raw OSM object_type."),
@@ -322,6 +372,7 @@ def write_legend_sheet(ws: Worksheet) -> None:
     r = _write_kv_table(ws, r, "Asset types", ASSET_DESCRIPTIONS)
     r = _write_kv_table(ws, r, "Factors", FACTOR_DESCRIPTIONS)
     r = _write_kv_table(ws, r, "Outcomes", OUTCOME_DESCRIPTIONS)
+    r = _write_kv_table(ws, r, "Sobol_Convergence columns", CONVERGENCE_DESCRIPTIONS)
     r = _write_kv_table(ws, r, "Reruns_Overview / Reruns_Detail columns", RERUN_DESCRIPTIONS)
     _write_kv_table(ws, r, "Timing_By_Combo / Timing_Summary / Timing_Raw columns", TIMING_DESCRIPTIONS)
     ws.freeze_panes = "A4"
@@ -339,6 +390,7 @@ def build_curve_groups_table() -> pd.DataFrame:
         for hazard, groups, obj_group in (
             ("river", cfg.flood_groups, cfg.flood_object_group),
             ("earthquake", cfg.eq_groups, cfg.eq_object_group),
+            ("windstorm", cfg.wind_groups, cfg.wind_object_group),
         ):
             for group_name, curve_ids in sorted(groups.items()):
                 members = sorted(o for o, g in obj_group.items() if g == group_name)
@@ -364,10 +416,18 @@ def _short_member_list(members: list[str], max_items: int = 6) -> str:
     return "/".join(members[:max_items]) + f" +{len(members) - max_items} more"
 
 
+_HAZARD_GROUPS = {
+    "river": ("flood_groups", "flood_object_group", "Flood"),
+    "earthquake": ("eq_groups", "eq_object_group", "Earthquake"),
+    "windstorm": ("wind_groups", "wind_object_group", "Windstorm"),
+}
+
+
 def _curve_group_label(asset: str, hazard: str, group_name: str) -> str:
     cfg = ASSET_CONFIGS[asset]
-    groups = cfg.flood_groups if hazard == "river" else cfg.eq_groups
-    obj_group = cfg.flood_object_group if hazard == "river" else cfg.eq_object_group
+    groups_attr, obj_attr, hazard_word = _HAZARD_GROUPS[hazard]
+    groups = getattr(cfg, groups_attr)
+    obj_group = getattr(cfg, obj_attr)
     curve_ids = groups[group_name]
     members = sorted(o for o, g in obj_group.items() if g == group_name)
 
@@ -377,7 +437,6 @@ def _curve_group_label(asset: str, hazard: str, group_name: str) -> str:
     else:
         desc = _short_member_list(members)
 
-    hazard_word = "Flood" if hazard == "river" else "Earthquake"
     n = len(curve_ids)
     return f"{hazard_word}: {desc} ({curve_ids[0]}, {n} curve{'s' if n != 1 else ''})"
 
@@ -385,8 +444,8 @@ def _curve_group_label(asset: str, hazard: str, group_name: str) -> str:
 def _build_curve_label_lookup() -> dict[tuple[str, str], str]:
     lookup = {}
     for asset, cfg in ASSET_CONFIGS.items():
-        for hazard, groups in (("river", cfg.flood_groups), ("earthquake", cfg.eq_groups)):
-            for group_name in groups:
+        for hazard, (groups_attr, _obj, _word) in _HAZARD_GROUPS.items():
+            for group_name in getattr(cfg, groups_attr):
                 lookup[(asset, f"curve_{group_name}")] = _curve_group_label(asset, hazard, group_name)
     return lookup
 
@@ -532,12 +591,18 @@ def build_st_heatmap(sobol_df: pd.DataFrame, scenario: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 STAGE1_STEPS = ("preprocess", "validate")
-SCENARIO_STEPS = ("run_experiments_lhs", "analyze_lhs", "run_experiments_sobol", "analyze_sobol")
+# adaptive_sobol replaced the old fixed-N run_experiments_sobol step; both are
+# accepted so timing sheets still parse older logs from before the change.
+SCENARIO_STEPS = (
+    "run_experiments_lhs", "analyze_lhs",
+    "adaptive_sobol", "run_experiments_sobol", "analyze_sobol",
+)
 STEP_LABELS = {
     "preprocess": "preprocess_s",
     "validate": "validate_s",
     "run_experiments_lhs": "lhs_run_s",
     "analyze_lhs": "lhs_analyze_s",
+    "adaptive_sobol": "sobol_run_s",
     "run_experiments_sobol": "sobol_run_s",
     "analyze_sobol": "sobol_analyze_s",
 }
@@ -642,6 +707,81 @@ def build_timing_summary(timing_df: pd.DataFrame) -> pd.DataFrame:
     cols = ["country", "asset", "scenario", "lhs_n", "lhs_run_s", "lhs_analyze_s",
             "sobol_n", "sobol_run_s", "sobol_analyze_s", "scenario_total_s"]
     return piv[[c for c in cols if c in piv.columns]]
+
+
+# ---------------------------------------------------------------------------
+# Adaptive-Sobol convergence (results/sobol_convergence_log.jsonl)
+# ---------------------------------------------------------------------------
+
+
+def load_convergence_log(results_dir: Path) -> pd.DataFrame:
+    """One row per (country, asset, scenario) adaptive-Sobol search.
+
+    Reads results/sobol_convergence_log.jsonl (written by src.adaptive_sobol),
+    keeping the most recent record per combination. Flattens the per-round
+    detail into a compact 'ratio_by_n' string plus the headline stop info, so
+    a limited test run can be read at a glance: where each combination's
+    sample size stopped, and why.
+    """
+    path = results_dir / "sobol_convergence_log.jsonl"
+    cols = ["country", "asset", "scenario", "stop_n", "stop_reason", "n_factors",
+            "threshold", "worst_ratio_at_stop", "top_factor_at_stop", "n_rounds",
+            "ratio_by_n", "total_runs", "elapsed_s", "ts"]
+    if not path.exists():
+        return pd.DataFrame(columns=cols)
+
+    records = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            rounds = rec.get("rounds", []) or []
+
+            def _fmt(r):
+                wr = r.get("worst_ratio")
+                return f"{r.get('n')}:{'n/a' if wr is None else round(wr, 3)}"
+
+            last = rounds[-1] if rounds else {}
+            records.append(
+                {
+                    "country": rec.get("country"),
+                    "asset": rec.get("asset"),
+                    "scenario": rec.get("scenario"),
+                    "stop_n": rec.get("stop_n"),
+                    "stop_reason": rec.get("stop_reason"),
+                    "n_factors": rec.get("n_factors"),
+                    "threshold": rec.get("threshold"),
+                    "worst_ratio_at_stop": last.get("worst_ratio"),
+                    "top_factor_at_stop": last.get("top_factor"),
+                    "n_rounds": len(rounds),
+                    "ratio_by_n": ", ".join(_fmt(r) for r in rounds),
+                    "total_runs": sum(int(r.get("n_runs", 0) or 0) for r in rounds),
+                    "elapsed_s": rec.get("elapsed_s"),
+                    "ts": rec.get("ts"),
+                }
+            )
+    df = pd.DataFrame(records, columns=cols)
+    if df.empty:
+        return df
+    df = df.sort_values("ts").drop_duplicates(["country", "asset", "scenario"], keep="last")
+
+    asset_order = {a: i for i, a in enumerate(ASSET_CONFIGS)}
+    scen_order = {s: i for i, s in enumerate(SCENARIOS)}
+    df["_a"] = df["asset"].map(asset_order)
+    df["_s"] = df["scenario"].map(scen_order)
+    df["factor"] = [readable_factor(a, str(f)) if f else f
+                    for a, f in zip(df["asset"], df["top_factor_at_stop"])]
+    df["top_factor_at_stop"] = df["factor"]
+    return (
+        df.sort_values(["_a", "_s", "country"])
+        .drop(columns=["_a", "_s", "factor"])
+        .reset_index(drop=True)
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -992,6 +1132,20 @@ def main() -> None:
                 writer.sheets["All_Feature_Scores"], fscore_df, fraction_cols=["importance"]
             )
 
+        convergence_df = load_convergence_log(results_dir)
+        convergence_sheets = []
+        if not convergence_df.empty:
+            print(f"  {len(convergence_df)} adaptive-Sobol convergence records")
+            convergence_df.to_excel(writer, sheet_name="Sobol_Convergence", index=False)
+            _style_data_sheet(
+                writer.sheets["Sobol_Convergence"], convergence_df,
+                fraction_cols=["threshold", "worst_ratio_at_stop"],
+                relative_cols=["stop_n", "total_runs", "elapsed_s"],
+            )
+            convergence_sheets.append("Sobol_Convergence")
+        else:
+            print("  no results/sobol_convergence_log.jsonl - skipping Sobol_Convergence sheet")
+
         print("  checking for Sobol reruns at different sample sizes...")
         rerun_overview, rerun_detail = build_rerun_comparisons(results_dir)
         rerun_sheets = []
@@ -1042,6 +1196,7 @@ def main() -> None:
             ["Legend", "Curve_Groups", "Top_Drivers"]
             + [f"ST_{s}"[:31] for s in SCENARIOS]
             + ["All_Sobol_Indices", "All_Feature_Scores"]
+            + convergence_sheets
             + rerun_sheets
             + timing_sheets
         )

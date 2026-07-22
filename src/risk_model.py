@@ -2,8 +2,10 @@
 
 Consumes the intermediate files written by src.preprocess and evaluates one
 parameterization (one EMA Workbench experiment) in well under a second,
-without touching any raster or geometry. Hazards: river flood + earthquake
-(windstorm is not modelled - see src/curves.py).
+without touching any raster or geometry. Hazards: river flood, earthquake and
+windstorm - each computed independently (the study runs one hazard at a time;
+see src/ema_model.py). Windstorm applies to airports/education/power only
+(the roads wind curve is identically zero - see src/curves.py).
 
 Damage formula (identical to damagescanner.vector._get_damage_per_object):
 
@@ -43,13 +45,20 @@ Uncertainty factors (declared per-scenario in src/ema_model.py):
                       (protection_scale's multiplicative 0 * x = 0 cannot do
                       that - see README "Method notes").
     depth_offset      additive water-depth error in metres (river)
+    depth_scale       multiplicative water-depth factor, e.g. 0.9-1.1 (river);
+                      an alternative to depth_offset - a scenario uses one or
+                      the other, the unused one stays at its no-op default
     pga_scale         multiplier on PGA (earthquake hazard-map uncertainty)
+    gust_scale        multiplier on 3-sec gust speed (windstorm hazard-map
+                      uncertainty, analogous to pga_scale)
     aggregation       'per_cell'  = curve per raster cell, then sum (reference)
                       'mean_depth' = length-weighted mean intensity per feature
-                                     first, then curve applied once (both hazards)
-    include_river / include_earthquake  bool - which hazards to compute at all
-                      (flood-only / earthquake-only scenarios skip the other
-                      hazard's numpy work entirely, not just its reporting)
+                                     first, then curve applied once (all hazards)
+    include_river / include_earthquake / include_windstorm  bool - which
+                      hazard to compute at all (each scenario computes exactly
+                      one, skipping the others' numpy work entirely). Windstorm
+                      uses a fixed RP50 design-standard protection cutoff
+                      (WIND_DESIGN_RP) and no climate shift.
 """
 
 from dataclasses import dataclass, field
@@ -57,12 +66,22 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .curves import AssetConfig, get_asset_config, load_eq_edr_tables, load_flood_curves
+from .curves import (
+    AssetConfig,
+    get_asset_config,
+    load_eq_edr_tables,
+    load_flood_curves,
+    load_wind_curves,
+)
 from .paths import base_stem, hazard_stem, load_config
 
 WARMING_LEVELS = {"current": None, "1.5C": "15", "2.0C": "20", "3.0C": "30", "4.0C": "40"}
 # Clip bounds for shifted anchor RPs, mirroring _safe_rp() in AssetRisk_PanEU
 ANCHOR_CLIPS = {10: (1.0, 99.0), 100: (1.0, 499.0), 500: (1.0, 1000.0)}
+# Windstorm design standard: RP50 for every asset type (IEC 60826 lower
+# bound), applied as a fixed protection cutoff - mirrors
+# WIND_PROTECTION_STANDARD_RP in AssetRisk_PanEU/hazard_windstorm.py.
+WIND_DESIGN_RP = 50.0
 
 
 @dataclass
@@ -94,8 +113,10 @@ class ModelData:
     anchors: dict = field(default_factory=dict)         # warming code -> (n_seg, 3)
     flood_curve_tables: dict = field(default_factory=dict)  # curve_id -> (x, y)
     eq_curve_tables: dict = field(default_factory=dict)
+    wind_curve_tables: dict = field(default_factory=dict)
     flood_group_order: list[str] = field(default_factory=list)
     eq_group_order: list[str] = field(default_factory=list)
+    wind_group_order: list[str] = field(default_factory=list)
 
 
 def _load_profiles(path, rps: np.ndarray, seg_group: np.ndarray) -> HazardProfiles:
@@ -125,12 +146,21 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
 
     flood_group_order = sorted(asset_cfg.flood_groups)
     eq_group_order = sorted(asset_cfg.eq_groups)
+    wind_group_order = sorted(asset_cfg.wind_groups)
     seg_flood_group_idx = (
         seg["flood_group"].map({g: i for i, g in enumerate(flood_group_order)}).to_numpy(np.int32)
     )
     seg_eq_group_idx = (
         seg["eq_group"].map({g: i for i, g in enumerate(eq_group_order)}).to_numpy(np.int32)
     )
+    # wind_group is only written by Stage 1 for assets that support windstorm;
+    # absent for roads (and any pre-windstorm intermediate files).
+    if wind_group_order and "wind_group" in seg.columns:
+        seg_wind_group_idx = (
+            seg["wind_group"].map({g: i for i, g in enumerate(wind_group_order)}).to_numpy(np.int32)
+        )
+    else:
+        seg_wind_group_idx = np.zeros(n_seg, dtype=np.int32)
 
     anchors = {}
     if "river" in cfg["hazards"]:
@@ -157,13 +187,27 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
         load_eq_edr_tables(cfg["fragility_path"], eq_curve_ids) if eq_curve_ids else {}
     )
 
+    wind_curve_ids = sorted({c for curves in asset_cfg.wind_groups.values() for c in curves})
+    wind_curve_tables = {}
+    if wind_curve_ids:
+        wind_df = load_wind_curves(cfg["vulnerability_path"], wind_curve_ids)
+        wind_curve_tables = {
+            cid: (wind_df.index.to_numpy(np.float64), wind_df[cid].to_numpy(np.float64))
+            for cid in wind_curve_ids
+        }
+
+    group_idx_by_hazard = {
+        "river": seg_flood_group_idx,
+        "earthquake": seg_eq_group_idx,
+        "windstorm": seg_wind_group_idx,
+    }
     hazards = {}
     for hazard, hcfg in cfg["hazards"].items():
         prof_path = cfg["intermediate_dir"] / f"{hazard_stem(cfg, hazard)}_profiles.parquet"
         if not prof_path.exists():
             continue
         rps = np.asarray(sorted(hcfg["return_periods"]), dtype=np.float64)
-        group_idx = seg_flood_group_idx if hazard == "river" else seg_eq_group_idx
+        group_idx = group_idx_by_hazard.get(hazard, seg_flood_group_idx)
         hazards[hazard] = _load_profiles(prof_path, rps, group_idx)
 
     class_to_idx = {c: i for i, c in enumerate(asset_cfg.report_classes)}
@@ -179,8 +223,10 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
         anchors=anchors,
         flood_curve_tables=flood_curve_tables,
         eq_curve_tables=eq_curve_tables,
+        wind_curve_tables=wind_curve_tables,
         flood_group_order=flood_group_order,
         eq_group_order=eq_group_order,
+        wind_group_order=wind_group_order,
     )
 
 
@@ -313,21 +359,32 @@ def compute_risk(
     protection_scale: float = 1.0,
     protection_abs_rp: float | None = None,
     depth_offset: float = 0.0,
+    depth_scale: float = 1.0,
     pga_scale: float = 1.0,
+    gust_scale: float = 1.0,
     aggregation: str = "per_cell",
     include_river: bool = True,
     include_earthquake: bool = True,
+    include_windstorm: bool = False,
 ) -> dict:
     """Evaluate one parameterization; returns scalar outcomes in a dict.
 
     curve_choices maps every group name that will actually be used (i.e.
-    every entry of data.flood_group_order if include_river, and/or every
-    entry of data.eq_group_order if include_earthquake) to a chosen curve ID
-    from that group.
+    every entry of data.flood_group_order if include_river, data.eq_group_order
+    if include_earthquake, and/or data.wind_group_order if include_windstorm)
+    to a chosen curve ID from that group.
+
+    River water depth is transformed as ``depth * depth_scale + depth_offset``:
+    depth_offset is an additive bias in metres (default 0), depth_scale a
+    multiplicative factor (default 1). A scenario varies one or the other
+    (see src/ema_model.py); the unused one keeps its no-op default. Windstorm
+    gust speed is scaled multiplicatively by gust_scale (analogous to
+    pga_scale for earthquake).
     """
     cost = _cost_per_unit(data, cost_level)
     ead_river = np.zeros(data.n_seg)
     ead_eq = np.zeros(data.n_seg)
+    ead_wind = np.zeros(data.n_seg)
     out: dict[str, float] = {}
 
     if include_river:
@@ -338,7 +395,7 @@ def compute_risk(
             i: data.flood_curve_tables[curve_choices[name]]
             for i, name in enumerate(data.flood_group_order)
         }
-        depth = np.maximum(hz.p_intensity + depth_offset, 0.0)
+        depth = np.maximum(hz.p_intensity * depth_scale + depth_offset, 0.0)
         dmg_qty, exposed_qty = _damage_matrix(hz, depth, curves_by_group, aggregation, data.n_seg)
         damage_river = dmg_qty * cost[:, None]
         idx100 = int(np.argmin(np.abs(hz.rps - 100)))
@@ -384,7 +441,31 @@ def compute_risk(
         )
         out["EAD_earthquake_MEUR"] = float(ead_eq.sum() / 1e6)
 
-    ead_total = ead_river + ead_eq
+    if include_windstorm:
+        if "windstorm" not in data.hazards:
+            raise ValueError("include_windstorm=True but no windstorm profiles were loaded")
+        hz_w = data.hazards["windstorm"]
+        curves_by_group_w = {
+            i: data.wind_curve_tables[curve_choices[name]]
+            for i, name in enumerate(data.wind_group_order)
+        }
+        speed = hz_w.p_intensity * gust_scale
+        dmg_qty_w, exposed_qty_w = _damage_matrix(
+            hz_w, speed, curves_by_group_w, aggregation, data.n_seg
+        )
+        damage_wind = dmg_qty_w * cost[:, None]
+        idx100_w = int(np.argmin(np.abs(hz_w.rps - 100)))
+        # Fixed RP50 design standard for every feature (no per-feature
+        # protection raster and no climate shift for wind).
+        prot_wind = np.full(data.n_seg, WIND_DESIGN_RP, dtype=np.float64)
+        ead_wind = _integrate_ead(
+            damage_wind, np.broadcast_to(hz_w.rps, damage_wind.shape), prot_wind
+        )
+        out["EAD_windstorm_MEUR"] = float(ead_wind.sum() / 1e6)
+        out["damage_RP100_windstorm_MEUR"] = float(damage_wind[:, idx100_w].sum() / 1e6)
+        out["exposed_qty_RP100_windstorm"] = float(exposed_qty_w[:, idx100_w].sum())
+
+    ead_total = ead_river + ead_eq + ead_wind
     out["total_EAD_MEUR"] = float(ead_total.sum() / 1e6)
 
     class_ead = np.bincount(data.class_idx, weights=ead_total, minlength=len(data.report_classes))

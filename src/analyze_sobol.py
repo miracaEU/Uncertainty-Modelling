@@ -46,7 +46,9 @@ PREFERRED_OUTCOMES = [
     "total_EAD_MEUR",
     "EAD_river_MEUR",
     "EAD_earthquake_MEUR",
+    "EAD_windstorm_MEUR",
     "damage_RP100_river_MEUR",
+    "damage_RP100_windstorm_MEUR",
 ]
 
 plt.rcParams.update(

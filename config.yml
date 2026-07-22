@@ -14,11 +14,19 @@ protection_standard_path: "S:/eks510/projects/AssetRisk_PanEU/data/floodProtecti
 basin_data_path: "S:/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_return_periods.parquet"
 
 # --- hazards -----------------------------------------------------------------
-# Only hazards with non-trivial vulnerability/fragility curves for the chosen
-# asset type. For roads: river floods (F7.x) and earthquakes (E7.x).
-# Windstorm is excluded on purpose: the roads wind curve (W7.2) is identically
-# zero in the MIRACA database, so windstorm EAD for roads is always 0.
-# Coastal flooding does not apply to landlocked Luxembourg.
+# Every hazard the pipeline can model (local damage-curve + return-period
+# rasters). Which of these actually apply to a given asset is decided per
+# asset by src/curves.py::applicable_hazards, NOT here - listing a hazard
+# here just tells the pipeline where its data lives:
+#   river       - all assets
+#   earthquake  - all assets
+#   windstorm   - airports/education/power only (the roads wind curve W7.2 is
+#                 identically zero, so roads carry no windstorm damage and it
+#                 is skipped for them automatically)
+# Coastal flooding is intentionally not listed: in the reference pipeline its
+# rasters are streamed at runtime from a remote CoCLiCo STAC catalog rather
+# than read from local files, so it needs a different Stage-1 path (a planned
+# follow-up) and cannot be added by a local dir/filename_template alone.
 hazards:
   river:
     dir: "S:/eks510/Hazard_data/River_floods"
@@ -28,6 +36,10 @@ hazards:
     dir: "S:/eks510/Hazard_data/Earthquakes"
     filename_template: "PGA_1_{rp}_vs30.tif"
     return_periods: [50, 101, 476, 976, 2500, 5000]
+  windstorm:
+    dir: "S:/eks510/Hazard_data/Windstorms"
+    filename_template: "{rp}yr_wisc_nao_0.59.tif"
+    return_periods: [5, 10, 25, 50, 100, 250, 500]
 
 # --- outputs (relative to this project folder) -------------------------------
 intermediate_dir: "data/intermediate"

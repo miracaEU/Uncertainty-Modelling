@@ -44,7 +44,7 @@ import xarray as xr
 
 from damagescanner.core import VectorExposure
 
-from .curves import get_asset_config, maxdam_arrays, report_class_for
+from .curves import applicable_hazards, get_asset_config, maxdam_arrays, report_class_for
 from .paths import base_stem, hazard_stem, load_config, set_asset_override, set_country_override
 
 WARMING_CODES = ("15", "20", "30", "40")
@@ -264,6 +264,20 @@ def build_segments(features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict)
             f"{unknown}. Add them to FLOOD_CURVES_RAW/EQ_CURVES_RAW in src/curves.py."
         )
 
+    # wind_group is only written for assets that actually support windstorm
+    # (airports/education/power); roads have no wind curves at all. Every
+    # object type of a windstorm asset must map to a wind group (some map to
+    # the zero placeholder group - see WIND_CURVES_RAW).
+    if asset_cfg.supports_windstorm:
+        segments["wind_group"] = object_types.map(asset_cfg.wind_object_group).to_numpy()
+        n_unmapped_wind = segments["wind_group"].isna().sum()
+        if n_unmapped_wind:
+            unknown = sorted(set(object_types[segments["wind_group"].isna()]))
+            raise ValueError(
+                f"{n_unmapped_wind} features have no wind curve group. Unknown "
+                f"object_type(s): {unknown}. Add them to WIND_CURVES_RAW in src/curves.py."
+            )
+
     segments["prot_rp"] = sample_protection_standards(features, cfg)
 
     basin_df = join_basin_anchors(features, cfg)
@@ -283,10 +297,20 @@ def main() -> None:
     set_country_override(args.country)
     set_asset_override(args.asset)
     cfg = load_config()
-    hazards = args.hazards or list(cfg["hazards"].keys())
+
+    # Only extract hazards that are both configured (have data paths) AND
+    # apply to this asset (e.g. windstorm is skipped for roads). An explicit
+    # --hazards subset is still intersected with applicability.
+    applicable = applicable_hazards(cfg["asset_type"])
+    default_hazards = [h for h in cfg["hazards"] if h in applicable]
+    hazards = args.hazards or default_hazards
     unknown = set(hazards) - set(cfg["hazards"])
     if unknown:
         raise SystemExit(f"Unknown hazards {unknown}; configured: {list(cfg['hazards'])}")
+    skipped = [h for h in hazards if h not in applicable]
+    if skipped:
+        print(f"  NOTE: {skipped} not applicable to asset '{cfg['asset_type']}' - skipping.")
+        hazards = [h for h in hazards if h in applicable]
 
     print(f"Country: {cfg['country']}  Asset: {cfg['asset_type']}")
     t_start = time.time()

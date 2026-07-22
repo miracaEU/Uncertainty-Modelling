@@ -174,9 +174,12 @@ def plot_ead_vs_protection(experiments, outcomes, protection_col: str, fig_dir: 
     plt.close(fig)
 
 
-def plot_ead_vs_depth_offset(experiments, outcomes, fig_dir: Path, prefix: str) -> None:
+def plot_ead_vs_depth(experiments, outcomes, depth_col: str, fig_dir: Path, prefix: str) -> None:
+    """EAD vs the scenario's depth-error factor - either depth_offset (additive,
+    metres) or depth_scale (multiplicative, x0.9-1.1), whichever this scenario
+    varies."""
     ead = np.asarray(outcomes["total_EAD_MEUR"])
-    off = experiments["depth_offset"].to_numpy(float)
+    off = experiments[depth_col].to_numpy(float)
     has_agg = "aggregation" in experiments.columns
     groups = [(a, c) for a, c in zip(["per_cell", "mean_depth"], [BLUE, GREEN])] if has_agg else [(None, BLUE)]
 
@@ -197,10 +200,12 @@ def plot_ead_vs_depth_offset(experiments, outcomes, fig_dir: Path, prefix: str) 
         for t in leg.get_texts():
             t.set_color(INK_2)
         leg.get_title().set_color(INK_2)
-    ax.set_xlabel("water depth offset (m)")
+    xlabel = ("water depth offset (m, additive)" if depth_col == "depth_offset"
+              else "water depth scale (x, multiplicative)")
+    ax.set_xlabel(xlabel)
     ax.set_ylabel("total EAD (M EUR / yr)")
     ax.set_title(f"Depth uncertainty and aggregation choice, {prefix} (binned medians)")
-    fig.savefig(fig_dir / f"{prefix}_ead_vs_depth_offset.png", dpi=200)
+    fig.savefig(fig_dir / f"{prefix}_ead_vs_{depth_col}.png", dpi=200)
     plt.close(fig)
 
 
@@ -214,7 +219,7 @@ def print_summary(experiments, outcomes, factors, scores: pd.DataFrame) -> None:
         f"  p5 {q[0]:8.3f} | p25 {q[1]:8.3f} | median {q[2]:8.3f} "
         f"| p75 {q[3]:8.3f} | p95 {q[4]:8.3f}"
     )
-    for hz_outcome in ("EAD_river_MEUR", "EAD_earthquake_MEUR"):
+    for hz_outcome in ("EAD_river_MEUR", "EAD_earthquake_MEUR", "EAD_windstorm_MEUR"):
         if hz_outcome in outcomes:
             v = np.asarray(outcomes[hz_outcome])
             print(
@@ -271,10 +276,11 @@ def main() -> None:
     else:
         print("Skipping ead_vs_protection: no protection factor varies in this scenario.")
 
-    if "depth_offset" in factors and experiments["depth_offset"].nunique() > 1:
-        plot_ead_vs_depth_offset(experiments, outcomes, fig_dir, prefix)
+    depth_col = next((c for c in ("depth_offset", "depth_scale") if c in factors), None)
+    if depth_col and experiments[depth_col].nunique() > 1:
+        plot_ead_vs_depth(experiments, outcomes, depth_col, fig_dir, prefix)
     else:
-        print("Skipping ead_vs_depth_offset: 'depth_offset' not a varying factor in this scenario.")
+        print("Skipping ead_vs_depth: no depth factor (depth_offset/depth_scale) varies in this scenario.")
 
     print_summary(experiments, outcomes, factors, scores)
     print(f"\nFigures saved to {fig_dir}")

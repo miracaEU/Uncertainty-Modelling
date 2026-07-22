@@ -2,20 +2,24 @@
 """Orchestrates the full multi-country, multi-asset, multi-scenario study.
 
 For every (asset, country) pair, in order:
-  1. Stage 1 once:  preprocess (both hazards) + validate.
-  2. For every scenario (baseline, abs_protection, flood_no_protection,
-     earthquake_only): an LHS run + a Sobol run, each followed by its
-     analysis script.
+  1. Stage 1 once:  preprocess (every hazard applicable to the asset) + validate.
+  2. For every scenario applicable to that asset (see src/ema_model.py -
+     six single-hazard flood scenarios, one earthquake, one windstorm;
+     windstorm is skipped for roads automatically): an LHS run (fixed N)
+     followed by src.analyze, then an ADAPTIVE Sobol search (src.adaptive_sobol
+     doubles N from --sobol-min-n until the confidence-interval criterion is
+     met or --sobol-max-n is reached) followed by src.analyze_sobol.
   3. Once every combination is done (or the run is aborted/fails), the
      aggregated summary workbook (MIRACA_uncertainty_study_summary.xlsx, in
      the project root - see src/aggregate_results.py) is regenerated from
      whatever results/*.csv files exist at that point - so it's always
      current after any run of this script, full or partial.
 
-Default order matches the study design: roads for LUX then DNK, fully
-through all four scenarios, before moving on to airports, then education,
-then power, each again LUX then DNK. Override with --assets/--countries/
---scenarios to run a subset (e.g. one array task on a cluster).
+Default order matches the study design: roads for LUX/DNK/GRC/PRT, through
+every applicable scenario, before moving on to airports, then education,
+then power. Override with --assets/--countries/--scenarios to run a subset
+(e.g. one array task on a cluster). Non-applicable (asset, scenario) pairs
+are skipped automatically.
 
 Nothing is ever overwritten:
   - Stage-1 outputs and experiment archives are skipped (not regenerated) if
@@ -28,20 +32,23 @@ Nothing is ever overwritten:
     just a re-derivable summary of already-protected raw data.
 
 Multi-processor / cluster use:
-  --workers N is passed straight through to every run_experiments.py call
+  --workers N is passed straight through to every experiment run
   (ema_workbench.MultiprocessingEvaluator). Each stage is a fresh Python
   subprocess (via `--python -m src.<stage>`), so a crash in one combination
   cannot corrupt or hang a later one; by default the script logs the failure
   and continues (see --fail-fast to abort instead). A JSONL run log is kept
-  at results/run_study_log.jsonl so progress survives interruption/preemption
-  and can be inspected without re-parsing stdout.
+  at results/run_study_log.jsonl (per-step timing) and a Sobol convergence log
+  at results/sobol_convergence_log.jsonl (the N sequence each combination
+  stopped at) so progress survives interruption/preemption and can be
+  inspected without re-parsing stdout.
 
 Usage:
     python run_study.py --dry-run                          # preview the plan
-    python run_study.py --workers 8                         # full study
-    python run_study.py --assets roads --countries LUX --workers 8
-    python run_study.py --assets roads --countries LUX --scenarios baseline \\
+    python run_study.py --workers 8                         # full study (LUX/DNK/GRC/PRT)
+    python run_study.py --assets power --countries LUX --workers 8
+    python run_study.py --assets power --countries LUX --scenarios windstorm \\
         --workers 16                                        # one SLURM array task
+    python run_study.py --sobol-min-n 128 --sobol-max-n 8192 --sobol-threshold 0.2
 """
 
 import argparse
@@ -53,11 +60,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from src.ema_model import SCENARIOS  # noqa: E402
+from src.ema_model import SCENARIOS, scenario_applies  # noqa: E402
 from src.paths import base_stem, load_config, set_asset_override, set_country_override, set_scenario_override  # noqa: E402
 
 DEFAULT_ASSETS = ["roads", "airports", "education", "power"]
-DEFAULT_COUNTRIES = ["LUX", "DNK"]
+DEFAULT_COUNTRIES = ["LUX", "DNK", "GRC", "PRT"]
 
 
 def log(msg: str) -> None:
@@ -122,13 +129,42 @@ def analysis_exists(cfg: dict, scenario: str, kind: str) -> bool:
     return (cfg["results_dir"] / name).exists()
 
 
+def adaptive_done(cfg: dict, scenario: str) -> bool:
+    """True if results/sobol_convergence_log.jsonl already has a record for
+    this (country, asset, scenario) - i.e. the adaptive Sobol search ran to a
+    stop before, so it can be skipped on a resumed study (unless --force)."""
+    log_path = cfg["results_dir"] / "sobol_convergence_log.jsonl"
+    if not log_path.exists():
+        return False
+    with open(log_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if (
+                rec.get("country") == cfg["country"]
+                and rec.get("asset") == cfg["asset_type"]
+                and rec.get("scenario") == scenario
+                and rec.get("stop_n") is not None
+            ):
+                return True
+    return False
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--assets", nargs="+", default=DEFAULT_ASSETS, choices=DEFAULT_ASSETS)
     parser.add_argument("--countries", nargs="+", default=DEFAULT_COUNTRIES)
     parser.add_argument("--scenarios", nargs="+", default=SCENARIOS, choices=SCENARIOS)
     parser.add_argument("--lhs-n", type=int, default=3000, help="LHS experiment count")
-    parser.add_argument("--sobol-n", type=int, default=512, help="Sobol base sample size N (use a power of 2)")
+    parser.add_argument("--sobol-min-n", type=int, default=128, help="adaptive Sobol starting base N (power of 2)")
+    parser.add_argument("--sobol-max-n", type=int, default=8192, help="adaptive Sobol maximum base N (power of 2)")
+    parser.add_argument("--sobol-threshold", type=float, default=0.2,
+                        help="adaptive Sobol stop threshold: max ST_conf/ST among relevant factors")
     parser.add_argument("--workers", type=int, default=4, help="parallel worker processes per experiment run")
     parser.add_argument("--python", default=sys.executable, help="Python interpreter to invoke for every stage")
     parser.add_argument("--force", action="store_true", help="re-run steps even if their output already exists")
@@ -194,51 +230,98 @@ def main() -> None:
                     marker.parent.mkdir(parents=True, exist_ok=True)
                     marker.write_text(datetime.now(timezone.utc).isoformat())
 
-        for scenario in args.scenarios:
+        scenarios_here = [s for s in args.scenarios if scenario_applies(s, asset)]
+        skipped_scen = [s for s in args.scenarios if s not in scenarios_here]
+        if skipped_scen:
+            log(f"  (scenarios not applicable to {asset}: {skipped_scen})")
+
+        for scenario in scenarios_here:
             log("-" * 70)
             log(f"{combo} / {scenario}")
             log("-" * 70)
 
-            for sampler, n in (("lhs", args.lhs_n), ("sobol", args.sobol_n)):
-                if not args.force and experiments_exist(cfg, scenario, sampler, n):
-                    log(f"  {sampler} n={n}: SKIP (archive already exists)")
-                else:
-                    extra = [
-                        "--country", country, "--asset", asset, "--scenario", scenario,
-                        "--n", str(n), "--workers", str(args.workers),
-                    ]
-                    if sampler == "sobol":
-                        extra += ["--sampler", "sobol"]
-                    ok, elapsed = run_step(args.python, "src.run_experiments", extra, args.dry_run)
-                    study_log.record(
-                        combo=combo, step=f"run_experiments_{sampler}", scenario=scenario,
-                        n=n, ok=ok, elapsed_s=round(elapsed, 1),
-                    )
-                    if not ok:
-                        log(f"  {sampler} n={n}: FAILED after {elapsed:.0f}s")
-                        failures.append(f"{combo}/{scenario} {sampler}")
-                        if args.fail_fast:
-                            log("Aborting (--fail-fast).")
-                            _finalize(args, failures)
-                        continue
-                    log(f"  {sampler} n={n}: done in {elapsed:.0f}s")
-
-                analyze_module = "src.analyze" if sampler == "lhs" else "src.analyze_sobol"
-                ok, elapsed = run_step(
-                    args.python, analyze_module,
-                    ["--country", country, "--asset", asset, "--scenario", scenario],
-                    args.dry_run,
-                )
+            # 1. LHS (fixed N) - quick extra-trees importance complement.
+            if not args.force and experiments_exist(cfg, scenario, "lhs", args.lhs_n):
+                log(f"  lhs n={args.lhs_n}: SKIP (archive already exists)")
+            else:
+                extra = [
+                    "--country", country, "--asset", asset, "--scenario", scenario,
+                    "--n", str(args.lhs_n), "--workers", str(args.workers),
+                ]
+                ok, elapsed = run_step(args.python, "src.run_experiments", extra, args.dry_run)
                 study_log.record(
-                    combo=combo, step=f"analyze_{sampler}", scenario=scenario,
-                    ok=ok, elapsed_s=round(elapsed, 1),
+                    combo=combo, step="run_experiments_lhs", scenario=scenario,
+                    n=args.lhs_n, ok=ok, elapsed_s=round(elapsed, 1),
                 )
                 if not ok:
-                    log(f"  analyze ({sampler}): FAILED")
-                    failures.append(f"{combo}/{scenario} analyze_{sampler}")
+                    log(f"  lhs n={args.lhs_n}: FAILED after {elapsed:.0f}s")
+                    failures.append(f"{combo}/{scenario} lhs")
                     if args.fail_fast:
                         log("Aborting (--fail-fast).")
                         _finalize(args, failures)
+                else:
+                    log(f"  lhs n={args.lhs_n}: done in {elapsed:.0f}s")
+
+            ok, elapsed = run_step(
+                args.python, "src.analyze",
+                ["--country", country, "--asset", asset, "--scenario", scenario],
+                args.dry_run,
+            )
+            study_log.record(
+                combo=combo, step="analyze_lhs", scenario=scenario,
+                ok=ok, elapsed_s=round(elapsed, 1),
+            )
+            if not ok:
+                log("  analyze (lhs): FAILED")
+                failures.append(f"{combo}/{scenario} analyze_lhs")
+                if args.fail_fast:
+                    log("Aborting (--fail-fast).")
+                    _finalize(args, failures)
+
+            # 2. Adaptive Sobol (N doubled from --sobol-min-n until the CI
+            #    criterion is met or --sobol-max-n is reached). Replaces the
+            #    old fixed-N Sobol run; src.adaptive_sobol writes every N's
+            #    archive plus a convergence-log record, then we analyze the
+            #    highest-N archive it produced.
+            if not args.force and adaptive_done(cfg, scenario):
+                log("  sobol (adaptive): SKIP (convergence record already exists)")
+            else:
+                extra = [
+                    "--country", country, "--asset", asset, "--scenario", scenario,
+                    "--min-n", str(args.sobol_min_n), "--max-n", str(args.sobol_max_n),
+                    "--threshold", str(args.sobol_threshold), "--workers", str(args.workers),
+                ]
+                if args.force:
+                    extra.append("--force")
+                ok, elapsed = run_step(args.python, "src.adaptive_sobol", extra, args.dry_run)
+                study_log.record(
+                    combo=combo, step="adaptive_sobol", scenario=scenario,
+                    ok=ok, elapsed_s=round(elapsed, 1),
+                )
+                if not ok:
+                    log(f"  sobol (adaptive): FAILED after {elapsed:.0f}s")
+                    failures.append(f"{combo}/{scenario} adaptive_sobol")
+                    if args.fail_fast:
+                        log("Aborting (--fail-fast).")
+                        _finalize(args, failures)
+                    continue
+                log(f"  sobol (adaptive): done in {elapsed:.0f}s")
+
+            ok, elapsed = run_step(
+                args.python, "src.analyze_sobol",
+                ["--country", country, "--asset", asset, "--scenario", scenario],
+                args.dry_run,
+            )
+            study_log.record(
+                combo=combo, step="analyze_sobol", scenario=scenario,
+                ok=ok, elapsed_s=round(elapsed, 1),
+            )
+            if not ok:
+                log("  analyze (sobol): FAILED")
+                failures.append(f"{combo}/{scenario} analyze_sobol")
+                if args.fail_fast:
+                    log("Aborting (--fail-fast).")
+                    _finalize(args, failures)
 
     _finalize(args, failures)
 

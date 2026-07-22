@@ -120,6 +120,60 @@ EQ_CURVES_RAW = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Windstorm vulnerability curves (transcribed from AssetRisk_PanEU
+# DICT_CIS_VULNERABILITY_WIND, sheet ``W_Vuln_V10m_3sec`` - damage fraction
+# 0-1 vs 3-second gust speed at 10 m, 0-120 m/s). Roads are intentionally
+# NOT included: the only roads wind curve (W7.2) is identically zero in the
+# database, so roads carry no windstorm damage and windstorm is skipped for
+# them entirely (see supports_windstorm / applicable_hazards below).
+#
+# W7.2 is likewise identically zero (verified against the table) and is used
+# here only as the "wind does not damage this" placeholder for enclosed /
+# below-grade object types (power plants, substations, transformers, ...,
+# and airport aerodrome/apron/runway surfaces): a single-curve, all-zero
+# group is held FIXED and contributes no damage, keeping the "every object
+# type has a group" invariant the preprocessing relies on.
+# ---------------------------------------------------------------------------
+
+WIND_ZERO_CURVE = "W7.2"  # identically zero in the MIRACA table (verified)
+
+_WIND_TOWER_CURVES = [
+    "W3.5", "W3.6", "W3.7", "W3.8", "W3.9", "W3.10", "W3.11", "W3.12", "W3.13", "W3.14",
+]
+_WIND_POLE_CURVES = ["W4.33", "W4.34", "W4.35", "W4.36", "W4.37"]
+_WIND_LINE_CURVES = ["W6.1", "W6.2", "W6.3"]
+_WIND_BUILDING_CURVES = ["W21.11", "W21.12", "W21.13", "W21.14"]
+
+WIND_CURVES_RAW = {
+    "airports": {
+        "aerodrome": [WIND_ZERO_CURVE],
+        "apron": [WIND_ZERO_CURVE],
+        "runway": [WIND_ZERO_CURVE],
+        "terminal": ["W21.13", "W21.14"],
+    },
+    "education": {
+        t: _WIND_BUILDING_CURVES
+        for t in ("school", "kindergarten", "college", "university", "library")
+    },
+    "power": {
+        "line": _WIND_LINE_CURVES,
+        "minor_line": _WIND_LINE_CURVES,
+        "cable": [WIND_ZERO_CURVE],
+        "pole": _WIND_POLE_CURVES,
+        "catenary_mast": _WIND_POLE_CURVES,
+        "tower": _WIND_TOWER_CURVES,
+        # wind-immune (enclosed / below-grade) -> zero placeholder curve
+        "plant": [WIND_ZERO_CURVE],
+        "generator": [WIND_ZERO_CURVE],
+        "substation": [WIND_ZERO_CURVE],
+        "transformer": [WIND_ZERO_CURVE],
+        "portal": [WIND_ZERO_CURVE],
+        "terminal": [WIND_ZERO_CURVE],
+        "switch": [WIND_ZERO_CURVE],
+    },
+}
+
 MAXDAM_RAW = {
     "roads": {
         "motorway": [1106, 2895, 3931], "motorway_link": [1106, 2895, 3931],
@@ -236,15 +290,34 @@ class AssetConfig:
     eq_groups: dict[str, list[str]]
     eq_object_group: dict[str, str]
     maxdam: dict[str, list[float]]           # object_type -> [min, mean, max]
+    wind_groups: dict[str, list[str]] = field(default_factory=dict)     # empty -> no windstorm
+    wind_object_group: dict[str, str] = field(default_factory=dict)
     default_maxdam: list[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
     report_class: dict[str, str] | None = None      # None -> use object_type directly
     default_report_class: str = "other"
     report_classes: list[str] = field(default_factory=list)  # only used if report_class is set
 
+    @property
+    def supports_windstorm(self) -> bool:
+        """True iff at least one wind curve group is non-degenerate.
+
+        A group made up solely of the identically-zero placeholder curve
+        (W7.2) carries no damage; an asset whose wind groups are all like
+        that (or that has no wind config at all, e.g. roads) has nothing to
+        vary for windstorm and is skipped.
+        """
+        return any(
+            any(c != WIND_ZERO_CURVE for c in curves)
+            for curves in self.wind_groups.values()
+        )
+
 
 def _build_asset_config(asset: str) -> AssetConfig:
     flood_groups, flood_obj_group = _derive_groups(FLOOD_CURVES_RAW[asset])
     eq_groups, eq_obj_group = _derive_groups(EQ_CURVES_RAW[asset])
+    wind_groups, wind_obj_group = (
+        _derive_groups(WIND_CURVES_RAW[asset]) if asset in WIND_CURVES_RAW else ({}, {})
+    )
     maxdam = MAXDAM_RAW[asset]
     default_maxdam = list(np.mean(list(maxdam.values()), axis=0))
 
@@ -255,6 +328,8 @@ def _build_asset_config(asset: str) -> AssetConfig:
             flood_object_group=flood_obj_group,
             eq_groups=eq_groups,
             eq_object_group=eq_obj_group,
+            wind_groups=wind_groups,
+            wind_object_group=wind_obj_group,
             maxdam=maxdam,
             default_maxdam=default_maxdam,
             report_class=ROAD_REPORT_CLASS,
@@ -269,6 +344,8 @@ def _build_asset_config(asset: str) -> AssetConfig:
         flood_object_group=flood_obj_group,
         eq_groups=eq_groups,
         eq_object_group=eq_obj_group,
+        wind_groups=wind_groups,
+        wind_object_group=wind_obj_group,
         maxdam=maxdam,
         default_maxdam=default_maxdam,
         report_class=None,
@@ -280,6 +357,21 @@ def _build_asset_config(asset: str) -> AssetConfig:
 ASSET_CONFIGS: dict[str, AssetConfig] = {
     asset: _build_asset_config(asset) for asset in FLOOD_CURVES_RAW
 }
+
+# Hazards available in this pipeline, and which apply to which asset. River
+# flood and earthquake apply to every asset; windstorm only to assets with a
+# non-degenerate wind curve set (airports/education/power - not roads). This
+# is the single source of truth the preprocessing, the scenario applicability
+# in ema_model.py, and the study orchestrator all consult.
+ALL_HAZARDS = ("river", "earthquake", "windstorm")
+
+
+def applicable_hazards(asset: str) -> list[str]:
+    cfg = get_asset_config(asset)
+    hazards = ["river", "earthquake"]
+    if cfg.supports_windstorm:
+        hazards.append("windstorm")
+    return hazards
 
 
 def get_asset_config(asset: str) -> AssetConfig:
@@ -310,28 +402,46 @@ def report_class_for(cfg: AssetConfig, object_types: pd.Series) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 
-def load_flood_curves(vulnerability_path: Path, curve_ids: list[str]) -> pd.DataFrame:
-    """Load depth-damage curves for the given curve IDs from the MIRACA table.
+def load_vulnerability_curves(
+    vulnerability_path: Path, curve_ids: list[str], sheet: str, axis_name: str = "intensity"
+) -> pd.DataFrame:
+    """Load intensity-damage curves for the given IDs from a MIRACA table sheet.
 
-    Returns a DataFrame indexed by depth (m, 0.00-6.00 in 0.05 steps) with one
-    column per curve ID, values = damage fraction in [0, 1].
-
-    Row slice iloc[4:125] mirrors prepare_flood_curves() in AssetRisk_PanEU:
-    rows 0-3 are header/metadata, data rows are depths 0 to 6 m.
+    Returns a DataFrame indexed by the hazard intensity axis with one column
+    per curve ID, values = damage fraction in [0, 1]. Works for any sheet
+    that follows the shared layout (an "ID number" intensity column plus one
+    column per curve, data in rows iloc[4:125]) - i.e. both the flood
+    depth-damage sheet (F_Vuln_Depth, depth 0-6 m) and the windstorm
+    speed-damage sheet (W_Vuln_V10m_3sec, 3-sec gust 0-120 m/s). Row slice
+    mirrors prepare_flood_curves() / prepare_wind_curves() in AssetRisk_PanEU.
     """
-    vul_df = pd.read_excel(vulnerability_path, sheet_name="F_Vuln_Depth").ffill()
+    vul_df = pd.read_excel(vulnerability_path, sheet_name=sheet).ffill()
     curves = (
         vul_df[["ID number"] + curve_ids]
         .iloc[4:125]
         .set_index("ID number")
-        .rename_axis("depth")
+        .rename_axis(axis_name)
         .astype(np.float64)
         .ffill()
     )
     curves.index = curves.index.astype(np.float64)
     if not curves.index.is_monotonic_increasing:
-        raise ValueError("Curve depth index is not monotonically increasing")
+        raise ValueError(f"Curve intensity index ({sheet}) is not monotonically increasing")
     return curves
+
+
+def load_flood_curves(vulnerability_path: Path, curve_ids: list[str]) -> pd.DataFrame:
+    """Depth-damage curves (F_Vuln_Depth sheet), indexed by depth in metres."""
+    return load_vulnerability_curves(
+        vulnerability_path, curve_ids, sheet="F_Vuln_Depth", axis_name="depth"
+    )
+
+
+def load_wind_curves(vulnerability_path: Path, curve_ids: list[str]) -> pd.DataFrame:
+    """Speed-damage curves (W_Vuln_V10m_3sec sheet), indexed by 3-sec gust m/s."""
+    return load_vulnerability_curves(
+        vulnerability_path, curve_ids, sheet="W_Vuln_V10m_3sec", axis_name="speed"
+    )
 
 
 # ---------------------------------------------------------------------------

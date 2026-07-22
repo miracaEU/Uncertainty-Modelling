@@ -26,6 +26,12 @@ Check C - earthquake damage at a representative RP recomputed independently:
     fresh VectorExposure overlay of the PGA raster + EDR lookup + mean costs,
     compared with the Stage-2 earthquake damage matrix.
 
+Check D - windstorm damage at a representative RP recomputed independently:
+    fresh VectorExposure overlay of the gust-speed raster + wind curve interp
+    + mean costs, compared with the Stage-2 windstorm damage matrix. Skipped
+    for assets that don't support windstorm (e.g. roads) or with zero wind
+    exposure.
+
 Run:  python -m src.validate --country LUX --asset roads
 """
 
@@ -39,7 +45,7 @@ from scipy.interpolate import interp1d
 
 from damagescanner.core import VectorScanner, VectorExposure
 
-from .curves import get_asset_config, load_eq_edr_tables, load_flood_curves
+from .curves import get_asset_config, load_eq_edr_tables, load_flood_curves, load_wind_curves
 from .paths import load_config, set_asset_override, set_country_override
 from .risk_model import (
     ModelData,
@@ -327,6 +333,82 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
     return ok
 
 
+def check_windstorm_recomputation(cfg: dict, data: ModelData) -> bool:
+    if "windstorm" not in data.hazards:
+        print("Check D: skipped (no windstorm hazard for this asset).")
+        return True
+    if len(data.hazards["windstorm"].p_pair) == 0:
+        print("Check D: skipped (this asset/country has zero windstorm exposure at every RP).")
+        return True
+
+    asset_cfg = get_asset_config(cfg["asset_type"])
+    curve_choices = _representative_choices(asset_cfg.wind_groups)
+    rps = sorted(cfg["hazards"]["windstorm"]["return_periods"])
+    rp = rps[len(rps) // 2]
+    print("=" * 70)
+    print(f"Check D: windstorm RP{rp} damage, independent recompute (curves: {curve_choices})")
+    print("=" * 70)
+
+    features = _load_features(cfg)
+    hcfg = cfg["hazards"]["windstorm"]
+    hazard = _clip_hazard(hcfg["dir"] / hcfg["filename_template"].format(rp=rp), features)
+
+    print("Running fresh VectorExposure overlay + wind curve interp (reference-style)...")
+    exposed, _, _, _ = VectorExposure(
+        hazard_file=hazard,
+        feature_file=features[["object_type", "geometry"]],
+        hazard_value_col="band_data",
+        disable_progress=True,
+        return_full=False,
+    )
+    needed_curves = sorted(set(curve_choices.values()))
+    wind_df = load_wind_curves(cfg["vulnerability_path"], needed_curves)
+    wind_tables = {c: (wind_df.index.to_numpy(float), wind_df[c].to_numpy(float)) for c in needed_curves}
+
+    ref = np.zeros(data.n_seg)
+    for seg_idx, values, coverage in zip(
+        exposed.index, exposed["values"], exposed["coverage"]
+    ):
+        v = np.asarray(values, dtype=np.float64)
+        c = np.asarray(coverage, dtype=np.float64)
+        keep = np.isfinite(v) & (v > 0) & (c > 0)
+        if not keep.any():
+            continue
+        obj = features["object_type"].iloc[seg_idx]
+        group = asset_cfg.wind_object_group[obj]
+        speed_x, frac_y = wind_tables[curve_choices[group]]
+        maxdam = asset_cfg.maxdam.get(obj, asset_cfg.default_maxdam)[1]
+        geom_kind = features.geometry.iloc[seg_idx].geom_type
+        if geom_kind in ("Polygon", "MultiPolygon"):
+            from damagescanner.vector import _get_cell_area_m2
+            cell_area_m2 = _get_cell_area_m2(
+                features, hazard.rio.crs, abs(hazard.rio.resolution()[0])
+            )
+            q = c[keep] * cell_area_m2
+        else:
+            q = c[keep]
+        ref[seg_idx] = np.sum(np.interp(v[keep], speed_x, frac_y) * q) * maxdam
+
+    hz = data.hazards["windstorm"]
+    curves_by_group = {
+        i: data.wind_curve_tables[curve_choices[name]]
+        for i, name in enumerate(data.wind_group_order)
+    }
+    dmg_qty, _ = _damage_matrix(hz, hz.p_intensity, curves_by_group, "per_cell", data.n_seg)
+    fast = (dmg_qty * _cost_per_unit(data, 0.0)[:, None])[:, int(np.argmin(np.abs(hz.rps - rp)))]
+
+    tot_ref, tot_fast = ref.sum(), fast.sum()
+    denom = np.maximum(np.abs(ref), 1.0)
+    rel = (np.abs(fast - ref) / denom).max()
+    print(f"  total damage  reference: {tot_ref / 1e6:12.4f} MEUR")
+    print(f"  total damage  fast     : {tot_fast / 1e6:12.4f} MEUR")
+    print(f"  total rel. difference  : {abs(tot_fast - tot_ref) / max(tot_ref, 1e-9):.2e}")
+    print(f"  max per-feature rel. difference: {rel:.2e}")
+    ok = abs(tot_fast - tot_ref) / max(tot_ref, 1e-9) < 1e-3 and rel < 1e-2
+    print(f"  -> {'PASS' if ok else 'FAIL'}")
+    return ok
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
@@ -341,8 +423,10 @@ def main() -> None:
     ok_a = check_river_vs_vectorscanner(cfg, data)
     ok_b = check_ead_integration(cfg, data)
     ok_c = check_earthquake_recomputation(cfg, data)
+    ok_d = check_windstorm_recomputation(cfg, data)
     print("=" * 70)
-    print(f"Overall: {'ALL CHECKS PASSED' if ok_a and ok_b and ok_c else 'CHECKS FAILED'}")
+    all_ok = ok_a and ok_b and ok_c and ok_d
+    print(f"Overall: {'ALL CHECKS PASSED' if all_ok else 'CHECKS FAILED'}")
     print("=" * 70)
 
 
