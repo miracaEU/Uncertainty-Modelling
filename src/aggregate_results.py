@@ -26,6 +26,14 @@ Produces MIRACA_uncertainty_study_summary.xlsx in the project root with:
                         yourself in Excel for anything not already covered
   All_Feature_Scores  - the same, for the LHS extra-trees importance scores
                         (a quicker, less rigorous complement to Sobol)
+  Reruns_Overview     - only present once some combination has been re-run
+                        at a higher Sobol sample size N: one row per combo,
+                        old vs new #1 driver and its ST - "did more runs
+                        change the headline answer"
+  Reruns_Detail       - same reruns, but every factor (not just the top
+                        one): old vs new S1/ST/ST_conf and the confidence-
+                        to-estimate ratio, flagging anything still imprecise
+                        even at the higher N
   Timing_By_Combo     - one row per (country, asset): preprocessing/validation
                         time plus the summed total across every scenario -
                         "how long did this country+asset take overall"
@@ -47,10 +55,14 @@ airports but "terminal" for power), so the description always uses the
 row's own asset for context; heatmap rows (which have no per-cell asset
 column) are prefixed with the asset name instead.
 
-This is a derived summary, safe to regenerate at any time - it never reads
-or writes the underlying experiment archives, only the small per-combination
-CSVs analyze.py/analyze_sobol.py already produce. run_study.py regenerates
-it automatically after a study run.
+This is a derived summary, safe to regenerate at any time - it never writes
+to the underlying experiment archives or per-combination CSVs, only reads
+them. Every sheet except Reruns_* comes purely from the small CSVs
+analyze.py/analyze_sobol.py already produce; the Reruns_* sheets additionally
+re-run SALib's Sobol analysis directly on whichever experiments_*.tar.gz
+archives are found (see find_sobol_rerun_pairs), since the per-combo indices
+CSV is overwritten in place on every rerun and keeps no history of its own.
+run_study.py regenerates the whole workbook automatically after a study run.
 
 Usage:
     python -m src.aggregate_results
@@ -59,6 +71,7 @@ Usage:
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -69,8 +82,8 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
 from .curves import ASSET_CONFIGS
-from .ema_model import SCENARIOS
-from .paths import PROJECT_ROOT, load_config
+from .ema_model import SCENARIOS, build_model
+from .paths import PROJECT_ROOT, load_config, set_asset_override, set_country_override, set_scenario_override
 
 OUTPUT_NAME = "MIRACA_uncertainty_study_summary.xlsx"
 
@@ -98,7 +111,48 @@ RELATIVE_COLOR_SCALE = ColorScaleRule(
     mid_type="percentile", mid_value=50, mid_color="86B6EF",
     end_type="max", end_color="0D366B",
 )
-WHITE_TEXT_THRESHOLD = 0.6  # fraction value above which the cell is dark enough to need white text
+
+# Both colour scales above interpolate through the SAME three stops
+# (FCFCFB -> 86B6EF -> 0D366B); only what min/mid/max map to in data-space
+# differs (fixed 0/0.5/1 vs each column's own min/median/max). So rather
+# than a hand-picked "value > threshold" cutoff per scale type, work out
+# the actual background colour Excel will render for a cell and choose
+# text colour by its relative luminance - one rule, correct for both scales
+# and immune to the two ever drifting apart again.
+_SCALE_STOP_COLORS = ("FCFCFB", "86B6EF", "0D366B")
+
+
+def _hex_to_rgb(h: str) -> tuple[float, float, float]:
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _lerp_rgb(t: float, c0: tuple, c1: tuple) -> tuple[float, float, float]:
+    t = min(max(t, 0.0), 1.0)
+    return tuple(c0[i] + (c1[i] - c0[i]) * t for i in range(3))
+
+
+def _color_scale_rgb(value: float, vmin: float, vmid: float, vmax: float) -> tuple[float, float, float]:
+    """Interpolated RGB for `value` under a 3-stop min/mid/max colour scale."""
+    c0, c1, c2 = (_hex_to_rgb(c) for c in _SCALE_STOP_COLORS)
+    if vmax <= vmin:
+        return c0
+    if value <= vmid:
+        t = 0.0 if vmid <= vmin else (value - vmin) / (vmid - vmin)
+        return _lerp_rgb(t, c0, c1)
+    t = 0.0 if vmax <= vmid else (value - vmid) / (vmax - vmid)
+    return _lerp_rgb(t, c1, c2)
+
+
+def _relative_luminance(rgb: tuple[float, float, float]) -> float:
+    r, g, b = (c / 255 for c in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _font_for_value(value: float, vmin: float, vmid: float, vmax: float) -> Font:
+    """White text if the cell's own colour-scale background is dark enough
+    to need it, black otherwise - computed from the actual interpolated
+    colour rather than guessed from a raw-value threshold."""
+    return WHITE_FONT if _relative_luminance(_color_scale_rgb(value, vmin, vmid, vmax)) < 0.5 else BLACK_FONT
 
 # ---------------------------------------------------------------------------
 # Legend content
@@ -204,6 +258,31 @@ TIMING_DESCRIPTIONS = [
                "attempt."),
 ]
 
+RERUN_DESCRIPTIONS = [
+    ("How a rerun pair is found", "Every experiments_{country}_{asset}_{scenario}_sobol_n<N>_<timestamp>.tar.gz "
+                                   "archive in results/ is grouped by (country, asset, scenario). A combo with "
+                                   "archives at 2+ distinct N gets compared: smallest N = 'old', largest N = "
+                                   "'new'. Combos only ever run once are not shown - nothing to compare yet. "
+                                   "Always on total_EAD_MEUR, the headline outcome."),
+    ("old_n / new_n", "The Sobol sample size N used for the earlier/later run (actual experiment count is "
+                       "N x (2k+2) for k uncertain factors, per the Saltelli scheme)."),
+    ("old_top_factor / new_top_factor", "(Reruns_Overview) Whichever factor had the single highest ST at "
+                                         "that N. If this differs old-to-new, the extra runs didn't just "
+                                         "tighten confidence, they changed which factor looks most important."),
+    ("old_worst_ratio / new_worst_ratio", "(Reruns_Overview) The worst (largest) ST_conf/ST ratio among "
+                                           "factors with ST > 0.05 at that N - one number summarising 'how "
+                                           "trustworthy is the least-trustworthy relevant factor'."),
+    ("top_factor_changed", "(Reruns_Overview) TRUE if old_top_factor != new_top_factor - the clearest "
+                            "single sign that the original sample size wasn't enough to safely rank the "
+                            "top drivers."),
+    ("old_ratio / new_ratio", "(Reruns_Detail) ST_conf/ST for that specific factor at that N. Blank where "
+                               "ST <= 0.05 (too small to matter, so precision on it isn't tracked). Lower "
+                               "is more precise; both scales use the same fixed colouring so old vs new "
+                               "colour intensity is directly comparable."),
+    ("still_imprecise", "(Reruns_Detail) TRUE if, even at the higher new_n, ST > 0.05 and the ST_conf/ST "
+                         "ratio is still above 0.3 - a candidate for yet another rerun at even higher N."),
+]
+
 OUTCOME_DESCRIPTIONS = [
     ("total_EAD_MEUR", "Total expected annual damage across whichever hazards this scenario "
                         "computes, million EUR/year."),
@@ -243,6 +322,7 @@ def write_legend_sheet(ws: Worksheet) -> None:
     r = _write_kv_table(ws, r, "Asset types", ASSET_DESCRIPTIONS)
     r = _write_kv_table(ws, r, "Factors", FACTOR_DESCRIPTIONS)
     r = _write_kv_table(ws, r, "Outcomes", OUTCOME_DESCRIPTIONS)
+    r = _write_kv_table(ws, r, "Reruns_Overview / Reruns_Detail columns", RERUN_DESCRIPTIONS)
     _write_kv_table(ws, r, "Timing_By_Combo / Timing_Summary / Timing_Raw columns", TIMING_DESCRIPTIONS)
     ws.freeze_panes = "A4"
 
@@ -565,12 +645,192 @@ def build_timing_summary(timing_df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Sobol N-rerun comparison (before/after precision, e.g. N=512 -> N=8192)
+# ---------------------------------------------------------------------------
+
+RERUN_RELEVANCE = 0.05  # ST above this is "big enough to matter" for ranking/flagging
+RERUN_TARGET_RATIO = 0.3  # ST_conf/ST above this still counts as imprecise
+
+ARCHIVE_RE = re.compile(
+    r"^experiments_(?P<country>[A-Z]{3})_(?P<rest>.+)_sobol_n(?P<n>\d+)_\d{8}_\d{6}\.tar\.gz$"
+)
+
+
+def find_sobol_rerun_pairs(results_dir: Path) -> list[dict]:
+    """Group every Sobol experiment archive by (country, asset, scenario).
+
+    For any combination with archives at more than one sample size N, return
+    the smallest-N ("old") and largest-N ("new") archive - the two points a
+    before/after precision comparison is built from. Combinations only ever
+    run once (a single N) are skipped - there is nothing to compare yet.
+    Fully general: picks up whatever reruns exist for any country/asset/
+    scenario, not just the LUX-only batch that motivated this feature.
+    """
+    groups: dict[tuple[str, str, str], dict[int, Path]] = {}
+    for path in results_dir.glob("experiments_*_sobol_n*_*.tar.gz"):
+        m = ARCHIVE_RE.match(path.name)
+        if not m:
+            continue
+        country, rest, n = m.group("country"), m.group("rest"), int(m.group("n"))
+        asset = scenario = None
+        for a in ASSET_CONFIGS:
+            prefix = f"{a}_"
+            if rest.startswith(prefix):
+                asset, scenario = a, rest[len(prefix):]
+                break
+        if asset is None or scenario not in SCENARIOS:
+            continue
+        by_n = groups.setdefault((country, asset, scenario), {})
+        existing = by_n.get(n)
+        if existing is None or path.stat().st_mtime > existing.stat().st_mtime:
+            by_n[n] = path
+
+    pairs = []
+    for (country, asset, scenario), by_n in groups.items():
+        if len(by_n) < 2:
+            continue
+        ns = sorted(by_n)
+        pairs.append(
+            {
+                "country": country, "asset": asset, "scenario": scenario,
+                "old_n": ns[0], "old_path": by_n[ns[0]],
+                "new_n": ns[-1], "new_path": by_n[ns[-1]],
+            }
+        )
+    return pairs
+
+
+def _analyze_archive(path: Path, problem: dict, outcome: str) -> pd.DataFrame | None:
+    """Re-run SALib's Sobol analysis on an archived experiment set.
+
+    Returns None if the outcome has ~zero variance (e.g. an asset/hazard
+    combination with no exposure at all) - Sobol indices are meaningless
+    there, same edge case already handled elsewhere in this module.
+    """
+    from ema_workbench import load_results
+
+    _, outcomes = load_results(str(path))
+    y = np.asarray(outcomes[outcome], dtype=float)
+    if np.var(y) < 1e-30:
+        return None
+    from SALib.analyze import sobol as salib_sobol
+
+    si = salib_sobol.analyze(problem, y, calc_second_order=True, print_to_console=False)
+    return pd.DataFrame(
+        {
+            "factor_code": problem["names"],
+            "S1": np.nan_to_num(si["S1"]),
+            "ST": np.nan_to_num(si["ST"]),
+            "ST_conf": np.nan_to_num(si["ST_conf"]),
+        }
+    )
+
+
+def build_rerun_comparisons(
+    results_dir: Path, outcome: str = "total_EAD_MEUR"
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Before/after Sobol precision comparison for every rerun pair found by
+    find_sobol_rerun_pairs(), on `outcome` only (total_EAD_MEUR - the
+    headline result used throughout the rest of this workbook).
+
+    Returns (overview, detail):
+      overview - one row per rerun combo: old/new sample size, old/new #1
+                  driver and its ST, and the worst ST_conf/ST ratio among
+                  relevant (ST > RERUN_RELEVANCE) factors at each N - the
+                  "did more runs actually change the headline answer" view.
+      detail   - one row per rerun combo x factor (every factor, not just
+                  the top one): old/new S1/ST/ST_conf and the precision
+                  ratio, plus whether it's still imprecise after the rerun.
+    """
+    pairs = find_sobol_rerun_pairs(results_dir)
+    overview_rows, detail_rows = [], []
+
+    for p in pairs:
+        set_country_override(p["country"])
+        set_asset_override(p["asset"])
+        set_scenario_override(p["scenario"])
+        cfg = load_config()
+        model = build_model(cfg)
+        from ema_workbench.em_framework.salib_samplers import get_SALib_problem
+
+        problem = get_SALib_problem(model.uncertainties)
+
+        old_df = _analyze_archive(p["old_path"], problem, outcome)
+        new_df = _analyze_archive(p["new_path"], problem, outcome)
+
+        base = {"country": p["country"], "asset": p["asset"], "scenario": p["scenario"]}
+        if old_df is None or new_df is None:
+            # Zero-variance outcome at this combo (e.g. no exposure at all) -
+            # nothing meaningful to compare, but still record that it was checked.
+            overview_rows.append(
+                {
+                    **base,
+                    "old_n": p["old_n"], "old_top_factor": None, "old_top_ST": 0.0, "old_worst_ratio": 0.0,
+                    "new_n": p["new_n"], "new_top_factor": None, "new_top_ST": 0.0, "new_worst_ratio": 0.0,
+                    "top_factor_changed": False,
+                }
+            )
+            continue
+
+        merged = old_df.merge(new_df, on="factor_code", suffixes=("_old", "_new"))
+        merged["ratio_old"] = merged["ST_conf_old"] / merged["ST_old"].abs()
+        merged["ratio_new"] = merged["ST_conf_new"] / merged["ST_new"].abs()
+        merged["factor"] = [readable_factor(p["asset"], c) for c in merged["factor_code"]]
+
+        for _, row in merged.iterrows():
+            detail_rows.append(
+                {
+                    **base,
+                    "factor_code": row["factor_code"], "factor": row["factor"],
+                    "old_n": p["old_n"], "old_S1": row["S1_old"], "old_ST": row["ST_old"],
+                    "old_ST_conf": row["ST_conf_old"],
+                    "old_ratio": row["ratio_old"] if row["ST_old"] > RERUN_RELEVANCE else np.nan,
+                    "new_n": p["new_n"], "new_S1": row["S1_new"], "new_ST": row["ST_new"],
+                    "new_ST_conf": row["ST_conf_new"],
+                    "new_ratio": row["ratio_new"] if row["ST_new"] > RERUN_RELEVANCE else np.nan,
+                    "still_imprecise": bool(
+                        row["ST_new"] > RERUN_RELEVANCE and row["ratio_new"] > RERUN_TARGET_RATIO
+                    ),
+                }
+            )
+
+        relevant_old = merged[merged["ST_old"] > RERUN_RELEVANCE]
+        relevant_new = merged[merged["ST_new"] > RERUN_RELEVANCE]
+        old_top = merged.loc[merged["ST_old"].idxmax()]
+        new_top = merged.loc[merged["ST_new"].idxmax()]
+        overview_rows.append(
+            {
+                **base,
+                "old_n": p["old_n"], "old_top_factor": old_top["factor"], "old_top_ST": old_top["ST_old"],
+                "old_worst_ratio": float(relevant_old["ratio_old"].max()) if len(relevant_old) else 0.0,
+                "new_n": p["new_n"], "new_top_factor": new_top["factor"], "new_top_ST": new_top["ST_new"],
+                "new_worst_ratio": float(relevant_new["ratio_new"].max()) if len(relevant_new) else 0.0,
+                "top_factor_changed": bool(old_top["factor_code"] != new_top["factor_code"]),
+            }
+        )
+
+    asset_order = {a: i for i, a in enumerate(ASSET_CONFIGS)}
+    scen_order = {s: i for i, s in enumerate(SCENARIOS)}
+    overview = pd.DataFrame(overview_rows)
+    detail = pd.DataFrame(detail_rows)
+    for d, extra_sort in ((overview, []), (detail, ["factor"])):
+        if d.empty:
+            continue
+        d["_a"] = d["asset"].map(asset_order)
+        d["_s"] = d["scenario"].map(scen_order)
+        d.sort_values(["_a", "_s", "country"] + extra_sort, inplace=True)
+        d.drop(columns=["_a", "_s"], inplace=True)
+        d.reset_index(drop=True, inplace=True)
+    return overview, detail
+
+
+# ---------------------------------------------------------------------------
 # Excel writing
 # ---------------------------------------------------------------------------
 
 
 def _apply_fraction_formatting(ws: Worksheet, rng: str) -> None:
-    """Fixed 0/0.5/1 colour scale + white text above WHITE_TEXT_THRESHOLD.
+    """Fixed 0/0.5/1 colour scale + white text on cells dark enough to need it.
 
     Reads the font decision straight back from each cell's own persisted
     value (rather than a separately-passed parallel array) so it can never
@@ -582,8 +842,29 @@ def _apply_fraction_formatting(ws: Worksheet, rng: str) -> None:
             val = cell.value
             if val is None or val == "":
                 continue
-            cell.font = WHITE_FONT if float(val) > WHITE_TEXT_THRESHOLD else BLACK_FONT
+            cell.font = _font_for_value(float(val), 0.0, 0.5, 1.0)
     ws.conditional_formatting.add(rng, FRACTION_COLOR_SCALE)
+
+
+def _apply_relative_formatting(ws: Worksheet, rng: str, values) -> None:
+    """Percentile-based colour scale (min/median/max of the column's own
+    values, matching RELATIVE_COLOR_SCALE) + white text on cells dark
+    enough to need it, using the same luminance rule as the fixed scale.
+
+    `values` must be in the same row order the cells in `rng` were written
+    in (i.e. the DataFrame column that produced them).
+    """
+    finite = pd.to_numeric(pd.Series(values), errors="coerce").dropna()
+    vmin = float(finite.min()) if len(finite) else 0.0
+    vmax = float(finite.max()) if len(finite) else 1.0
+    vmid = float(finite.median()) if len(finite) else 0.5
+    cells = [c for row in ws[rng] for c in row]
+    for cell, val in zip(cells, values):
+        cell.number_format = "0.000"
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            continue
+        cell.font = _font_for_value(float(val), vmin, vmid, vmax)
+    ws.conditional_formatting.add(rng, RELATIVE_COLOR_SCALE)
 
 
 def _style_data_sheet(
@@ -615,10 +896,7 @@ def _style_data_sheet(
         col_idx = list(df.columns).index(col) + 1
         letter = get_column_letter(col_idx)
         rng = f"{letter}2:{letter}{len(df) + 1}"
-        for row in ws[rng]:
-            for c in row:
-                c.number_format = "0.000"
-        ws.conditional_formatting.add(rng, RELATIVE_COLOR_SCALE)
+        _apply_relative_formatting(ws, rng, df[col].tolist())
 
 
 def _write_heatmap_sheet(writer: pd.ExcelWriter, sheet_name: str, piv: pd.DataFrame, scenario: str) -> None:
@@ -714,6 +992,28 @@ def main() -> None:
                 writer.sheets["All_Feature_Scores"], fscore_df, fraction_cols=["importance"]
             )
 
+        print("  checking for Sobol reruns at different sample sizes...")
+        rerun_overview, rerun_detail = build_rerun_comparisons(results_dir)
+        rerun_sheets = []
+        if not rerun_overview.empty:
+            print(f"  {len(rerun_overview)} rerun combo(s) found, {len(rerun_detail)} factor rows")
+            rerun_overview.round(4).to_excel(writer, sheet_name="Reruns_Overview", index=False)
+            _style_data_sheet(
+                writer.sheets["Reruns_Overview"], rerun_overview,
+                fraction_cols=["old_top_ST", "old_worst_ratio", "new_top_ST", "new_worst_ratio"],
+            )
+            rerun_sheets.append("Reruns_Overview")
+
+            rerun_detail.round(4).to_excel(writer, sheet_name="Reruns_Detail", index=False)
+            _style_data_sheet(
+                writer.sheets["Reruns_Detail"], rerun_detail,
+                fraction_cols=["old_S1", "old_ST", "old_ratio", "new_S1", "new_ST", "new_ratio"],
+                relative_cols=["old_ST_conf", "new_ST_conf"],
+            )
+            rerun_sheets.append("Reruns_Detail")
+        else:
+            print("  no combination has more than one Sobol N yet - skipping Reruns_* sheets")
+
         timing_df = load_timing_log(results_dir)
         print(f"  {len(timing_df)} timing log rows")
         timing_sheets = []
@@ -742,6 +1042,7 @@ def main() -> None:
             ["Legend", "Curve_Groups", "Top_Drivers"]
             + [f"ST_{s}"[:31] for s in SCENARIOS]
             + ["All_Sobol_Indices", "All_Feature_Scores"]
+            + rerun_sheets
             + timing_sheets
         )
         writer.book._sheets = [writer.book[name] for name in order if name in writer.book.sheetnames]
