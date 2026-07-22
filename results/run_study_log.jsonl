@@ -242,3 +242,93 @@
 {"combo": "LUX/power", "step": "analyze_lhs", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
 {"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
 {"combo": "LUX/power", "step": "analyze_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:19:14.265319+00:00"}
+{"combo": "LUX/power", "step": "preprocess", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.296732+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_baseline", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.303884+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.304389+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.305046+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.305046+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_baseline_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.310232+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.310573+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.311685+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.311685+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_absprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.316390+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.316390+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.316390+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.316390+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_absprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.320410+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.320410+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.323347+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.323852+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_noprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.328167+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.328937+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.329697+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.329697+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "flood_noprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.334527+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.334527+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.334527+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.334527+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "earthquake", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.338981+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.338981+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.338981+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.338981+00:00"}
+{"combo": "LUX/power", "step": "run_experiments_lhs", "scenario": "windstorm", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.345194+00:00"}
+{"combo": "LUX/power", "step": "analyze_lhs", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.345194+00:00"}
+{"combo": "LUX/power", "step": "adaptive_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.345194+00:00"}
+{"combo": "LUX/power", "step": "analyze_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.347255+00:00"}
+{"combo": "DNK/power", "step": "preprocess", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.347762+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_baseline", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.353760+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.353760+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.353760+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.353760+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_baseline_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.357706+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.359715+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.360220+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.360941+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_absprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.363836+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.363836+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.366122+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.366122+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_absprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.367153+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.367153+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.367153+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.371496+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_noprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.373089+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.373089+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.373089+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.373089+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "flood_noprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.381354+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.381727+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.382231+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "flood_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.382742+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_baseline", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.386846+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.387365+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.388107+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_baseline", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.388107+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_baseline_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.388107+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.388107+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.388107+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_baseline_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.393571+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_absprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.397974+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.398682+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.398682+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_absprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.398682+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_absprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.402976+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.402976+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.402976+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_absprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.402976+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_noprot", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.407730+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.409468+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.409468+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_noprot", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.410347+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "coastal_noprot_ds", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.415132+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "coastal_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.415132+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "coastal_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.416140+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "coastal_noprot_ds", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.416652+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "earthquake", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.420442+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.420442+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.420442+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "earthquake", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.420442+00:00"}
+{"combo": "DNK/power", "step": "run_experiments_lhs", "scenario": "windstorm", "n": 3000, "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.425110+00:00"}
+{"combo": "DNK/power", "step": "analyze_lhs", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.425110+00:00"}
+{"combo": "DNK/power", "step": "adaptive_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.425110+00:00"}
+{"combo": "DNK/power", "step": "analyze_sobol", "scenario": "windstorm", "ok": true, "elapsed_s": 0.0, "ts": "2026-07-22T17:38:53.427118+00:00"}

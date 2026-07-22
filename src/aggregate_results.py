@@ -189,8 +189,8 @@ COLUMN_DESCRIPTIONS = [
 
 SCENARIO_DESCRIPTIONS = [
     ("(each scenario = ONE hazard)", "Hazards are never combined - every scenario computes exactly "
-                                      "one of river flood / earthquake / windstorm, so their "
-                                      "uncertainty structures are studied independently. The '_ds' "
+                                      "one of river flood / coastal flood / earthquake / windstorm, "
+                                      "so their uncertainty structures are studied independently. The '_ds' "
                                       "suffix means depth error is MULTIPLICATIVE (depth_scale, "
                                       "x0.9-1.1) instead of the additive +/-0.5 m depth_offset - "
                                       "the two are otherwise identical, so a scenario and its _ds "
@@ -207,6 +207,14 @@ SCENARIO_DESCRIPTIONS = [
                       "standards), not sampled - isolates how much the other flood factors matter "
                       "once protection uncertainty is set aside. Additive depth."),
     ("flood_noprot_ds", "As flood_noprot but depth error is multiplicative (depth_scale, x0.9-1.1)."),
+    ("coastal_baseline / _absprot / _noprot (+ _ds twins)", "The six river-flood scenarios above, "
+                     "mirrored for COASTAL flood: same three protection treatments x additive/"
+                     "multiplicative depth, reusing the IDENTICAL flood depth-damage curves (so a "
+                     "coastal scenario's curve factors still read 'Flood: ...'). Differences: the "
+                     "coastal hazard maps (streamed from the CoCLiCo STAC catalogue), the COASTPROS "
+                     "coastal protection standard instead of FLOPROS, and NO warming factor "
+                     "(coastal sea-level rise is not modelled here). Coastal (non-landlocked) "
+                     "countries only - absent for e.g. LUX."),
     ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
                     "curve choice(s), cost_level, pga_scale, aggregation."),
     ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826). Factors: "
@@ -334,13 +342,16 @@ OUTCOME_DESCRIPTIONS = [
                         "EUR/year. (Scenarios are single-hazard, so this equals the one EAD_*_MEUR "
                         "hazard column below that the scenario computes.)"),
     ("EAD_river_MEUR", "Expected annual damage from river flooding (flood_* scenarios)."),
+    ("EAD_coastal_MEUR", "Expected annual damage from coastal flooding (coastal_* scenarios)."),
     ("EAD_earthquake_MEUR", "Expected annual damage from earthquake (earthquake scenario)."),
     ("EAD_windstorm_MEUR", "Expected annual damage from windstorm (windstorm scenario)."),
     ("damage_RP100_river_MEUR", "Total damage from a single simulated 1-in-100-year flood event "
                                  "(not annualised - a snapshot, not an expectation)."),
+    ("damage_RP100_coastal_MEUR", "As above for a 1-in-100-year coastal flood event."),
     ("damage_RP100_windstorm_MEUR", "As above for a 1-in-100-year windstorm event."),
     ("exposed_qty_RP100_river", "Total exposed quantity at the RP100 flood extent, in the "
                                  "asset's native units (metres/m^2/count depending on geometry mix)."),
+    ("exposed_qty_RP100_coastal", "As above for the RP100 coastal flood extent."),
     ("exposed_qty_RP100_windstorm", "As above for the RP100 windstorm extent."),
     ("EAD_<class>_MEUR", "Expected annual damage broken down by report class: for roads, a "
                           "5-class road hierarchy (motorway_trunk/primary/secondary/tertiary/other); "

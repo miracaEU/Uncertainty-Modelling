@@ -23,6 +23,17 @@ The eight scenarios:
                           Additive depth error.
     flood_noprot_ds       Same fixed protection, multiplicative depth error.
 
+  Coastal flood (six - the river-flood set mirrored for the coastal hazard):
+    coastal_baseline / _ds, coastal_absprot / _ds, coastal_noprot / _ds
+                          Same three protection treatments x two depth
+                          treatments as the river flood scenarios, reusing the
+                          identical flood depth-damage curves, but for the
+                          coastal hazard and against the COASTPROS coastal
+                          protection standard. No 'warming' factor (coastal
+                          sea-level rise is a separate mechanism, not modelled
+                          here). Only defined for coastal (non-landlocked)
+                          countries - skipped for e.g. LUX.
+
   Earthquake (one):
     earthquake            Earthquake only (eq curve group(s), cost_level,
                           pga_scale, aggregation). No protection standard.
@@ -55,29 +66,37 @@ from .curves import AssetConfig, applicable_hazards, get_asset_config
 from .risk_model import WARMING_LEVELS, ModelData, compute_risk, load_model_data
 from .paths import load_config
 
-# Ordered so the flood-protection treatments and their depth-scale twins sit
-# next to each other, then the two single-hazard scenarios.
+# Ordered so each hazard's protection treatments and their depth-scale twins
+# sit together. Coastal mirrors the river flood scenarios (same treatments,
+# same curves) but for the coastal hazard.
 SCENARIOS = [
     "flood_baseline", "flood_baseline_ds",
     "flood_absprot", "flood_absprot_ds",
     "flood_noprot", "flood_noprot_ds",
+    "coastal_baseline", "coastal_baseline_ds",
+    "coastal_absprot", "coastal_absprot_ds",
+    "coastal_noprot", "coastal_noprot_ds",
     "earthquake",
     "windstorm",
 ]
 
 # Which single hazard each scenario computes. Used to decide applicability
-# (a scenario applies to an asset iff its hazard does) and to pick the
+# (a scenario applies to an asset/country iff its hazard does) and to pick the
 # include_* flag in build_model.
 SCENARIO_HAZARD = {
     "flood_baseline": "river", "flood_baseline_ds": "river",
     "flood_absprot": "river", "flood_absprot_ds": "river",
     "flood_noprot": "river", "flood_noprot_ds": "river",
+    "coastal_baseline": "coastal", "coastal_baseline_ds": "coastal",
+    "coastal_absprot": "coastal", "coastal_absprot_ds": "coastal",
+    "coastal_noprot": "coastal", "coastal_noprot_ds": "coastal",
     "earthquake": "earthquake",
     "windstorm": "windstorm",
 }
 
-# The three flood-protection treatments and whether depth error is additive
-# (depth_offset) or multiplicative (depth_scale, the "_ds" twins).
+# The protection treatment (scale/abs/fixed) and depth-error treatment
+# (offset = additive, scale = multiplicative "_ds" twin) for each flood-type
+# scenario. Coastal entries carry no 'warming' factor (see _build_flood_model).
 _FLOOD_SCENARIOS = {
     "flood_baseline": ("scale", "offset"),
     "flood_baseline_ds": ("scale", "scale"),
@@ -86,19 +105,31 @@ _FLOOD_SCENARIOS = {
     "flood_noprot": ("fixed", "offset"),
     "flood_noprot_ds": ("fixed", "scale"),
 }
+_COASTAL_SCENARIOS = {
+    "coastal_baseline": ("scale", "offset"),
+    "coastal_baseline_ds": ("scale", "scale"),
+    "coastal_absprot": ("abs", "offset"),
+    "coastal_absprot_ds": ("abs", "scale"),
+    "coastal_noprot": ("fixed", "offset"),
+    "coastal_noprot_ds": ("fixed", "scale"),
+}
 
 CURVE_PREFIX = "curve_"
 
 _DATA_CACHE: dict[tuple[str, str], ModelData] = {}
 
 
-def scenario_applies(scenario: str, asset: str) -> bool:
-    """True iff `scenario`'s hazard applies to `asset` (see applicable_hazards)."""
-    return SCENARIO_HAZARD[scenario] in applicable_hazards(asset)
+def scenario_applies(scenario: str, asset: str, country: str | None = None) -> bool:
+    """True iff `scenario`'s hazard applies to this asset (and country).
+
+    country matters only for coastal scenarios (skipped for landlocked
+    countries); pass it so those are filtered correctly.
+    """
+    return SCENARIO_HAZARD[scenario] in applicable_hazards(asset, country)
 
 
-def applicable_scenarios(asset: str) -> list[str]:
-    return [s for s in SCENARIOS if scenario_applies(s, asset)]
+def applicable_scenarios(asset: str, country: str | None = None) -> list[str]:
+    return [s for s in SCENARIOS if scenario_applies(s, asset, country)]
 
 
 def _get_data() -> ModelData:
@@ -151,19 +182,27 @@ def _class_outcomes(asset_cfg: AssetConfig) -> list[str]:
     return [f"EAD_{c}_MEUR" for c in asset_cfg.report_classes]
 
 
-def _build_flood_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> Model:
-    prot_kind, depth_kind = _FLOOD_SCENARIOS[scenario]
+def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard: str) -> Model:
+    """Build a river- or coastal-flood scenario model (they share everything
+    but the hazard flag, the outcome names, and - for coastal - dropping the
+    river-only 'warming' climate factor)."""
+    treatments = _FLOOD_SCENARIOS if hazard == "river" else _COASTAL_SCENARIOS
+    prot_kind, depth_kind = treatments[scenario]
     uncertainties: list = []
     constants: list = []
 
     _add_curve_params(uncertainties, constants, asset_cfg.flood_groups)
     uncertainties += [
-        CategoricalParameter("warming", list(WARMING_LEVELS.keys())),
         RealParameter("cost_level", -1.0, 1.0),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]
+    if hazard == "river":
+        # Climate-driven RP shift is river-basin-anchor based; coastal
+        # sea-level rise is a separate (SSP-horizon) mechanism not modelled here.
+        uncertainties.append(CategoricalParameter("warming", list(WARMING_LEVELS.keys())))
 
-    # protection treatment
+    # protection treatment (against FLOPROS for river, COASTPROS for coastal -
+    # same parameter names, the baseline differs inside compute_risk)
     if prot_kind == "scale":
         uncertainties.append(RealParameter("protection_scale", 0.0, 2.0))
     elif prot_kind == "abs":
@@ -178,12 +217,14 @@ def _build_flood_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> Mode
         uncertainties.append(RealParameter("depth_scale", 0.9, 1.1))
 
     constants += [
-        Constant("include_river", True),
+        Constant("include_river", hazard == "river"),
         Constant("include_earthquake", False),
         Constant("include_windstorm", False),
+        Constant("include_coastal", hazard == "coastal"),
     ]
+    hz = "river" if hazard == "river" else "coastal"
     outcomes = (
-        ["total_EAD_MEUR", "EAD_river_MEUR", "damage_RP100_river_MEUR", "exposed_qty_RP100_river"]
+        ["total_EAD_MEUR", f"EAD_{hz}_MEUR", f"damage_RP100_{hz}_MEUR", f"exposed_qty_RP100_{hz}"]
         + _class_outcomes(asset_cfg)
     )
     model = Model(f"{cfg['country']}_{cfg['asset_type']}_{scenario}", function=flood_risk_model)
@@ -206,6 +247,7 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
         Constant("include_river", False),
         Constant("include_earthquake", True),
         Constant("include_windstorm", False),
+        Constant("include_coastal", False),
     ]
     outcomes = ["total_EAD_MEUR", "EAD_earthquake_MEUR"] + _class_outcomes(asset_cfg)
     model = Model(f"{cfg['country']}_{cfg['asset_type']}_earthquake", function=flood_risk_model)
@@ -233,6 +275,7 @@ def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
         Constant("include_river", False),
         Constant("include_earthquake", False),
         Constant("include_windstorm", True),
+        Constant("include_coastal", False),
     ]
     outcomes = (
         ["total_EAD_MEUR", "EAD_windstorm_MEUR", "damage_RP100_windstorm_MEUR",
@@ -253,7 +296,9 @@ def build_model(cfg: dict | None = None) -> Model:
     asset_cfg = get_asset_config(cfg["asset_type"])
 
     if scenario in _FLOOD_SCENARIOS:
-        return _build_flood_model(cfg, asset_cfg, scenario)
+        return _build_water_model(cfg, asset_cfg, scenario, hazard="river")
+    if scenario in _COASTAL_SCENARIOS:
+        return _build_water_model(cfg, asset_cfg, scenario, hazard="coastal")
     if scenario == "earthquake":
         return _build_earthquake_model(cfg, asset_cfg)
     if scenario == "windstorm":

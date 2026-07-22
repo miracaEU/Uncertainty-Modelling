@@ -358,19 +358,40 @@ ASSET_CONFIGS: dict[str, AssetConfig] = {
     asset: _build_asset_config(asset) for asset in FLOOD_CURVES_RAW
 }
 
-# Hazards available in this pipeline, and which apply to which asset. River
-# flood and earthquake apply to every asset; windstorm only to assets with a
-# non-degenerate wind curve set (airports/education/power - not roads). This
+# Hazards available in this pipeline, and which apply to which asset/country.
+# River flood and earthquake apply to every asset; windstorm only to assets
+# with a non-degenerate wind curve set (airports/education/power - not roads);
+# coastal flood only to coastal (non-landlocked) countries, for any asset. This
 # is the single source of truth the preprocessing, the scenario applicability
 # in ema_model.py, and the study orchestrator all consult.
-ALL_HAZARDS = ("river", "earthquake", "windstorm")
+ALL_HAZARDS = ("river", "earthquake", "windstorm", "coastal")
+
+# European ISO3 countries with no coastline - coastal flood is skipped for
+# them. (Only LUX is in the current study set; the rest are listed so the
+# check is correct if more countries are added later.)
+LANDLOCKED = frozenset({
+    "LUX", "AUT", "CHE", "CZE", "HUN", "SVK", "LIE", "AND", "SMR",
+    "MKD", "SRB", "BLR", "MDA", "VAT", "XKX", "RKS",
+})
 
 
-def applicable_hazards(asset: str) -> list[str]:
+def country_has_coast(country: str | None) -> bool:
+    return bool(country) and country.upper() not in LANDLOCKED
+
+
+def applicable_hazards(asset: str, country: str | None = None) -> list[str]:
+    """Hazards that apply to this asset (and country, for coastal).
+
+    country is optional: when omitted, coastal is left out (it is the only
+    country-dependent hazard, so callers that know the country - preprocess,
+    the orchestrator - pass it to include coastal for coastal countries).
+    """
     cfg = get_asset_config(asset)
     hazards = ["river", "earthquake"]
     if cfg.supports_windstorm:
         hazards.append("windstorm")
+    if country_has_coast(country):
+        hazards.append("coastal")
     return hazards
 
 

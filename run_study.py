@@ -60,10 +60,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from src.curves import ASSET_CONFIGS, applicable_hazards  # noqa: E402
 from src.ema_model import SCENARIOS, scenario_applies  # noqa: E402
 from src.paths import base_stem, load_config, set_asset_override, set_country_override, set_scenario_override  # noqa: E402
 
-DEFAULT_ASSETS = ["roads", "airports", "education", "power"]
+# All registered asset classes, so a no-argument run covers every asset the
+# pipeline supports (src/curves.py::ASSET_CONFIGS) - stays complete if more
+# are added later.
+DEFAULT_ASSETS = list(ASSET_CONFIGS)
 DEFAULT_COUNTRIES = ["LUX", "DNK", "GRC", "PRT"]
 
 
@@ -99,7 +103,11 @@ def stage1_done(cfg: dict) -> bool:
     seg_path = cfg["intermediate_dir"] / f"{stem}_segments.parquet"
     if not seg_path.exists():
         return False
-    for hazard in cfg["hazards"]:
+    # Only the hazards that actually apply to this asset/country are extracted
+    # (windstorm skipped for roads, coastal for landlocked countries), so only
+    # those profiles are required for Stage 1 to count as done.
+    applicable = [h for h in applicable_hazards(cfg["asset_type"], cfg["country"]) if h in cfg["hazards"]]
+    for hazard in applicable:
         prof_path = cfg["intermediate_dir"] / f"{stem}_{hazard}_profiles.parquet"
         if not prof_path.exists():
             return False
@@ -230,10 +238,10 @@ def main() -> None:
                     marker.parent.mkdir(parents=True, exist_ok=True)
                     marker.write_text(datetime.now(timezone.utc).isoformat())
 
-        scenarios_here = [s for s in args.scenarios if scenario_applies(s, asset)]
+        scenarios_here = [s for s in args.scenarios if scenario_applies(s, asset, country)]
         skipped_scen = [s for s in args.scenarios if s not in scenarios_here]
         if skipped_scen:
-            log(f"  (scenarios not applicable to {asset}: {skipped_scen})")
+            log(f"  (scenarios not applicable to {country}/{asset}: {skipped_scen})")
 
         for scenario in scenarios_here:
             log("-" * 70)

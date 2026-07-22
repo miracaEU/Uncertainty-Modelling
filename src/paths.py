@@ -61,7 +61,13 @@ def load_config(config_path: Path = CONFIG_PATH) -> dict:
         cfg[key] = Path(cfg[key])
 
     for hazard_cfg in cfg["hazards"].values():
-        hazard_cfg["dir"] = Path(hazard_cfg["dir"])
+        # Local-raster hazards have a dir; streamed ones (kind: stac, e.g.
+        # coastal) don't - resolve whatever local paths each one declares.
+        if "dir" in hazard_cfg:
+            hazard_cfg["dir"] = Path(hazard_cfg["dir"])
+        for path_key in ("coastpros_path", "nuts2_path"):
+            if path_key in hazard_cfg:
+                hazard_cfg[path_key] = Path(hazard_cfg[path_key])
 
     return cfg
 

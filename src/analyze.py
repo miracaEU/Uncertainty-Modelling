@@ -219,7 +219,7 @@ def print_summary(experiments, outcomes, factors, scores: pd.DataFrame) -> None:
         f"  p5 {q[0]:8.3f} | p25 {q[1]:8.3f} | median {q[2]:8.3f} "
         f"| p75 {q[3]:8.3f} | p95 {q[4]:8.3f}"
     )
-    for hz_outcome in ("EAD_river_MEUR", "EAD_earthquake_MEUR", "EAD_windstorm_MEUR"):
+    for hz_outcome in ("EAD_river_MEUR", "EAD_coastal_MEUR", "EAD_earthquake_MEUR", "EAD_windstorm_MEUR"):
         if hz_outcome in outcomes:
             v = np.asarray(outcomes[hz_outcome])
             print(

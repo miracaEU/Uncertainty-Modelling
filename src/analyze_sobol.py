@@ -45,9 +45,11 @@ GREEN = "#008300"   # S1 (first order)
 PREFERRED_OUTCOMES = [
     "total_EAD_MEUR",
     "EAD_river_MEUR",
+    "EAD_coastal_MEUR",
     "EAD_earthquake_MEUR",
     "EAD_windstorm_MEUR",
     "damage_RP100_river_MEUR",
+    "damage_RP100_coastal_MEUR",
     "damage_RP100_windstorm_MEUR",
 ]
 

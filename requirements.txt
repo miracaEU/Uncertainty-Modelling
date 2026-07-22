@@ -18,3 +18,7 @@ openpyxl
 pyyaml
 tqdm
 ipykernel
+# Coastal flood only: streams hazard tiles from the remote CoCLiCo STAC
+# catalogue. Not needed for river/earthquake/windstorm.
+pystac-client
+pystac

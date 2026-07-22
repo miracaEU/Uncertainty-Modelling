@@ -40,6 +40,25 @@ hazards:
     dir: "S:/eks510/Hazard_data/Windstorms"
     filename_template: "{rp}yr_wisc_nao_0.59.tif"
     return_periods: [5, 10, 25, 50, 100, 250, 500]
+  # Coastal flood is NOT local rasters: its maps are streamed from the remote
+  # CoCLiCo STAC catalogue (kind: stac), so it has no dir/filename_template.
+  # It reuses the river flood depth-damage curves and applies to coastal
+  # countries only (landlocked countries are skipped - see curves.py). Needs
+  # pystac-client/pystac installed and network access at preprocessing time.
+  # Baseline present-day (2010) LOW_DEFENDED scenario; protection from the
+  # local COASTPROS-EU table joined to NUTS2 regions.
+  coastal:
+    kind: stac
+    stac_url: "https://storage.googleapis.com/coclico-data-public/coclico/coclico-stac/catalog.json"
+    collection: "cfhp_all"
+    time_horizon: "2010"
+    climate_scenario: "None"
+    defence: "LOW_DEFENDED"
+    return_periods: [10, 25, 50, 100, 250, 500, 1000]
+    coastpros_path: "S:/eks510/projects/AssetRisk_PanEU/data/COASTPROS-EU.xlsx"
+    nuts2_path: "S:/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2024_3035.parquet"
+    protection_sheet: "COASTPROS-EU"
+    protection_rp_col: "MODELLED RETURN PERIOD"
 
 # --- outputs (relative to this project folder) -------------------------------
 intermediate_dir: "data/intermediate"

@@ -2,10 +2,13 @@
 
 Consumes the intermediate files written by src.preprocess and evaluates one
 parameterization (one EMA Workbench experiment) in well under a second,
-without touching any raster or geometry. Hazards: river flood, earthquake and
-windstorm - each computed independently (the study runs one hazard at a time;
-see src/ema_model.py). Windstorm applies to airports/education/power only
-(the roads wind curve is identically zero - see src/curves.py).
+without touching any raster or geometry. Hazards: river flood, earthquake,
+windstorm and coastal flood - each computed independently (the study runs one
+hazard at a time; see src/ema_model.py). Windstorm applies to
+airports/education/power only (the roads wind curve is identically zero);
+coastal flood applies to coastal countries only, reusing the river flood
+curves with its own COASTPROS protection standard (see src/curves.py,
+src/coastal.py).
 
 Damage formula (identical to damagescanner.vector._get_damage_per_object):
 
@@ -54,11 +57,15 @@ Uncertainty factors (declared per-scenario in src/ema_model.py):
     aggregation       'per_cell'  = curve per raster cell, then sum (reference)
                       'mean_depth' = length-weighted mean intensity per feature
                                      first, then curve applied once (all hazards)
-    include_river / include_earthquake / include_windstorm  bool - which
-                      hazard to compute at all (each scenario computes exactly
-                      one, skipping the others' numpy work entirely). Windstorm
-                      uses a fixed RP50 design-standard protection cutoff
-                      (WIND_DESIGN_RP) and no climate shift.
+    include_river / include_earthquake / include_windstorm / include_coastal
+                      bool - which hazard to compute at all (each scenario
+                      computes exactly one, skipping the others' numpy work
+                      entirely). Windstorm uses a fixed RP50 design-standard
+                      protection cutoff (WIND_DESIGN_RP) and no climate shift.
+                      Coastal reuses the river flood curves and the
+                      depth_offset/depth_scale + protection_scale/
+                      protection_abs_rp factors, but against its own coastal
+                      protection standard (coast_prot_rp) and with no warming.
 """
 
 from dataclasses import dataclass, field
@@ -106,7 +113,8 @@ class ModelData:
 
     n_seg: int
     maxdam3: np.ndarray             # (n_seg, 3) min/mean/max EUR per unit
-    prot_rp: np.ndarray             # (n_seg,) FLOPROS design RP (0 = unprotected)
+    prot_rp: np.ndarray             # (n_seg,) FLOPROS river design RP (0 = unprotected)
+    coast_prot_rp: np.ndarray       # (n_seg,) COASTPROS coastal design RP (0 = unprotected)
     class_idx: np.ndarray           # (n_seg,) index into report_classes
     report_classes: list[str]
     hazards: dict[str, HazardProfiles] = field(default_factory=dict)
@@ -196,10 +204,14 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
             for cid in wind_curve_ids
         }
 
+    # Coastal flood reuses the river flood curve groups (same F-curves), so it
+    # shares the flood group order/index and curve tables - only its hazard
+    # profiles and its protection standard differ.
     group_idx_by_hazard = {
         "river": seg_flood_group_idx,
         "earthquake": seg_eq_group_idx,
         "windstorm": seg_wind_group_idx,
+        "coastal": seg_flood_group_idx,
     }
     hazards = {}
     for hazard, hcfg in cfg["hazards"].items():
@@ -213,10 +225,18 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
     class_to_idx = {c: i for i, c in enumerate(asset_cfg.report_classes)}
     class_idx = seg["report_class"].map(class_to_idx).to_numpy(np.int64)
 
+    # coast_prot_rp only written by Stage 1 for coastal countries (absent for
+    # landlocked ones and pre-coastal intermediate files).
+    if "coast_prot_rp" in seg.columns:
+        coast_prot_rp = seg["coast_prot_rp"].to_numpy(np.float64)
+    else:
+        coast_prot_rp = np.zeros(n_seg, dtype=np.float64)
+
     return ModelData(
         n_seg=n_seg,
         maxdam3=seg[["maxdam_min", "maxdam_mean", "maxdam_max"]].to_numpy(np.float64),
         prot_rp=seg["prot_rp"].to_numpy(np.float64),
+        coast_prot_rp=coast_prot_rp,
         class_idx=class_idx,
         report_classes=asset_cfg.report_classes,
         hazards=hazards,
@@ -366,6 +386,7 @@ def compute_risk(
     include_river: bool = True,
     include_earthquake: bool = True,
     include_windstorm: bool = False,
+    include_coastal: bool = False,
 ) -> dict:
     """Evaluate one parameterization; returns scalar outcomes in a dict.
 
@@ -385,6 +406,7 @@ def compute_risk(
     ead_river = np.zeros(data.n_seg)
     ead_eq = np.zeros(data.n_seg)
     ead_wind = np.zeros(data.n_seg)
+    ead_coast = np.zeros(data.n_seg)
     out: dict[str, float] = {}
 
     if include_river:
@@ -465,7 +487,36 @@ def compute_risk(
         out["damage_RP100_windstorm_MEUR"] = float(damage_wind[:, idx100_w].sum() / 1e6)
         out["exposed_qty_RP100_windstorm"] = float(exposed_qty_w[:, idx100_w].sum())
 
-    ead_total = ead_river + ead_eq + ead_wind
+    if include_coastal:
+        if "coastal" not in data.hazards:
+            raise ValueError("include_coastal=True but no coastal profiles were loaded")
+        # Coastal reuses the river flood depth-damage curves and groups; the
+        # depth transform (depth_scale/depth_offset) is identical. It differs
+        # from river only in its own protection standard (coast_prot_rp, from
+        # COASTPROS) and in having no climate-warming RP shift.
+        hz_c = data.hazards["coastal"]
+        curves_by_group_c = {
+            i: data.flood_curve_tables[curve_choices[name]]
+            for i, name in enumerate(data.flood_group_order)
+        }
+        depth_c = np.maximum(hz_c.p_intensity * depth_scale + depth_offset, 0.0)
+        dmg_qty_c, exposed_qty_c = _damage_matrix(
+            hz_c, depth_c, curves_by_group_c, aggregation, data.n_seg
+        )
+        damage_coast = dmg_qty_c * cost[:, None]
+        idx100_c = int(np.argmin(np.abs(hz_c.rps - 100)))
+        if protection_abs_rp is not None:
+            prot_coast = np.full(data.n_seg, float(protection_abs_rp), dtype=np.float64)
+        else:
+            prot_coast = data.coast_prot_rp * protection_scale
+        ead_coast = _integrate_ead(
+            damage_coast, np.broadcast_to(hz_c.rps, damage_coast.shape), prot_coast
+        )
+        out["EAD_coastal_MEUR"] = float(ead_coast.sum() / 1e6)
+        out["damage_RP100_coastal_MEUR"] = float(damage_coast[:, idx100_c].sum() / 1e6)
+        out["exposed_qty_RP100_coastal"] = float(exposed_qty_c[:, idx100_c].sum())
+
+    ead_total = ead_river + ead_eq + ead_wind + ead_coast
     out["total_EAD_MEUR"] = float(ead_total.sum() / 1e6)
 
     class_ead = np.bincount(data.class_idx, weights=ead_total, minlength=len(data.report_classes))

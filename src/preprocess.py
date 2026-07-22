@@ -44,7 +44,8 @@ import xarray as xr
 
 from damagescanner.core import VectorExposure
 
-from .curves import applicable_hazards, get_asset_config, maxdam_arrays, report_class_for
+from .coastal import extract_coastal_profiles, sample_coastal_protection
+from .curves import applicable_hazards, country_has_coast, get_asset_config, maxdam_arrays, report_class_for
 from .paths import base_stem, hazard_stem, load_config, set_asset_override, set_country_override
 
 WARMING_CODES = ("15", "20", "30", "40")
@@ -280,6 +281,11 @@ def build_segments(features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict)
 
     segments["prot_rp"] = sample_protection_standards(features, cfg)
 
+    # Coastal design standard (COASTPROS x NUTS2) - only for coastal countries
+    # with the coastal hazard configured. No network needed for this part.
+    if country_has_coast(cfg["country"]) and "coastal" in cfg["hazards"]:
+        segments["coast_prot_rp"] = sample_coastal_protection(features, cfg["hazards"]["coastal"])
+
     basin_df = join_basin_anchors(features, cfg)
     return pd.concat([segments, basin_df.reset_index(drop=True)], axis=1)
 
@@ -299,9 +305,10 @@ def main() -> None:
     cfg = load_config()
 
     # Only extract hazards that are both configured (have data paths) AND
-    # apply to this asset (e.g. windstorm is skipped for roads). An explicit
-    # --hazards subset is still intersected with applicability.
-    applicable = applicable_hazards(cfg["asset_type"])
+    # apply to this asset/country (windstorm is skipped for roads, coastal for
+    # landlocked countries). An explicit --hazards subset is still intersected
+    # with applicability.
+    applicable = applicable_hazards(cfg["asset_type"], cfg["country"])
     default_hazards = [h for h in cfg["hazards"] if h in applicable]
     hazards = args.hazards or default_hazards
     unknown = set(hazards) - set(cfg["hazards"])
@@ -342,9 +349,16 @@ def main() -> None:
 
     for hazard in hazards:
         print(f"\nExtracting {hazard} profiles (the expensive step)...")
-        profiles, exposed_per_rp, cell_area_m2 = extract_hazard_profiles(
-            features, geom_kind, cfg["hazards"][hazard]
-        )
+        if hazard == "coastal":
+            # Coastal maps are streamed from the remote CoCLiCo STAC catalogue
+            # rather than read from local rasters (needs pystac-client + network).
+            profiles, exposed_per_rp, cell_area_m2 = extract_coastal_profiles(
+                features, geom_kind, cfg["hazards"]["coastal"]
+            )
+        else:
+            profiles, exposed_per_rp, cell_area_m2 = extract_hazard_profiles(
+                features, geom_kind, cfg["hazards"][hazard]
+            )
         prof_path = cfg["intermediate_dir"] / f"{hazard_stem(cfg, hazard)}_profiles.parquet"
         profiles.to_parquet(prof_path, index=False)
         print(f"Saved {prof_path}")
