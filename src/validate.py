@@ -1,22 +1,35 @@
 """Validate the fast Stage-2 model against the reference implementations.
 
-Check A — river per-RP damage vs damagescanner.VectorScanner:
-    runs the real VectorScanner on the RP100 flood raster with one fixed curve
-    per road class group and mean costs, and compares per-segment damages with
-    the Stage-2 damage matrix (aggregation='per_cell', depth_offset=0).
+Works for any asset type registered in src/curves.py. For the "which curve
+did we pick" question in each check, one representative curve is chosen per
+curve group (the alphabetically-first curve ID in that group) - this is
+just a fixed, reproducible test point, not a modeling choice; the point of
+these checks is that Stage 2 exactly reproduces the ground truth for
+*whichever* curves are active, so one representative combination is enough
+to catch a formula or unit-conversion bug.
 
-Check B — EAD integration vs a scalar port of AssetRisk_PanEU's
+Check A - per-RP damage vs damagescanner.VectorScanner:
+    runs the real VectorScanner on the RP100 (or first configured) flood
+    raster with the representative curve per flood group and mean costs, and
+    compares per-feature damages with the Stage-2 damage matrix
+    (aggregation='per_cell', depth_offset=0). VectorScanner is geometry-aware
+    internally (line/polygon/point handled per feature already), so this
+    also validates Stage 1's polygon-area / point-count quantity conversion.
+
+Check B - EAD integration vs a scalar port of AssetRisk_PanEU's
     integrate_ead()/_apply_protection_standard()/adjust_return_periods_climate(),
-    evaluated per segment on a random sample, for several combinations of
-    protection scaling and warming level.
+    evaluated per feature on a random sample, for several combinations of
+    protection scaling and warming level. Skipped for assets/scenarios with
+    no river hazard.
 
-Check C — earthquake damage at RP476 recomputed independently:
+Check C - earthquake damage at a representative RP recomputed independently:
     fresh VectorExposure overlay of the PGA raster + EDR lookup + mean costs,
-    compared with the Stage-2 earthquake damage matrix. Validates the cached
-    fragments and the EDR pipeline end-to-end.
+    compared with the Stage-2 earthquake damage matrix.
 
-Run:  python -m src.validate
+Run:  python -m src.validate --country LUX --asset roads
 """
+
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -26,29 +39,21 @@ from scipy.interpolate import interp1d
 
 from damagescanner.core import VectorScanner, VectorExposure
 
-from .curves import (
-    DEFAULT_MAXDAM,
-    MAIN_ROAD_TYPES,
-    ROAD_MAXDAM,
-    load_eq_edr_tables,
-    load_flood_curves,
-)
-from .paths import load_config, set_country_override
+from .curves import get_asset_config, load_eq_edr_tables, load_flood_curves
+from .paths import load_config, set_asset_override, set_country_override
 from .risk_model import (
     ModelData,
     WARMING_LEVELS,
-    _cost_per_m,
+    _cost_per_unit,
     _damage_matrix,
     _integrate_ead,
     _shift_rps,
     load_model_data,
 )
 
-CURVE_MAIN = "F7.5"
-CURVE_OTHER = "F7.9"
-EQ_CURVE = "E7.2"
-RIVER_VALIDATION_RP = 100
-EQ_VALIDATION_RP = 476
+
+def _representative_choices(groups: dict[str, list[str]]) -> dict[str, str]:
+    return {name: sorted(curves)[0] for name, curves in groups.items()}
 
 
 def _load_features(cfg: dict) -> gpd.GeoDataFrame:
@@ -65,47 +70,39 @@ def _clip_hazard(path, features: gpd.GeoDataFrame):
     )
 
 
-def _river_damage_stage2(data: ModelData, rp: int) -> np.ndarray:
-    hz = data.hazards["river"]
-    dmg_m, _ = _damage_matrix(
-        hz,
-        hz.p_intensity,
-        {0: data.flood_curves[CURVE_MAIN], 1: data.flood_curves[CURVE_OTHER]},
-        "per_cell",
-        data.n_seg,
-    )
-    damage = dmg_m * _cost_per_m(data, 0.0)[:, None]
-    return damage[:, int(np.argmin(np.abs(hz.rps - rp)))]
-
-
-# ---------------------------------------------------------------------------
-# Check A: river damage per RP vs VectorScanner
-# ---------------------------------------------------------------------------
-
-
 def check_river_vs_vectorscanner(cfg: dict, data: ModelData) -> bool:
+    if "river" not in data.hazards:
+        print("Check A: skipped (no river hazard for this asset).")
+        return True
+    if len(data.hazards["river"].p_pair) == 0:
+        print("Check A: skipped (this asset/country has zero river-flood exposure at every RP).")
+        return True
+
+    asset_cfg = get_asset_config(cfg["asset_type"])
+    curve_choices = _representative_choices(asset_cfg.flood_groups)
+    rp = int(sorted(cfg["hazards"]["river"]["return_periods"])[len(cfg["hazards"]["river"]["return_periods"]) // 2])
     print("=" * 70)
-    print(f"Check A: river RP{RIVER_VALIDATION_RP} damage vs VectorScanner")
+    print(f"Check A: river RP{rp} damage vs VectorScanner  (curves: {curve_choices})")
     print("=" * 70)
 
     features = _load_features(cfg)
-    curve_df = load_flood_curves(cfg["vulnerability_path"])
+    curve_df = load_flood_curves(
+        cfg["vulnerability_path"], sorted(set(curve_choices.values()))
+    )
     object_types = features["object_type"].unique()
     curves = pd.DataFrame(index=curve_df.index)
     for obj in object_types:
-        cid = CURVE_MAIN if obj in MAIN_ROAD_TYPES else CURVE_OTHER
-        curves[obj] = curve_df[cid]
+        group = asset_cfg.flood_object_group[obj]
+        curves[obj] = curve_df[curve_choices[group]]
     maxdam = pd.DataFrame(
         {
             "object_type": object_types,
-            "damage": [ROAD_MAXDAM.get(o, DEFAULT_MAXDAM)[1] for o in object_types],
+            "damage": [asset_cfg.maxdam.get(o, asset_cfg.default_maxdam)[1] for o in object_types],
         }
     )
 
     hcfg = cfg["hazards"]["river"]
-    hazard = _clip_hazard(
-        hcfg["dir"] / hcfg["filename_template"].format(rp=RIVER_VALIDATION_RP), features
-    )
+    hazard = _clip_hazard(hcfg["dir"] / hcfg["filename_template"].format(rp=rp), features)
 
     print("Running VectorScanner (reference)...")
     ref = VectorScanner(
@@ -118,26 +115,27 @@ def check_river_vs_vectorscanner(cfg: dict, data: ModelData) -> bool:
     )
     ref_damage = ref["damage"].astype(float)
 
-    fast_damage = pd.Series(
-        _river_damage_stage2(data, RIVER_VALIDATION_RP), index=np.arange(data.n_seg)
-    )
+    hz = data.hazards["river"]
+    curves_by_group = {
+        i: data.flood_curve_tables[curve_choices[name]]
+        for i, name in enumerate(data.flood_group_order)
+    }
+    dmg_qty, _ = _damage_matrix(hz, hz.p_intensity, curves_by_group, "per_cell", data.n_seg)
+    damage = dmg_qty * _cost_per_unit(data, 0.0)[:, None]
+    idx = int(np.argmin(np.abs(hz.rps - rp)))
+    fast_damage = pd.Series(damage[:, idx], index=np.arange(data.n_seg))
 
     both = pd.DataFrame({"ref": ref_damage, "fast": fast_damage}).fillna(0.0)
     tot_ref, tot_fast = both["ref"].sum(), both["fast"].sum()
     denom = np.maximum(both["ref"].abs(), 1.0)
     rel = ((both["fast"] - both["ref"]).abs() / denom).max()
-    print(f"  total damage  reference: {tot_ref / 1e6:12.3f} MEUR")
-    print(f"  total damage  fast     : {tot_fast / 1e6:12.3f} MEUR")
-    print(f"  total rel. difference  : {abs(tot_fast - tot_ref) / tot_ref:.2e}")
-    print(f"  max per-segment rel. difference (damage > 1 EUR): {rel:.2e}")
-    ok = abs(tot_fast - tot_ref) / tot_ref < 1e-3 and rel < 1e-2
+    print(f"  total damage  reference: {tot_ref / 1e6:12.4f} MEUR")
+    print(f"  total damage  fast     : {tot_fast / 1e6:12.4f} MEUR")
+    print(f"  total rel. difference  : {abs(tot_fast - tot_ref) / max(tot_ref, 1e-9):.2e}")
+    print(f"  max per-feature rel. difference (damage > 1 EUR): {rel:.2e}")
+    ok = abs(tot_fast - tot_ref) / max(tot_ref, 1e-9) < 1e-3 and rel < 1e-2
     print(f"  -> {'PASS' if ok else 'FAIL'}")
     return ok
-
-
-# ---------------------------------------------------------------------------
-# Check B: EAD integration vs scalar reference port
-# ---------------------------------------------------------------------------
 
 
 def _ref_integrate_ead(rps, damages, protection_standard):
@@ -175,7 +173,7 @@ def _ref_integrate_ead(rps, damages, protection_standard):
 
 
 def _ref_adjust_rps(rps, protection, anchors_row):
-    """Scalar port of adjust_return_periods_climate for one segment."""
+    """Scalar port of adjust_return_periods_climate for one feature."""
     f = interp1d(
         [10, 100, 500], anchors_row, kind="linear",
         bounds_error=False, fill_value="extrapolate",
@@ -188,26 +186,35 @@ def _ref_adjust_rps(rps, protection, anchors_row):
 
 
 def check_ead_integration(cfg: dict, data: ModelData, n_sample: int = 3000) -> bool:
+    if "river" not in data.hazards:
+        print("Check B: skipped (no river hazard for this asset).")
+        return True
+
+    asset_cfg = get_asset_config(cfg["asset_type"])
+    curve_choices = _representative_choices(asset_cfg.flood_groups)
     print("=" * 70)
     print("Check B: EAD integration vs scalar reference port")
     print("=" * 70)
 
     rng = np.random.default_rng(42)
     hz = data.hazards["river"]
-    dmg_m, _ = _damage_matrix(
-        hz,
-        hz.p_intensity,
-        {0: data.flood_curves[CURVE_MAIN], 1: data.flood_curves[CURVE_OTHER]},
-        "per_cell",
-        data.n_seg,
-    )
-    damage = dmg_m * _cost_per_m(data, 0.0)[:, None]
+    curves_by_group = {
+        i: data.flood_curve_tables[curve_choices[name]]
+        for i, name in enumerate(data.flood_group_order)
+    }
+    dmg_qty, _ = _damage_matrix(hz, hz.p_intensity, curves_by_group, "per_cell", data.n_seg)
+    damage = dmg_qty * _cost_per_unit(data, 0.0)[:, None]
 
-    flooded = np.flatnonzero(damage.sum(axis=1) > 0)
-    sample = rng.choice(flooded, size=min(n_sample, len(flooded)), replace=False)
+    exposed = np.flatnonzero(damage.sum(axis=1) > 0)
+    if len(exposed) == 0:
+        print("  No features have nonzero flood damage under the representative curves; skipping.")
+        return True
+    sample = rng.choice(exposed, size=min(n_sample, len(exposed)), replace=False)
 
     all_ok = True
     for warming in ("current", "2.0C", "4.0C"):
+        if warming != "current" and not data.anchors:
+            continue
         for prot_scale in (0.0, 1.0, 2.0):
             prot_eff = data.prot_rp * prot_scale
             code = WARMING_LEVELS[warming]
@@ -247,21 +254,22 @@ def check_ead_integration(cfg: dict, data: ModelData, n_sample: int = 3000) -> b
     return all_ok
 
 
-# ---------------------------------------------------------------------------
-# Check C: earthquake damage recomputed independently
-# ---------------------------------------------------------------------------
-
-
 def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
+    if "earthquake" not in data.hazards:
+        print("Check C: skipped (no earthquake hazard for this asset).")
+        return True
+
+    asset_cfg = get_asset_config(cfg["asset_type"])
+    curve_choices = _representative_choices(asset_cfg.eq_groups)
+    rps = sorted(cfg["hazards"]["earthquake"]["return_periods"])
+    rp = rps[len(rps) // 2]
     print("=" * 70)
-    print(f"Check C: earthquake RP{EQ_VALIDATION_RP} damage, independent recompute")
+    print(f"Check C: earthquake RP{rp} damage, independent recompute (curves: {curve_choices})")
     print("=" * 70)
 
     features = _load_features(cfg)
     hcfg = cfg["hazards"]["earthquake"]
-    hazard = _clip_hazard(
-        hcfg["dir"] / hcfg["filename_template"].format(rp=EQ_VALIDATION_RP), features
-    )
+    hazard = _clip_hazard(hcfg["dir"] / hcfg["filename_template"].format(rp=rp), features)
 
     print("Running fresh VectorExposure overlay + EDR lookup (reference-style)...")
     exposed, _, _, _ = VectorExposure(
@@ -271,7 +279,8 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
         disable_progress=True,
         return_full=False,
     )
-    pga_x, edr_y = load_eq_edr_tables(cfg["fragility_path"], [EQ_CURVE])[EQ_CURVE]
+    needed_curves = sorted(set(curve_choices.values()))
+    edr_tables = load_eq_edr_tables(cfg["fragility_path"], needed_curves)
 
     ref = np.zeros(data.n_seg)
     for seg_idx, values, coverage in zip(
@@ -282,18 +291,29 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
         keep = np.isfinite(v) & (v > 0) & (c > 0)
         if not keep.any():
             continue
-        maxdam = ROAD_MAXDAM.get(
-            features["object_type"].iloc[seg_idx], DEFAULT_MAXDAM
-        )[1]
-        ref[seg_idx] = np.sum(np.interp(v[keep], pga_x, edr_y) * c[keep]) * maxdam
+        obj = features["object_type"].iloc[seg_idx]
+        group = asset_cfg.eq_object_group[obj]
+        pga_x, edr_y = edr_tables[curve_choices[group]]
+        maxdam = asset_cfg.maxdam.get(obj, asset_cfg.default_maxdam)[1]
+        # polygon area conversion mirrors preprocess.py's extract_hazard_profiles
+        geom_kind = features.geometry.iloc[seg_idx].geom_type
+        if geom_kind in ("Polygon", "MultiPolygon"):
+            from damagescanner.vector import _get_cell_area_m2
+            cell_area_m2 = _get_cell_area_m2(
+                features, hazard.rio.crs, abs(hazard.rio.resolution()[0])
+            )
+            q = c[keep] * cell_area_m2
+        else:
+            q = c[keep]
+        ref[seg_idx] = np.sum(np.interp(v[keep], pga_x, edr_y) * q) * maxdam
 
     hz = data.hazards["earthquake"]
-    dmg_m, _ = _damage_matrix(
-        hz, hz.p_intensity, {0: (pga_x, edr_y)}, "per_cell", data.n_seg
-    )
-    fast = (dmg_m * _cost_per_m(data, 0.0)[:, None])[
-        :, int(np.argmin(np.abs(hz.rps - EQ_VALIDATION_RP)))
-    ]
+    curves_by_group = {
+        i: data.eq_curve_tables[curve_choices[name]]
+        for i, name in enumerate(data.eq_group_order)
+    }
+    dmg_qty, _ = _damage_matrix(hz, hz.p_intensity, curves_by_group, "per_cell", data.n_seg)
+    fast = (dmg_qty * _cost_per_unit(data, 0.0)[:, None])[:, int(np.argmin(np.abs(hz.rps - rp)))]
 
     tot_ref, tot_fast = ref.sum(), fast.sum()
     denom = np.maximum(np.abs(ref), 1.0)
@@ -301,19 +321,19 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
     print(f"  total damage  reference: {tot_ref / 1e6:12.4f} MEUR")
     print(f"  total damage  fast     : {tot_fast / 1e6:12.4f} MEUR")
     print(f"  total rel. difference  : {abs(tot_fast - tot_ref) / max(tot_ref, 1e-9):.2e}")
-    print(f"  max per-segment rel. difference: {rel:.2e}")
+    print(f"  max per-feature rel. difference: {rel:.2e}")
     ok = abs(tot_fast - tot_ref) / max(tot_ref, 1e-9) < 1e-3 and rel < 1e-2
     print(f"  -> {'PASS' if ok else 'FAIL'}")
     return ok
 
 
 def main() -> None:
-    import argparse
-
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
+    parser.add_argument("--asset", default=None, help="asset type override")
     args = parser.parse_args()
     set_country_override(args.country)
+    set_asset_override(args.asset)
 
     cfg = load_config()
     print(f"Validating {cfg['country']} {cfg['asset_type']}")

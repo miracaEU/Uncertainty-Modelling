@@ -1,15 +1,22 @@
-"""Analyze EMA Workbench experiment results: which factors drive flood risk?
+"""Analyze EMA Workbench (LHS) experiment results for one (country, asset,
+scenario) combination: which factors drive risk?
 
-Produces (in results/figures/):
-  feature_scores.png     — extra-trees feature importance, factors x outcomes
-  ead_by_warming.png     — total EAD distribution per warming level
-  ead_vs_protection.png  — total EAD vs protection scale, colored by warming
-  ead_vs_depth_offset.png— total EAD vs depth offset, split by aggregation choice
-plus feature_scores.csv and a text summary on stdout.
+Produces (in results/figures/, all prefixed with {country}_{asset}_{scenario}):
+  ..._feature_scores.png     - extra-trees feature importance, factors x outcomes
+  ..._ead_by_warming.png     - total EAD distribution per warming level (if applicable)
+  ..._ead_vs_protection.png  - total EAD vs protection factor (if applicable)
+  ..._ead_vs_depth_offset.png- total EAD vs depth offset (if applicable)
+plus ..._feature_scores.csv and a text summary on stdout.
+
+The factor set is detected from the results file itself (every scenario has
+a different one - see src/ema_model.py), so this script works unmodified for
+any scenario or asset type. The "vs factor" scatter plots are skipped with a
+printed note when the relevant factor isn't part of the scenario (e.g.
+"ead_vs_protection" is meaningless for earthquake_only).
 
 Usage:
-    python -m src.analyze                # newest results file
-    python -m src.analyze --results results/experiments_... .tar.gz
+    python -m src.analyze --country LUX --asset roads --scenario baseline
+    python -m src.analyze --results results/experiments_....tar.gz
 """
 
 import argparse
@@ -25,7 +32,8 @@ from ema_workbench import load_results
 from ema_workbench.analysis import feature_scoring
 from matplotlib.colors import LinearSegmentedColormap
 
-from .paths import load_config, set_country_override
+from .ema_model import SCENARIOS
+from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
 
 # --- palette (dataviz reference instance, light mode) ---
 SURFACE = "#fcfcfb"
@@ -36,24 +44,14 @@ GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
 BLUE = "#2a78d6"
 GREEN = "#008300"
-# ordinal blue ramp (steps 250..650) for the 5 warming levels, light mode
 WARMING_RAMP = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"]
 WARMING_ORDER = ["current", "1.5C", "2.0C", "3.0C", "4.0C"]
 SEQ_CMAP = LinearSegmentedColormap.from_list(
     "seq_blue", ["#fcfcfb", "#cde2fb", "#86b6ef", "#3987e5", "#256abf", "#0d366b"]
 )
 
-FACTORS = [
-    "warming",
-    "curve_main",
-    "curve_other",
-    "eq_curve",
-    "cost_level",
-    "protection_scale",
-    "depth_offset",
-    "pga_scale",
-    "aggregation",
-]
+NON_FACTOR_COLUMNS = {"scenario", "policy", "model"}
+MAX_CATEGORICAL_LEVELS = 10  # factors with at most this many unique values get a per-level summary
 
 plt.rcParams.update(
     {
@@ -78,20 +76,24 @@ plt.rcParams.update(
 )
 
 
+def detect_factors(experiments: pd.DataFrame) -> list[str]:
+    return [c for c in experiments.columns if c not in NON_FACTOR_COLUMNS]
+
+
 def newest_results(cfg: dict) -> Path:
-    pattern = f"experiments_{cfg['country']}_{cfg['asset_type']}_lhs_*.tar.gz"
+    pattern = f"experiments_{result_stem(cfg)}_lhs_*.tar.gz"
     files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
     if not files:
         raise FileNotFoundError(f"No {pattern} in {cfg['results_dir']}")
     return files[-1]
 
 
-def plot_feature_scores(experiments, outcomes, fig_dir: Path, prefix: str) -> pd.DataFrame:
-    x = experiments[FACTORS]
+def plot_feature_scores(experiments, outcomes, factors, fig_dir: Path, prefix: str) -> pd.DataFrame:
+    x = experiments[factors]
     scores = feature_scoring.get_feature_scores_all(x, outcomes)
-    scores = scores.loc[FACTORS]
+    scores = scores.loc[factors]
 
-    fig, ax = plt.subplots(figsize=(9.6, 5.4), layout="constrained")
+    fig, ax = plt.subplots(figsize=(max(7.0, 1.0 * scores.shape[1]), max(4.0, 0.5 * len(factors))), layout="constrained")
     mat = scores.to_numpy()
     im = ax.imshow(mat, cmap=SEQ_CMAP, vmin=0, vmax=max(0.5, mat.max()), aspect="auto")
     ax.set_xticks(range(scores.shape[1]), scores.columns, rotation=30, ha="right")
@@ -119,22 +121,21 @@ def plot_feature_scores(experiments, outcomes, fig_dir: Path, prefix: str) -> pd
 def plot_ead_by_warming(experiments, outcomes, fig_dir: Path, prefix: str) -> None:
     ead = np.asarray(outcomes["total_EAD_MEUR"])
     warming = experiments["warming"].astype(str).to_numpy()
+    levels = [w for w in WARMING_ORDER if w in set(warming)]
 
     fig, ax = plt.subplots(figsize=(7.2, 4.4), layout="constrained")
     rng = np.random.default_rng(1)
-    for i, level in enumerate(WARMING_ORDER):
+    for i, level in enumerate(levels):
         vals = ead[warming == level]
         jitter = rng.uniform(-0.16, 0.16, len(vals))
         ax.scatter(
             np.full(len(vals), i) + jitter, vals,
-            s=9, color=WARMING_RAMP[i], alpha=0.45, linewidths=0, zorder=2,
+            s=9, color=WARMING_RAMP[i % len(WARMING_RAMP)], alpha=0.45, linewidths=0, zorder=2,
         )
         med = np.median(vals)
         ax.hlines(med, i - 0.28, i + 0.28, color=INK, linewidth=2, zorder=3)
-        ax.annotate(
-            f"{med:.2f}", (i + 0.32, med), fontsize=9, color=INK_2, va="center"
-        )
-    ax.set_xticks(range(len(WARMING_ORDER)), WARMING_ORDER)
+        ax.annotate(f"{med:.2f}", (i + 0.32, med), fontsize=9, color=INK_2, va="center")
+    ax.set_xticks(range(len(levels)), levels)
     ax.set_ylabel("total EAD (M EUR / yr)")
     ax.set_xlabel("global warming level")
     ax.set_title(f"Expected annual damage by warming level, {prefix} (median marked)")
@@ -143,27 +144,32 @@ def plot_ead_by_warming(experiments, outcomes, fig_dir: Path, prefix: str) -> No
     plt.close(fig)
 
 
-def plot_ead_vs_protection(experiments, outcomes, fig_dir: Path, prefix: str) -> None:
+def plot_ead_vs_protection(experiments, outcomes, protection_col: str, fig_dir: Path, prefix: str) -> None:
     ead = np.asarray(outcomes["total_EAD_MEUR"])
-    prot = experiments["protection_scale"].to_numpy(float)
-    warming = experiments["warming"].astype(str).to_numpy()
+    prot = experiments[protection_col].to_numpy(float)
+    has_warming = "warming" in experiments.columns
 
     fig, ax = plt.subplots(figsize=(7.6, 4.6), layout="constrained")
-    for i, level in enumerate(WARMING_ORDER):
-        m = warming == level
-        ax.scatter(
-            prot[m], ead[m], s=10, color=WARMING_RAMP[i], alpha=0.55,
-            linewidths=0, label=level,
-        )
-    leg = ax.legend(
-        title="warming", frameon=False, loc="upper right", fontsize=9, title_fontsize=9
+    if has_warming:
+        warming = experiments["warming"].astype(str).to_numpy()
+        for i, level in enumerate(w for w in WARMING_ORDER if w in set(warming)):
+            m = warming == level
+            ax.scatter(prot[m], ead[m], s=10, color=WARMING_RAMP[i % len(WARMING_RAMP)],
+                       alpha=0.55, linewidths=0, label=level)
+        leg = ax.legend(title="warming", frameon=False, loc="upper right", fontsize=9, title_fontsize=9)
+        for t in leg.get_texts():
+            t.set_color(INK_2)
+        leg.get_title().set_color(INK_2)
+    else:
+        ax.scatter(prot, ead, s=10, color=BLUE, alpha=0.5, linewidths=0)
+
+    label = (
+        "protection standard scale (x FLOPROS design RP)" if protection_col == "protection_scale"
+        else "absolute protection standard (years)"
     )
-    for t in leg.get_texts():
-        t.set_color(INK_2)
-    leg.get_title().set_color(INK_2)
-    ax.set_xlabel("protection standard scale (x FLOPROS design RP)")
+    ax.set_xlabel(label)
     ax.set_ylabel("total EAD (M EUR / yr)")
-    ax.set_title(f"EAD vs protection scaling ({prefix})")
+    ax.set_title(f"EAD vs protection ({prefix})")
     fig.savefig(fig_dir / f"{prefix}_ead_vs_protection.png", dpi=200)
     plt.close(fig)
 
@@ -171,14 +177,14 @@ def plot_ead_vs_protection(experiments, outcomes, fig_dir: Path, prefix: str) ->
 def plot_ead_vs_depth_offset(experiments, outcomes, fig_dir: Path, prefix: str) -> None:
     ead = np.asarray(outcomes["total_EAD_MEUR"])
     off = experiments["depth_offset"].to_numpy(float)
-    agg = experiments["aggregation"].astype(str).to_numpy()
+    has_agg = "aggregation" in experiments.columns
+    groups = [(a, c) for a, c in zip(["per_cell", "mean_depth"], [BLUE, GREEN])] if has_agg else [(None, BLUE)]
 
     fig, ax = plt.subplots(figsize=(7.6, 4.6), layout="constrained")
-    for label, color in (("per_cell", BLUE), ("mean_depth", GREEN)):
-        m = agg == label
+    for label, color in groups:
+        m = experiments["aggregation"].to_numpy() == label if has_agg else np.ones(len(off), dtype=bool)
         ax.scatter(off[m], ead[m], s=10, color=color, alpha=0.5, linewidths=0, label=label)
-        # binned median line to make the trend readable
-        bins = np.linspace(-0.5, 0.5, 11)
+        bins = np.linspace(off.min(), off.max(), 11)
         mids, meds = [], []
         for lo, hi in zip(bins[:-1], bins[1:]):
             sel = m & (off >= lo) & (off < hi)
@@ -186,11 +192,11 @@ def plot_ead_vs_depth_offset(experiments, outcomes, fig_dir: Path, prefix: str) 
                 mids.append(0.5 * (lo + hi))
                 meds.append(np.median(ead[sel]))
         ax.plot(mids, meds, color=color, linewidth=2)
-    leg = ax.legend(title="aggregation", frameon=False, loc="upper left", fontsize=9,
-                    title_fontsize=9)
-    for t in leg.get_texts():
-        t.set_color(INK_2)
-    leg.get_title().set_color(INK_2)
+    if has_agg:
+        leg = ax.legend(title="aggregation", frameon=False, loc="upper left", fontsize=9, title_fontsize=9)
+        for t in leg.get_texts():
+            t.set_color(INK_2)
+        leg.get_title().set_color(INK_2)
     ax.set_xlabel("water depth offset (m)")
     ax.set_ylabel("total EAD (M EUR / yr)")
     ax.set_title(f"Depth uncertainty and aggregation choice, {prefix} (binned medians)")
@@ -198,7 +204,7 @@ def plot_ead_vs_depth_offset(experiments, outcomes, fig_dir: Path, prefix: str) 
     plt.close(fig)
 
 
-def print_summary(experiments, outcomes, scores: pd.DataFrame) -> None:
+def print_summary(experiments, outcomes, factors, scores: pd.DataFrame) -> None:
     ead = np.asarray(outcomes["total_EAD_MEUR"])
     print("\n" + "=" * 70)
     print(f"Total EAD across {len(ead)} experiments (M EUR / yr)")
@@ -219,36 +225,58 @@ def print_summary(experiments, outcomes, scores: pd.DataFrame) -> None:
     ranked = scores["total_EAD_MEUR"].sort_values(ascending=False)
     for name, v in ranked.items():
         print(f"  {name:18s} {v:.3f}")
+
     print("\nMedian total EAD per categorical level:")
-    for factor in ("warming", "aggregation", "curve_main", "curve_other", "eq_curve"):
-        vals = experiments[factor].astype(str)
-        med = pd.Series(ead).groupby(vals.reset_index(drop=True)).median()
-        parts = ", ".join(f"{k}={v:.2f}" for k, v in med.items())
-        print(f"  {factor:12s} {parts}")
+    for factor in factors:
+        if experiments[factor].nunique() <= MAX_CATEGORICAL_LEVELS:
+            vals = experiments[factor].astype(str)
+            med = pd.Series(ead).groupby(vals.reset_index(drop=True)).median()
+            parts = ", ".join(f"{k}={v:.2f}" for k, v in med.items())
+            print(f"  {factor:18s} {parts}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=str, default=None)
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
+    parser.add_argument("--asset", default=None, help="asset type override")
+    parser.add_argument("--scenario", choices=SCENARIOS, default=None)
     args = parser.parse_args()
 
     set_country_override(args.country)
+    set_asset_override(args.asset)
+    set_scenario_override(args.scenario)
     cfg = load_config()
-    prefix = cfg["country"]
+    prefix = result_stem(cfg)
     path = Path(args.results) if args.results else newest_results(cfg)
     print(f"Loading {path}")
     experiments, outcomes = load_results(path)
+    factors = detect_factors(experiments)
+    print(f"Detected factors: {factors}")
 
     fig_dir = cfg["results_dir"] / "figures"
     fig_dir.mkdir(exist_ok=True)
 
-    scores = plot_feature_scores(experiments, outcomes, fig_dir, prefix)
+    scores = plot_feature_scores(experiments, outcomes, factors, fig_dir, prefix)
     scores.to_csv(cfg["results_dir"] / f"{prefix}_feature_scores.csv")
-    plot_ead_by_warming(experiments, outcomes, fig_dir, prefix)
-    plot_ead_vs_protection(experiments, outcomes, fig_dir, prefix)
-    plot_ead_vs_depth_offset(experiments, outcomes, fig_dir, prefix)
-    print_summary(experiments, outcomes, scores)
+
+    if "warming" in factors and experiments["warming"].nunique() > 1:
+        plot_ead_by_warming(experiments, outcomes, fig_dir, prefix)
+    else:
+        print("Skipping ead_by_warming: 'warming' not a varying factor in this scenario.")
+
+    protection_col = next((c for c in ("protection_scale", "protection_abs_rp") if c in factors), None)
+    if protection_col and experiments[protection_col].nunique() > 1:
+        plot_ead_vs_protection(experiments, outcomes, protection_col, fig_dir, prefix)
+    else:
+        print("Skipping ead_vs_protection: no protection factor varies in this scenario.")
+
+    if "depth_offset" in factors and experiments["depth_offset"].nunique() > 1:
+        plot_ead_vs_depth_offset(experiments, outcomes, fig_dir, prefix)
+    else:
+        print("Skipping ead_vs_depth_offset: 'depth_offset' not a varying factor in this scenario.")
+
+    print_summary(experiments, outcomes, factors, scores)
     print(f"\nFigures saved to {fig_dir}")
 
 

@@ -1,15 +1,21 @@
-"""Run EMA Workbench experiments for the multi-hazard risk model.
+"""Run EMA Workbench experiments for one (country, asset, scenario) combination.
 
 Usage:
-    python -m src.run_experiments --n 1000                      # LHS
-    python -m src.run_experiments --sampler sobol --n 512       # Saltelli/Sobol
-    python -m src.run_experiments --n 5000 --workers 4
+    python -m src.run_experiments --country LUX --asset roads --scenario baseline --n 3000
+    python -m src.run_experiments --country LUX --asset roads --scenario baseline \\
+        --sampler sobol --n 512 --workers 8
+
+Scenarios (src/ema_model.py::SCENARIOS): baseline, abs_protection,
+flood_no_protection, earthquake_only.
 
 With --sampler sobol, --n is the SALib base sample size N (use a power of 2);
-the actual number of model runs is N * (2k + 2) with k = 9 factors, i.e.
-20 N runs. Analyze Sobol results with `python -m src.analyze_sobol`.
+the actual number of model runs is N * (2k + 2), k = number of uncertainty
+factors (varies by scenario - see ema_model.py). Analyze Sobol results with
+`python -m src.analyze_sobol`.
 
-Results are saved as a tar.gz readable with ema_workbench.load_results().
+Results are saved as a tar.gz, named so that no (country, asset, scenario,
+sampler) combination can ever overwrite another - re-running the same combo
+adds a new timestamped file rather than replacing the old one.
 """
 
 import argparse
@@ -23,8 +29,8 @@ from ema_workbench import (
     save_results,
 )
 
-from .ema_model import build_model
-from .paths import load_config, set_country_override
+from .ema_model import SCENARIOS, build_model
+from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
 
 
 def main() -> None:
@@ -33,15 +39,20 @@ def main() -> None:
                         help="number of experiments (LHS) or base sample size N (Sobol)")
     parser.add_argument("--sampler", choices=["lhs", "sobol"], default="lhs")
     parser.add_argument("--workers", type=int, default=1, help="parallel worker processes")
-    parser.add_argument("--tag", type=str, default="", help="optional tag for the output filename")
+    parser.add_argument("--tag", type=str, default="", help="optional extra tag for the output filename")
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
+    parser.add_argument("--asset", default=None, help="asset type override (roads/airports/education/power)")
+    parser.add_argument("--scenario", choices=SCENARIOS, default=None,
+                        help=f"modeling scenario (default: baseline); one of {SCENARIOS}")
     args = parser.parse_args()
 
     set_country_override(args.country)
+    set_asset_override(args.asset)
+    set_scenario_override(args.scenario)
     ema_logging.log_to_stderr(ema_logging.INFO)
     cfg = load_config()
-    print(f"Country: {cfg['country']}")
-    model = build_model()
+    print(f"Country: {cfg['country']}  Asset: {cfg['asset_type']}  Scenario: {cfg['scenario']}")
+    model = build_model(cfg)
 
     kwargs = {"scenarios": args.n}
     if args.sampler == "sobol":
@@ -63,7 +74,7 @@ def main() -> None:
     tag = f"_{args.tag}" if args.tag else ""
     out = (
         cfg["results_dir"]
-        / f"experiments_{cfg['country']}_{cfg['asset_type']}_{args.sampler}_n{args.n}{tag}_{stamp}.tar.gz"
+        / f"experiments_{result_stem(cfg)}_{args.sampler}_n{args.n}{tag}_{stamp}.tar.gz"
     )
     save_results(results, out)
     print(f"\nSaved results to {out}")

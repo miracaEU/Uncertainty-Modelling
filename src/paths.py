@@ -1,8 +1,10 @@
 """Configuration loading for the uncertainty-modeling pipeline.
 
-Reads config.yml from the project root and exposes resolved paths.
-Relative paths in the config are interpreted relative to the project root,
-so the same config works no matter where scripts are started from.
+Reads config.yml from the project root and exposes resolved paths. Country,
+asset type, and modeling scenario can all be overridden via CLI flags on the
+individual scripts (--country/--asset/--scenario); the overrides are passed
+through environment variables so they survive into MultiprocessingEvaluator
+worker processes, which re-import this module fresh in each subprocess.
 """
 
 import os
@@ -12,16 +14,22 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "config.yml"
+DEFAULT_SCENARIO = "baseline"
 
 
 def set_country_override(country: str | None) -> None:
-    """Set a country override that survives into multiprocessing workers.
-
-    CLI scripts call this before building the EMA model; worker processes
-    inherit the environment variable and pick it up in load_config().
-    """
     if country:
         os.environ["MIRACA_COUNTRY"] = country.upper()
+
+
+def set_asset_override(asset: str | None) -> None:
+    if asset:
+        os.environ["MIRACA_ASSET"] = asset.lower()
+
+
+def set_scenario_override(scenario: str | None) -> None:
+    if scenario:
+        os.environ["MIRACA_SCENARIO"] = scenario.lower()
 
 
 def load_config(config_path: Path = CONFIG_PATH) -> dict:
@@ -31,6 +39,10 @@ def load_config(config_path: Path = CONFIG_PATH) -> dict:
     env_country = os.environ.get("MIRACA_COUNTRY")
     if env_country:
         cfg["country"] = env_country
+    env_asset = os.environ.get("MIRACA_ASSET")
+    if env_asset:
+        cfg["asset_type"] = env_asset
+    cfg["scenario"] = os.environ.get("MIRACA_SCENARIO", DEFAULT_SCENARIO)
 
     for key in ("intermediate_dir", "results_dir"):
         p = Path(cfg[key])
@@ -55,10 +67,24 @@ def load_config(config_path: Path = CONFIG_PATH) -> dict:
 
 
 def base_stem(cfg: dict) -> str:
-    """Hazard-independent filename stem, e.g. 'LUX_roads'."""
+    """Hazard- and scenario-independent filename stem, e.g. 'LUX_roads'.
+
+    Used for Stage-1 preprocessing outputs (segments.parquet), which are
+    shared across every scenario for a given (country, asset) pair.
+    """
     return f"{cfg['country']}_{cfg['asset_type']}"
 
 
 def hazard_stem(cfg: dict, hazard: str) -> str:
-    """Per-hazard filename stem, e.g. 'LUX_roads_river'."""
+    """Per-hazard Stage-1 filename stem, e.g. 'LUX_roads_river'."""
     return f"{base_stem(cfg)}_{hazard}"
+
+
+def result_stem(cfg: dict) -> str:
+    """Scenario-specific filename stem, e.g. 'LUX_roads_abs_protection'.
+
+    Used for every Stage-2 output (experiment archives, summary CSVs,
+    figures) so that different scenarios for the same (country, asset) never
+    overwrite each other.
+    """
+    return f"{base_stem(cfg)}_{cfg['scenario']}"

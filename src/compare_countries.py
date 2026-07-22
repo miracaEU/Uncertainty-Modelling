@@ -1,16 +1,17 @@
-"""Cross-country comparison of uncertainty structure and risk levels.
+"""Cross-country comparison of uncertainty structure and risk levels, for one
+(asset, scenario) combination.
 
 Reads, for every country that has completed the workflow:
-  - {ISO}_sobol_indices.csv          (Sobol ST/S1 per factor per outcome)
-  - newest LHS results archive       (EAD distributions)
+  - {country}_{asset}_{scenario}_sobol_indices.csv  (Sobol ST/S1 per factor per outcome)
+  - newest matching LHS results archive              (EAD distributions)
 
 Produces:
-  results/country_comparison.csv
-  results/figures/country_comparison_sobol.png  (ST heatmap, factors x countries)
+  results/{asset}_{scenario}_country_comparison.csv
+  results/figures/{asset}_{scenario}_country_comparison_sobol.png  (ST heatmap, factors x countries)
 
 Usage:
-    python -m src.compare_countries                    # all countries found
-    python -m src.compare_countries --countries LUX DNK
+    python -m src.compare_countries --asset roads --scenario baseline
+    python -m src.compare_countries --asset roads --scenario baseline --countries LUX DNK
 """
 
 import argparse
@@ -24,7 +25,8 @@ import pandas as pd
 from ema_workbench import load_results
 from matplotlib.colors import LinearSegmentedColormap
 
-from .paths import load_config
+from .ema_model import SCENARIOS
+from .paths import load_config, set_asset_override, set_country_override, set_scenario_override
 
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
@@ -34,18 +36,6 @@ BASELINE = "#c3c2b7"
 SEQ_CMAP = LinearSegmentedColormap.from_list(
     "seq_blue", ["#fcfcfb", "#cde2fb", "#86b6ef", "#3987e5", "#256abf", "#0d366b"]
 )
-
-FACTOR_ORDER = [
-    "protection_scale",
-    "curve_main",
-    "curve_other",
-    "warming",
-    "cost_level",
-    "depth_offset",
-    "eq_curve",
-    "pga_scale",
-    "aggregation",
-]
 
 plt.rcParams.update(
     {
@@ -65,15 +55,13 @@ plt.rcParams.update(
 )
 
 
-def find_countries(cfg: dict) -> list[str]:
-    return sorted(
-        p.name.split("_")[0]
-        for p in cfg["results_dir"].glob("*_sobol_indices.csv")
-    )
+def find_countries(cfg: dict, asset: str, scenario: str) -> list[str]:
+    suffix = f"_{asset}_{scenario}_sobol_indices.csv"
+    return sorted(p.name[: -len(suffix)] for p in cfg["results_dir"].glob(f"*{suffix}"))
 
 
-def newest_lhs(cfg: dict, country: str):
-    pattern = f"experiments_{country}_{cfg['asset_type']}_lhs_*.tar.gz"
+def newest_lhs(cfg: dict, country: str, asset: str, scenario: str):
+    pattern = f"experiments_{country}_{asset}_{scenario}_lhs_*.tar.gz"
     files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
     return files[-1] if files else None
 
@@ -81,21 +69,29 @@ def newest_lhs(cfg: dict, country: str):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--countries", nargs="+", default=None)
+    parser.add_argument("--asset", default="roads")
+    parser.add_argument("--scenario", choices=SCENARIOS, default="baseline")
     args = parser.parse_args()
 
+    set_asset_override(args.asset)
+    set_scenario_override(args.scenario)
     cfg = load_config()
-    countries = args.countries or find_countries(cfg)
-    print(f"Comparing: {countries}")
+    asset, scenario = cfg["asset_type"], cfg["scenario"]
+    countries = args.countries or find_countries(cfg, asset, scenario)
+    print(f"Comparing {asset}/{scenario} across: {countries}")
+    prefix = f"{asset}_{scenario}"
 
     st_rows = {}
     summary_rows = []
     for iso in countries:
-        sob = pd.read_csv(cfg["results_dir"] / f"{iso}_sobol_indices.csv")
+        set_country_override(iso)
+        cfg_i = load_config()
+        sob = pd.read_csv(cfg["results_dir"] / f"{iso}_{asset}_{scenario}_sobol_indices.csv")
         total = sob[sob["outcome"] == "total_EAD_MEUR"].set_index("factor")
         st_rows[iso] = total["ST"]
 
         row = {"country": iso}
-        lhs_path = newest_lhs(cfg, iso)
+        lhs_path = newest_lhs(cfg, iso, asset, scenario)
         if lhs_path is not None:
             _, outcomes = load_results(lhs_path)
             for oc, label in [
@@ -115,11 +111,15 @@ def main() -> None:
         summary_rows.append(row)
 
     summary = pd.DataFrame(summary_rows).set_index("country")
-    csv_path = cfg["results_dir"] / "country_comparison.csv"
+    csv_path = cfg["results_dir"] / f"{prefix}_country_comparison.csv"
     summary.to_csv(csv_path)
 
     # --- heatmap: ST for total EAD, factors x countries ---
-    st = pd.DataFrame(st_rows).reindex(FACTOR_ORDER)
+    # Factor set is identical across countries for a fixed (asset, scenario) -
+    # it depends only on curve-group structure and scenario config, not data -
+    # so any one country's factor list defines the row order.
+    factor_order = list(next(iter(st_rows.values())).index)
+    st = pd.DataFrame(st_rows).reindex(factor_order)
     fig, ax = plt.subplots(
         figsize=(2.1 + 1.35 * len(countries), 4.8), layout="constrained"
     )
@@ -142,16 +142,17 @@ def main() -> None:
     cbar = fig.colorbar(im, ax=ax, shrink=0.85)
     cbar.set_label("Sobol total effect (ST) on total EAD", color=INK_2)
     cbar.outline.set_visible(False)
-    ax.set_title("What drives total-EAD uncertainty, per country?")
+    ax.set_title(f"What drives total-EAD uncertainty, per country? ({asset}/{scenario})")
     fig_dir = cfg["results_dir"] / "figures"
     fig_dir.mkdir(exist_ok=True)
-    fig.savefig(fig_dir / "country_comparison_sobol.png", dpi=200)
+    fig_path = fig_dir / f"{prefix}_country_comparison_sobol.png"
+    fig.savefig(fig_path, dpi=200)
     plt.close(fig)
 
     pd.set_option("display.width", 200)
     print("\n" + summary.round(3).to_string())
     print(f"\nSaved {csv_path}")
-    print(f"Saved {fig_dir / 'country_comparison_sobol.png'}")
+    print(f"Saved {fig_path}")
 
 
 if __name__ == "__main__":
