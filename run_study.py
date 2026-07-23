@@ -187,6 +187,11 @@ def main() -> None:
                         help="adaptive mode: stop once max ST_conf/ST among relevant factors < this")
     parser.add_argument("--workers", type=int, default=4, help="parallel worker processes per experiment run")
     parser.add_argument("--python", default=sys.executable, help="Python interpreter to invoke for every stage")
+    parser.add_argument("--no-aggregate", action="store_true",
+                        help="skip regenerating the aggregated workbook at the end. Use this when many "
+                             "per-combination jobs run in PARALLEL (e.g. one SLURM job per country/asset): "
+                             "otherwise every job rewrites the same .xlsx concurrently. Run "
+                             "`python -m src.aggregate_results` once after they all finish instead.")
     parser.add_argument("--force", action="store_true", help="re-run steps even if their output already exists")
     parser.add_argument("--fail-fast", action="store_true", help="abort the whole study on the first failed step")
     parser.add_argument("--dry-run", action="store_true", help="print the planned steps without running them")
@@ -363,13 +368,17 @@ def _finalize(args: argparse.Namespace, failures: list[str]) -> None:
     script, so a --fail-fast abort still leaves the summary up to date.
     """
     log("=" * 70)
-    log("Regenerating aggregated summary workbook...")
-    ok, elapsed = run_step(args.python, "src.aggregate_results", [], args.dry_run)
-    if ok:
-        log(f"  aggregate_results: done in {elapsed:.0f}s")
+    if getattr(args, "no_aggregate", False):
+        log("Skipping aggregated workbook (--no-aggregate); run "
+            "`python -m src.aggregate_results` once all jobs have finished.")
     else:
-        log("  aggregate_results: FAILED (raw results are unaffected, just the summary workbook)")
-        failures.append("aggregate_results")
+        log("Regenerating aggregated summary workbook...")
+        ok, elapsed = run_step(args.python, "src.aggregate_results", [], args.dry_run)
+        if ok:
+            log(f"  aggregate_results: done in {elapsed:.0f}s")
+        else:
+            log("  aggregate_results: FAILED (raw results are unaffected, just the summary workbook)")
+            failures.append("aggregate_results")
 
     log("=" * 70)
     if failures:

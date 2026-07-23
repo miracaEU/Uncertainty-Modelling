@@ -32,7 +32,18 @@ def set_scenario_override(scenario: str | None) -> None:
         os.environ["MIRACA_SCENARIO"] = scenario.lower()
 
 
-def load_config(config_path: Path = CONFIG_PATH) -> dict:
+def load_config(config_path: Path | None = None) -> dict:
+    """Load config.yml (or whatever MIRACA_CONFIG points at).
+
+    The MIRACA_CONFIG env var selects an alternative config file, so a cluster
+    run can use Linux data paths (config.cluster.yml) without editing - and
+    without creating a git diff in - the tracked config.yml. Like the
+    country/asset/scenario overrides it is read from the environment, so it
+    survives into subprocesses and multiprocessing workers.
+    """
+    if config_path is None:
+        env_cfg = os.environ.get("MIRACA_CONFIG")
+        config_path = Path(env_cfg) if env_cfg else CONFIG_PATH
     with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 

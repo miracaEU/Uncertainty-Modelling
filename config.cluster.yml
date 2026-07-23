@@ -1,0 +1,65 @@
+# Cluster (Linux) configuration for the MIRACA uncertainty-modeling pipeline.
+#
+# Identical to config.yml except that every input path is the Linux form of the
+# same SCISTOR storage: the S:\ drive on Windows is /scistor/ivm on the cluster,
+# so "S:/eks510/..." becomes "/scistor/ivm/eks510/...". The shared input data
+# (exposure, hazards, curve/fragility tables) stays under eks510; only the repo
+# and its outputs live in your own folder.
+#
+# Select it with the MIRACA_CONFIG environment variable, so the tracked
+# config.yml stays untouched (no git diff, nothing to un-stage before a pull):
+#
+#   export MIRACA_CONFIG=/scistor/ivm/yma794/Uncertainty-Modelling/config.cluster.yml
+#
+# submit_miraca_uncertainty_study.sh exports this for you.
+
+# --- case study selection (overridden per job by --country/--asset) ----------
+country: LUX          # ISO3 code, matches exposure file naming
+asset_type: roads     # matches exposure file naming + curve/maxdam tables
+
+# --- input data --------------------------------------------------------------
+exposure_dir: "/scistor/ivm/eks510/MIRACA_EXPOSURE"
+vulnerability_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/Table_D2_Hazard_Fragility_and_Vulnerability_Curves_V1.1.0_conversions.xlsx"
+fragility_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/EQ_fragility.xlsx"
+protection_standard_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/floodProtection_v2019_paper3.tif"
+basin_data_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_return_periods.parquet"
+
+# --- hazards -----------------------------------------------------------------
+# Which hazards apply to a given asset/country is decided by
+# src/curves.py::applicable_hazards, NOT here - listing a hazard here only says
+# where its data lives (windstorm is skipped for roads/ports, coastal for
+# landlocked countries, automatically).
+hazards:
+  river:
+    dir: "/scistor/ivm/eks510/Hazard_data/River_floods"
+    filename_template: "Europe_RP{rp}_filled_depth.tif"
+    return_periods: [10, 20, 30, 40, 50, 75, 100, 200, 500]
+  earthquake:
+    dir: "/scistor/ivm/eks510/Hazard_data/Earthquakes"
+    filename_template: "PGA_1_{rp}_vs30.tif"
+    return_periods: [50, 101, 476, 976, 2500, 5000]
+  windstorm:
+    dir: "/scistor/ivm/eks510/Hazard_data/Windstorms"
+    filename_template: "{rp}yr_wisc_nao_0.59.tif"
+    return_periods: [5, 10, 25, 50, 100, 250, 500]
+  # Coastal flood is streamed from the remote CoCLiCo STAC catalogue, so it has
+  # no dir/filename_template - it needs pystac-client/pystac installed AND
+  # outbound network access on the compute node at preprocessing time.
+  # If the compute nodes have no outbound network, drop this whole `coastal:`
+  # block and the pipeline runs river/earthquake/windstorm only.
+  coastal:
+    kind: stac
+    stac_url: "https://storage.googleapis.com/coclico-data-public/coclico/coclico-stac/catalog.json"
+    collection: "cfhp_all"
+    time_horizon: "2010"
+    climate_scenario: "None"
+    defence: "LOW_DEFENDED"
+    return_periods: [10, 25, 50, 100, 250, 500, 1000]
+    coastpros_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/COASTPROS-EU.xlsx"
+    nuts2_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2024_3035.parquet"
+    protection_sheet: "COASTPROS-EU"
+    protection_rp_col: "MODELLED RETURN PERIOD"
+
+# --- outputs (relative to the repo folder) -----------------------------------
+intermediate_dir: "data/intermediate"
+results_dir: "results"
