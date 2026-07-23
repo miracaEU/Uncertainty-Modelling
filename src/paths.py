@@ -72,6 +72,25 @@ def load_config(config_path: Path = CONFIG_PATH) -> dict:
     return cfg
 
 
+def country_results_dir(cfg: dict, create: bool = True) -> Path:
+    """Per-country results subfolder, e.g. results/LUX/.
+
+    All per-combination Stage-2 outputs live under here - the experiment
+    archives (*.tar.gz), the per-combo Sobol/feature-score CSVs, and that
+    country's own figures/ - so results/ stays navigable when the study spans
+    dozens of countries. Cross-country artefacts stay at the results_dir root:
+    the aggregated workbook, the global run_study / sobol_convergence logs, the
+    compare_countries outputs, and the shared vulnerability-curve figures.
+
+    Pass create=False in read-only/skip checks so a dry run doesn't litter
+    empty country folders.
+    """
+    d = cfg["results_dir"] / cfg["country"]
+    if create:
+        d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def base_stem(cfg: dict) -> str:
     """Hazard- and scenario-independent filename stem, e.g. 'LUX_roads'.
 

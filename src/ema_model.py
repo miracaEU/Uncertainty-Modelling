@@ -38,11 +38,17 @@ The eight scenarios:
     earthquake            Earthquake only (eq curve group(s), cost_level,
                           pga_scale, aggregation). No protection standard.
 
-  Windstorm (one):
+  Windstorm (two - two protection treatments):
     windstorm             Windstorm only (wind curve group(s), cost_level,
-                          gust_scale, aggregation). Fixed RP50 design standard.
-                          Only defined for assets that support windstorm
-                          (airports/education/power - not roads).
+                          gust_scale, aggregation). Fixed RP50 design standard
+                          (WIND_DESIGN_RP, not sampled).
+    windstorm_absprot     Same as windstorm, but the design standard is sampled
+                          as an ABSOLUTE return period (protection_abs_rp in
+                          [25, 200] years) applied uniformly to every feature,
+                          replacing the fixed RP50 - isolating the sensitivity
+                          to the assumed wind design standard.
+                          Both only defined for assets that support windstorm
+                          (not roads/ports).
 
 Each scenario maps to exactly one hazard (SCENARIO_HAZARD); a scenario only
 applies to an asset when that hazard applies to the asset
@@ -77,7 +83,19 @@ SCENARIOS = [
     "coastal_absprot", "coastal_absprot_ds",
     "coastal_noprot", "coastal_noprot_ds",
     "earthquake",
+    "windstorm", "windstorm_absprot",
+]
+
+# The subset the study orchestrator runs by default. All 14 scenarios above
+# remain available via `run_study.py --scenarios ...`; this just narrows the
+# no-argument run. For both floods we keep only the absolute-protection +
+# multiplicative-depth (_ds) variant, plus the two single-hazard scenarios.
+DEFAULT_SCENARIOS = [
+    "flood_absprot_ds",
+    "coastal_absprot_ds",
+    "earthquake",
     "windstorm",
+    "windstorm_absprot",
 ]
 
 # Which single hazard each scenario computes. Used to decide applicability
@@ -91,7 +109,7 @@ SCENARIO_HAZARD = {
     "coastal_absprot": "coastal", "coastal_absprot_ds": "coastal",
     "coastal_noprot": "coastal", "coastal_noprot_ds": "coastal",
     "earthquake": "earthquake",
-    "windstorm": "windstorm",
+    "windstorm": "windstorm", "windstorm_absprot": "windstorm",
 }
 
 # The protection treatment (scale/abs/fixed) and depth-error treatment
@@ -257,11 +275,11 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
     return model
 
 
-def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
+def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> Model:
     if not asset_cfg.supports_windstorm:
         raise ValueError(
             f"Asset '{cfg['asset_type']}' does not support windstorm "
-            "(no non-degenerate wind curve group); scenario 'windstorm' is not applicable."
+            f"(no non-degenerate wind curve group); scenario '{scenario}' is not applicable."
         )
     uncertainties: list = []
     constants: list = []
@@ -271,6 +289,11 @@ def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
         RealParameter("gust_scale", 0.9, 1.1),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]
+    # 'windstorm' holds the design standard fixed at RP50 (WIND_DESIGN_RP inside
+    # compute_risk); 'windstorm_absprot' samples it as an absolute return period
+    # applied uniformly to every feature (analogous to flood/coastal absprot).
+    if scenario == "windstorm_absprot":
+        uncertainties.append(RealParameter("protection_abs_rp", 25.0, 200.0))
     constants += [
         Constant("include_river", False),
         Constant("include_earthquake", False),
@@ -282,7 +305,7 @@ def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
          "exposed_qty_RP100_windstorm"]
         + _class_outcomes(asset_cfg)
     )
-    model = Model(f"{cfg['country']}_{cfg['asset_type']}_windstorm", function=flood_risk_model)
+    model = Model(f"{cfg['country']}_{cfg['asset_type']}_{scenario}", function=flood_risk_model)
     model.uncertainties = uncertainties
     model.constants = constants
     model.outcomes = [ScalarOutcome(name) for name in outcomes]
@@ -301,6 +324,6 @@ def build_model(cfg: dict | None = None) -> Model:
         return _build_water_model(cfg, asset_cfg, scenario, hazard="coastal")
     if scenario == "earthquake":
         return _build_earthquake_model(cfg, asset_cfg)
-    if scenario == "windstorm":
-        return _build_windstorm_model(cfg, asset_cfg)
+    if scenario in ("windstorm", "windstorm_absprot"):
+        return _build_windstorm_model(cfg, asset_cfg, scenario)
     raise ValueError(f"Unknown scenario '{scenario}'; choose from {SCENARIOS}")

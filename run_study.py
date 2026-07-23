@@ -3,12 +3,14 @@
 
 For every (asset, country) pair, in order:
   1. Stage 1 once:  preprocess (every hazard applicable to the asset) + validate.
-  2. For every scenario applicable to that asset (see src/ema_model.py -
-     six single-hazard flood scenarios, one earthquake, one windstorm;
-     windstorm is skipped for roads automatically): an LHS run (fixed N)
-     followed by src.analyze, then an ADAPTIVE Sobol search (src.adaptive_sobol
-     doubles N from --sobol-min-n until the confidence-interval criterion is
-     met or --sobol-max-n is reached) followed by src.analyze_sobol.
+  2. For every scenario applicable to that asset (see src/ema_model.py;
+     windstorm is skipped for roads/ports and coastal for landlocked
+     countries automatically): an LHS run (fixed N) followed by src.analyze,
+     then a Sobol run followed by src.analyze_sobol. Sobol uses a fixed
+     base sample size N (--sobol-n, default 8192) for every combination by
+     default, for consistency; pass --adaptive to instead double N from
+     --sobol-min-n up to --sobol-max-n, stopping early once the
+     confidence-interval criterion (--sobol-threshold) is met.
   3. Once every combination is done (or the run is aborted/fails), the
      aggregated summary workbook (MIRACA_uncertainty_study_summary.xlsx, in
      the project root - see src/aggregate_results.py) is regenerated from
@@ -48,7 +50,8 @@ Usage:
     python run_study.py --assets power --countries LUX --workers 8
     python run_study.py --assets power --countries LUX --scenarios windstorm \\
         --workers 16                                        # one SLURM array task
-    python run_study.py --sobol-min-n 128 --sobol-max-n 8192 --sobol-threshold 0.2
+    python run_study.py --sobol-n 8192                       # fixed N=8192 (default)
+    python run_study.py --adaptive --sobol-min-n 128 --sobol-max-n 8192 --sobol-threshold 0.2
 """
 
 import argparse
@@ -61,7 +64,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from src.curves import ASSET_CONFIGS, applicable_hazards  # noqa: E402
-from src.ema_model import SCENARIOS, scenario_applies  # noqa: E402
+from src.ema_model import DEFAULT_SCENARIOS, SCENARIOS, scenario_applies  # noqa: E402
 from src.paths import base_stem, load_config, set_asset_override, set_country_override, set_scenario_override  # noqa: E402
 
 # All registered asset classes, so a no-argument run covers every asset the
@@ -119,22 +122,22 @@ def validated_marker(cfg: dict) -> Path:
 
 
 def experiments_exist(cfg: dict, scenario: str, sampler: str, n: int) -> bool:
-    from src.paths import result_stem
+    from src.paths import country_results_dir, result_stem
 
     set_scenario_override(scenario)
     cfg2 = load_config()
     pattern = f"experiments_{result_stem(cfg2)}_{sampler}_n{n}_*.tar.gz"
-    return any(cfg["results_dir"].glob(pattern))
+    return any(country_results_dir(cfg2, create=False).glob(pattern))
 
 
 def analysis_exists(cfg: dict, scenario: str, kind: str) -> bool:
-    from src.paths import result_stem
+    from src.paths import country_results_dir, result_stem
 
     set_scenario_override(scenario)
     cfg2 = load_config()
     prefix = result_stem(cfg2)
     name = f"{prefix}_feature_scores.csv" if kind == "lhs" else f"{prefix}_sobol_indices.csv"
-    return (cfg["results_dir"] / name).exists()
+    return (country_results_dir(cfg2, create=False) / name).exists()
 
 
 def adaptive_done(cfg: dict, scenario: str) -> bool:
@@ -167,12 +170,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--assets", nargs="+", default=DEFAULT_ASSETS, choices=DEFAULT_ASSETS)
     parser.add_argument("--countries", nargs="+", default=DEFAULT_COUNTRIES)
-    parser.add_argument("--scenarios", nargs="+", default=SCENARIOS, choices=SCENARIOS)
+    parser.add_argument("--scenarios", nargs="+", default=DEFAULT_SCENARIOS, choices=SCENARIOS,
+                        help="scenarios to run (default: the absolute-protection + multiplicative-depth "
+                             "flood/coastal variants, earthquake, windstorm; pass names to run others, "
+                             "or all 14 explicitly)")
     parser.add_argument("--lhs-n", type=int, default=3000, help="LHS experiment count")
-    parser.add_argument("--sobol-min-n", type=int, default=128, help="adaptive Sobol starting base N (power of 2)")
-    parser.add_argument("--sobol-max-n", type=int, default=8192, help="adaptive Sobol maximum base N (power of 2)")
+    parser.add_argument("--sobol-n", type=int, default=8192,
+                        help="fixed Sobol base sample size N used for EVERY combination (default; power of 2). "
+                             "Ignored when --adaptive is set.")
+    parser.add_argument("--adaptive", action="store_true",
+                        help="instead of a fixed N, adaptively double N from --sobol-min-n up to --sobol-max-n, "
+                             "stopping once --sobol-threshold is met (variable N per combination)")
+    parser.add_argument("--sobol-min-n", type=int, default=128, help="adaptive mode: starting base N (power of 2)")
+    parser.add_argument("--sobol-max-n", type=int, default=8192, help="adaptive mode: maximum base N (power of 2)")
     parser.add_argument("--sobol-threshold", type=float, default=0.2,
-                        help="adaptive Sobol stop threshold: max ST_conf/ST among relevant factors")
+                        help="adaptive mode: stop once max ST_conf/ST among relevant factors < this")
     parser.add_argument("--workers", type=int, default=4, help="parallel worker processes per experiment run")
     parser.add_argument("--python", default=sys.executable, help="Python interpreter to invoke for every stage")
     parser.add_argument("--force", action="store_true", help="re-run steps even if their output already exists")
@@ -286,17 +298,26 @@ def main() -> None:
                     log("Aborting (--fail-fast).")
                     _finalize(args, failures)
 
-            # 2. Adaptive Sobol (N doubled from --sobol-min-n until the CI
-            #    criterion is met or --sobol-max-n is reached). Replaces the
-            #    old fixed-N Sobol run; src.adaptive_sobol writes every N's
-            #    archive plus a convergence-log record, then we analyze the
-            #    highest-N archive it produced.
+            # 2. Sobol. By default a fixed N (--sobol-n, 8192) for every
+            #    combination, for consistency. With --adaptive, N is instead
+            #    doubled from --sobol-min-n up to --sobol-max-n, stopping once
+            #    the CI criterion is met. Both go through src.adaptive_sobol
+            #    (fixed = a min==max single round); it writes each N's archive
+            #    plus a convergence-log record, then we analyze the highest-N
+            #    archive it produced.
+            if args.adaptive:
+                sobol_min, sobol_max = args.sobol_min_n, args.sobol_max_n
+                mode_label = "adaptive"
+            else:
+                sobol_min = sobol_max = args.sobol_n
+                mode_label = f"fixed N={args.sobol_n}"
+
             if not args.force and adaptive_done(cfg, scenario):
-                log("  sobol (adaptive): SKIP (convergence record already exists)")
+                log(f"  sobol ({mode_label}): SKIP (convergence record already exists)")
             else:
                 extra = [
                     "--country", country, "--asset", asset, "--scenario", scenario,
-                    "--min-n", str(args.sobol_min_n), "--max-n", str(args.sobol_max_n),
+                    "--min-n", str(sobol_min), "--max-n", str(sobol_max),
                     "--threshold", str(args.sobol_threshold), "--workers", str(args.workers),
                 ]
                 if args.force:
@@ -307,13 +328,13 @@ def main() -> None:
                     ok=ok, elapsed_s=round(elapsed, 1),
                 )
                 if not ok:
-                    log(f"  sobol (adaptive): FAILED after {elapsed:.0f}s")
+                    log(f"  sobol ({mode_label}): FAILED after {elapsed:.0f}s")
                     failures.append(f"{combo}/{scenario} adaptive_sobol")
                     if args.fail_fast:
                         log("Aborting (--fail-fast).")
                         _finalize(args, failures)
                     continue
-                log(f"  sobol (adaptive): done in {elapsed:.0f}s")
+                log(f"  sobol ({mode_label}): done in {elapsed:.0f}s")
 
             ok, elapsed = run_step(
                 args.python, "src.analyze_sobol",

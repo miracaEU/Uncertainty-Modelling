@@ -33,7 +33,14 @@ from ema_workbench.analysis import feature_scoring
 from matplotlib.colors import LinearSegmentedColormap
 
 from .ema_model import SCENARIOS
-from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
+from .paths import (
+    country_results_dir,
+    load_config,
+    result_stem,
+    set_asset_override,
+    set_country_override,
+    set_scenario_override,
+)
 
 # --- palette (dataviz reference instance, light mode) ---
 SURFACE = "#fcfcfb"
@@ -82,9 +89,10 @@ def detect_factors(experiments: pd.DataFrame) -> list[str]:
 
 def newest_results(cfg: dict) -> Path:
     pattern = f"experiments_{result_stem(cfg)}_lhs_*.tar.gz"
-    files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
+    cdir = country_results_dir(cfg)
+    files = sorted(cdir.glob(pattern), key=lambda p: p.stat().st_mtime)
     if not files:
-        raise FileNotFoundError(f"No {pattern} in {cfg['results_dir']}")
+        raise FileNotFoundError(f"No {pattern} in {cdir}")
     return files[-1]
 
 
@@ -259,11 +267,12 @@ def main() -> None:
     factors = detect_factors(experiments)
     print(f"Detected factors: {factors}")
 
-    fig_dir = cfg["results_dir"] / "figures"
-    fig_dir.mkdir(exist_ok=True)
+    cdir = country_results_dir(cfg)
+    fig_dir = cdir / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
 
     scores = plot_feature_scores(experiments, outcomes, factors, fig_dir, prefix)
-    scores.to_csv(cfg["results_dir"] / f"{prefix}_feature_scores.csv")
+    scores.to_csv(cdir / f"{prefix}_feature_scores.csv")
 
     if "warming" in factors and experiments["warming"].nunique() > 1:
         plot_ead_by_warming(experiments, outcomes, fig_dir, prefix)

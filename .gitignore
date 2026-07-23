@@ -2,7 +2,9 @@
 data/intermediate/
 
 # Raw EMA Workbench experiment archives (regenerable: python -m src.run_experiments ...)
+# Now written into per-country subfolders (results/<ISO3>/), so match at any depth.
 # Summary CSVs and figures in results/ are kept.
+results/**/*.tar.gz
 results/*.tar.gz
 
 # Python

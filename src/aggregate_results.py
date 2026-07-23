@@ -217,10 +217,14 @@ SCENARIO_DESCRIPTIONS = [
                      "countries only - absent for e.g. LUX."),
     ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
                     "curve choice(s), cost_level, pga_scale, aggregation."),
-    ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826). Factors: "
-                   "wind curve choice(s), cost_level, gust_scale, aggregation. Only defined for "
-                   "airports/education/power - roads carry no windstorm damage (the roads wind "
+    ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826), not sampled. "
+                   "Factors: wind curve choice(s), cost_level, gust_scale, aggregation. Only defined "
+                   "for wind-damaging assets - roads/ports carry no windstorm damage (their only wind "
                    "curve is identically zero) so the scenario is skipped for them."),
+    ("windstorm_absprot", "As windstorm, but the design standard is sampled as an ABSOLUTE return "
+                           "period (protection_abs_rp, 25-200 years) applied uniformly to every "
+                           "feature, replacing the fixed RP50 - isolates the sensitivity to the "
+                           "assumed wind design standard."),
 ]
 
 ASSET_DESCRIPTIONS = [
@@ -229,6 +233,12 @@ ASSET_DESCRIPTIONS = [
     ("education", "Schools, kindergartens, colleges, universities, libraries (polygon building footprints)."),
     ("power", "Mixed geometry: lines/cables, point towers/poles/substations/transformers, "
               "polygon plants/generators/substations."),
+    ("rail", "Rail and narrow-gauge track (line geometry)."),
+    ("telecom", "Masts, towers, communications towers (point geometry)."),
+    ("healthcare", "Hospitals and clinics (polygon building footprints)."),
+    ("gas", "Gas pipelines (line), storage tanks and gasometers (polygon)."),
+    ("oil", "Oil pipelines (line) and storage tanks (polygon)."),
+    ("ports", "Ports and harbours (polygon). No windstorm (its only wind curve is zero)."),
 ]
 
 FACTOR_DESCRIPTIONS = [
@@ -239,8 +249,10 @@ FACTOR_DESCRIPTIONS = [
                    "both hazards and every object type in the asset."),
     ("protection_scale", "Multiplier on the FLOPROS flood protection design standard, [0, 2]. "
                           "0 = no protection, 1 = FLOPROS estimate, 2 = double. baseline scenario only."),
-    ("protection_abs_rp", "Absolute flood protection design standard in years, [5, 200], applied "
-                           "uniformly regardless of the FLOPROS baseline. abs_protection scenario only."),
+    ("protection_abs_rp", "Absolute protection design standard in years, applied uniformly to every "
+                           "feature regardless of its baseline. Flood/coastal '_absprot' scenarios "
+                           "sample [5, 200] (replacing FLOPROS/COASTPROS); the 'windstorm_absprot' "
+                           "scenario samples [25, 200] (replacing the fixed RP50)."),
     ("depth_offset", "Additive bias on river flood water depth, [-0.5, 0.5] metres. Can only shrink "
                       "or intensify damage within the already-mapped flood extent, not expand it. "
                       "Used by the non-'_ds' flood scenarios."),
@@ -494,7 +506,9 @@ def parse_result_filename(path: Path, suffix: str) -> tuple[str, str, str] | Non
 
 def load_all_sobol(results_dir: Path) -> pd.DataFrame:
     frames = []
-    for path in sorted(results_dir.glob("*_sobol_indices.csv")):
+    # rglob: per-combo CSVs now live in per-country subfolders (results/<ISO3>/),
+    # but still pick up any legacy files written flat into results/.
+    for path in sorted(results_dir.rglob("*_sobol_indices.csv")):
         parsed = parse_result_filename(path, "_sobol_indices.csv")
         if parsed is None:
             continue
@@ -520,7 +534,7 @@ def load_all_sobol(results_dir: Path) -> pd.DataFrame:
 
 def load_all_feature_scores(results_dir: Path) -> pd.DataFrame:
     frames = []
-    for path in sorted(results_dir.glob("*_feature_scores.csv")):
+    for path in sorted(results_dir.rglob("*_feature_scores.csv")):
         parsed = parse_result_filename(path, "_feature_scores.csv")
         if parsed is None:
             continue
@@ -818,7 +832,7 @@ def find_sobol_rerun_pairs(results_dir: Path) -> list[dict]:
     scenario, not just the LUX-only batch that motivated this feature.
     """
     groups: dict[tuple[str, str, str], dict[int, Path]] = {}
-    for path in results_dir.glob("experiments_*_sobol_n*_*.tar.gz"):
+    for path in results_dir.rglob("experiments_*_sobol_n*_*.tar.gz"):
         m = ARCHIVE_RE.match(path.name)
         if not m:
             continue

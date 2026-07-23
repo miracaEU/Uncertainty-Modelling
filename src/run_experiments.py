@@ -13,9 +13,10 @@ the actual number of model runs is N * (2k + 2), k = number of uncertainty
 factors (varies by scenario - see ema_model.py). Analyze Sobol results with
 `python -m src.analyze_sobol`.
 
-Results are saved as a tar.gz, named so that no (country, asset, scenario,
-sampler) combination can ever overwrite another - re-running the same combo
-adds a new timestamped file rather than replacing the old one.
+Results are saved as a tar.gz into a per-country subfolder (results/<ISO3>/),
+named so that no (country, asset, scenario, sampler) combination can ever
+overwrite another - re-running the same combo adds a new timestamped file
+rather than replacing the old one.
 """
 
 import argparse
@@ -30,7 +31,14 @@ from ema_workbench import (
 )
 
 from .ema_model import SCENARIOS, build_model
-from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
+from .paths import (
+    country_results_dir,
+    load_config,
+    result_stem,
+    set_asset_override,
+    set_country_override,
+    set_scenario_override,
+)
 
 
 def main() -> None:
@@ -73,7 +81,7 @@ def main() -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = f"_{args.tag}" if args.tag else ""
     out = (
-        cfg["results_dir"]
+        country_results_dir(cfg)
         / f"experiments_{result_stem(cfg)}_{args.sampler}_n{args.n}{tag}_{stamp}.tar.gz"
     )
     save_results(results, out)

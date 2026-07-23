@@ -60,8 +60,10 @@ Uncertainty factors (declared per-scenario in src/ema_model.py):
     include_river / include_earthquake / include_windstorm / include_coastal
                       bool - which hazard to compute at all (each scenario
                       computes exactly one, skipping the others' numpy work
-                      entirely). Windstorm uses a fixed RP50 design-standard
-                      protection cutoff (WIND_DESIGN_RP) and no climate shift.
+                      entirely). Windstorm uses a uniform design-standard
+                      protection cutoff - the fixed RP50 (WIND_DESIGN_RP) by
+                      default, or protection_abs_rp when a scenario samples it -
+                      and no climate shift.
                       Coastal reuses the river flood curves and the
                       depth_offset/depth_scale + protection_scale/
                       protection_abs_rp factors, but against its own coastal
@@ -477,9 +479,12 @@ def compute_risk(
         )
         damage_wind = dmg_qty_w * cost[:, None]
         idx100_w = int(np.argmin(np.abs(hz_w.rps - 100)))
-        # Fixed RP50 design standard for every feature (no per-feature
-        # protection raster and no climate shift for wind).
-        prot_wind = np.full(data.n_seg, WIND_DESIGN_RP, dtype=np.float64)
+        # Uniform design standard for every feature (no per-feature protection
+        # raster and no climate shift for wind). Defaults to the fixed RP50
+        # (WIND_DESIGN_RP); a scenario that samples the design standard passes
+        # protection_abs_rp to override it (analogous to flood/coastal).
+        wind_prot_rp = WIND_DESIGN_RP if protection_abs_rp is None else float(protection_abs_rp)
+        prot_wind = np.full(data.n_seg, wind_prot_rp, dtype=np.float64)
         ead_wind = _integrate_ead(
             damage_wind, np.broadcast_to(hz_w.rps, damage_wind.shape), prot_wind
         )

@@ -1,16 +1,19 @@
 """Vulnerability/fragility curves and maximum damage values, per asset type.
 
 Curve IDs and max-damage values are transcribed from the MIRACA AssetRisk_PanEU
-pipeline (src/constants.py there: DICT_CIS_VULNERABILITY_FLOOD,
-DICT_CIS_VULNERABILITY_EARTHQUAKE, INFRASTRUCTURE_DAMAGE_VALUES), restricted
-to object types actually observed in the MIRACA_EXPOSURE parquet files for
-each asset. Curve databases: MIRACA vulnerability table (Nirandjan et al.),
-sheet ``F_Vuln_Depth`` (damage fraction 0-1 vs depth in m) and the earthquake
-fragility file, sheet ``E_Frag_PGA`` (P(damage state exceedance) vs PGA in g).
+pipeline (src/constants.py there: DICT_CIS_VULNERABILITY_FLOOD /
+_EARTHQUAKE / _WIND, INFRASTRUCTURE_DAMAGE_VALUES), restricted to the object
+types actually observed in the MIRACA_EXPOSURE parquet files for each asset.
+Ten asset types are covered: roads, airports, education, power, rail, telecom,
+healthcare, gas, oil, ports. Curve databases: MIRACA vulnerability table
+(Nirandjan et al.), sheets ``F_Vuln_Depth`` (flood, damage fraction 0-1 vs
+depth in m) and ``W_Vuln_V10m_3sec`` (windstorm, vs 3-sec gust in m/s), and the
+earthquake fragility file, sheet ``E_Frag_PGA`` (P(damage state exceedance)
+vs PGA in g). Coastal flood reuses the flood curves (see risk_model.py).
 
-Windstorm is not modelled: the roads wind curve (W7.2) is identically zero in
-the database, and the other three asset types here are not currently wired
-into a windstorm hazard block either.
+Windstorm applies only to assets with a non-degenerate wind curve set
+(everything except roads and ports - their sole wind curve, W7.2, is
+identically zero); see supports_windstorm / applicable_hazards below.
 
 Design standard: within one asset type, several object types often share the
 exact same curve list (e.g. every road class below "primary" uses F7.8/F7.9).
@@ -75,6 +78,31 @@ FLOOD_CURVES_RAW = {
         "switch": ["F2.1", "F2.2", "F2.3"],
         "catenary_mast": ["F10.1"],
     },
+    "rail": {
+        "rail": ["F8.1", "F8.2", "F8.3", "F8.4", "F8.5", "F8.6", "F8.7"],
+        "narrow_gauge": ["F8.1", "F8.2", "F8.3", "F8.4", "F8.5", "F8.6", "F8.7"],
+    },
+    "telecom": {
+        "mast": ["F10.1"],
+        "tower": ["F6.1", "F6.2"],
+        "communications_tower": ["F6.1", "F6.2"],
+    },
+    "healthcare": {
+        t: ["F21.6", "F21.8", "F21.9", "F21.12"] for t in ("hospital", "clinic")
+    },
+    "gas": {
+        "pipeline": ["F16.1", "F16.2", "F16.3"],
+        "storage_tank": ["F2.1", "F2.2", "F2.3"],
+        "gasometer": ["F13.1", "F13.2", "F13.3", "F13.5"],
+    },
+    "oil": {
+        "pipeline": ["F16.1", "F16.2", "F16.3"],
+        "storage_tank": ["F2.1", "F2.2", "F2.3"],
+    },
+    "ports": {
+        "port": ["F9.1"],
+        "harbour": ["F9.1"],
+    },
 }
 
 _EQ_ROAD_CURVES = ["E7.2", "E7.3", "E7.4", "E7.5", "E7.6", "E7.7", "E7.8", "E7.9", "E7.10"]
@@ -90,6 +118,13 @@ _EQ_SUB_CURVES = ["E2.1", "E2.2", "E2.3", "E2.4", "E2.5", "E2.6", "E2.7", "E2.8"
 _EQ_GEN_CURVES = ["E1.1", "E1.2", "E1.3", "E1.4", "E1.5", "E1.6", "E1.7", "E1.8"]
 _EQ_LINE_CURVES = ["E6.1", "E6.2", "E6.3", "E6.4"]
 _EQ_POLE_CURVES = ["E4.1", "E4.2", "E4.3", "E4.4"]
+_EQ_RAIL_CURVES = [
+    "E8.1", "E8.2", "E8.3", "E8.4", "E8.5", "E8.6", "E8.7", "E8.8", "E8.9", "E8.10",
+    "E8.11", "E8.12", "E8.13", "E8.14", "E8.15", "E8.16", "E8.17", "E8.18", "E8.19", "E8.20",
+]
+_EQ_HEALTH_CURVES = [
+    "E21.67-C", "E21.68-C", "E21.69-C", "E21.70-C", "E21.71-C", "E21.72-C",
+]
 
 EQ_CURVES_RAW = {
     "roads": {t: _EQ_ROAD_CURVES for t in _ROAD_TYPES_HIGH + _ROAD_TYPES_LOW},
@@ -118,6 +153,31 @@ EQ_CURVES_RAW = {
         "switch": _EQ_SUB_CURVES,
         "catenary_mast": _EQ_POLE_CURVES,
     },
+    "rail": {
+        "rail": _EQ_RAIL_CURVES,
+        "narrow_gauge": _EQ_RAIL_CURVES,
+    },
+    "telecom": {
+        "mast": ["E11.1"],
+        "tower": ["E3.1", "E3.2"],
+        "communications_tower": ["E3.1", "E3.2"],
+    },
+    "healthcare": {
+        t: _EQ_HEALTH_CURVES for t in ("hospital", "clinic")
+    },
+    "gas": {
+        "pipeline": _EQ_LINE_CURVES,
+        "storage_tank": _EQ_GEN_CURVES,
+        "gasometer": _EQ_GEN_CURVES,
+    },
+    "oil": {
+        "pipeline": _EQ_LINE_CURVES,
+        "storage_tank": _EQ_GEN_CURVES,
+    },
+    "ports": {
+        "port": ["E9.2", "E9.3", "E9.4"],
+        "harbour": ["E9.2", "E9.3", "E9.4"],
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -144,6 +204,10 @@ _WIND_TOWER_CURVES = [
 _WIND_POLE_CURVES = ["W4.33", "W4.34", "W4.35", "W4.36", "W4.37"]
 _WIND_LINE_CURVES = ["W6.1", "W6.2", "W6.3"]
 _WIND_BUILDING_CURVES = ["W21.11", "W21.12", "W21.13", "W21.14"]
+_WIND_COMMS_TOWER_CURVES = ["W10.3", "W10.4", "W10.5", "W10.6", "W10.7", "W10.8", "W10.9"]
+# Rail has no dedicated wind curve; the reference uses power-tower damage curves
+# (150/120/180 km/h design speeds) as a per-track catenary-mast proxy.
+_WIND_RAIL_CURVES = ["W3.9", "W3.6", "W3.12"]
 
 WIND_CURVES_RAW = {
     "airports": {
@@ -172,6 +236,29 @@ WIND_CURVES_RAW = {
         "terminal": [WIND_ZERO_CURVE],
         "switch": [WIND_ZERO_CURVE],
     },
+    "rail": {
+        "rail": _WIND_RAIL_CURVES,
+        "narrow_gauge": _WIND_RAIL_CURVES,
+    },
+    "telecom": {
+        "mast": _WIND_TOWER_CURVES,
+        "tower": _WIND_TOWER_CURVES,
+        "communications_tower": _WIND_COMMS_TOWER_CURVES,
+    },
+    "healthcare": {
+        t: _WIND_BUILDING_CURVES for t in ("hospital", "clinic")
+    },
+    "gas": {
+        "gasometer": _WIND_BUILDING_CURVES,
+        "storage_tank": _WIND_BUILDING_CURVES,
+        "pipeline": [WIND_ZERO_CURVE],  # buried -> no wind damage
+    },
+    "oil": {
+        "storage_tank": _WIND_BUILDING_CURVES,
+        "pipeline": [WIND_ZERO_CURVE],  # buried -> no wind damage
+    },
+    # ports intentionally omitted: its only wind curve is the zero W7.2
+    # (port/harbour), so ports carries no windstorm damage (like roads).
 }
 
 MAXDAM_RAW = {
@@ -208,6 +295,29 @@ MAXDAM_RAW = {
         "terminal": [1299, 1904, 6349],      # EUR/unit (point)
         "switch": [1299, 1904, 6349],        # EUR/unit (point)
         "catenary_mast": [67506, 76630, 111998],  # EUR/unit (point)
+    },
+    "rail": {  # EUR/m (line)
+        "rail": [491, 2858, 14186], "narrow_gauge": [491, 2858, 14186],
+    },
+    "telecom": {  # EUR/unit (point)
+        "mast": [67506, 76630, 111998],
+        "tower": [139610, 152468, 229376],
+        "communications_tower": [139610, 152468, 229376],
+    },
+    "healthcare": {  # EUR/m2 (polygon, building footprint)
+        "hospital": [591, 1294, 2227], "clinic": [591, 1294, 2227],
+    },
+    "gas": {
+        "pipeline": [71, 102, 103],          # EUR/m (line)
+        "storage_tank": [157, 4181, 7840],   # EUR/m2 (polygon)
+        "gasometer": [558, 14885, 27910],    # EUR/m2 (polygon)
+    },
+    "oil": {
+        "pipeline": [71, 102, 103],          # EUR/m (line)
+        "storage_tank": [157, 4181, 7840],   # EUR/m2 (polygon)
+    },
+    "ports": {  # EUR/m2 (polygon)
+        "port": [113, 135, 165], "harbour": [113, 135, 165],
     },
 }
 

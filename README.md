@@ -237,5 +237,11 @@ src/analyze.py         feature scoring + figures (LHS results), factor set auto-
 src/analyze_sobol.py   Sobol indices (S1/ST) + figure (Sobol results), outcomes auto-detected
 src/compare_countries.py  cross-country Sobol comparison (baseline scenario)
 data/intermediate/     Stage 1 outputs (parquet, regenerable, gitignored)
-results/               experiment archives (.tar.gz, gitignored) + summary CSVs + figures (kept)
+results/               per-country subfolders + cross-country roll-ups:
+  results/<ISO3>/        one folder per country: its experiment archives
+                         (.tar.gz, gitignored), per-combo Sobol/feature CSVs
+                         and figures/ (kept)
+  results/*.jsonl        global run_study / sobol_convergence logs (all countries)
+  results/*.csv, figures/  compare_countries + vulnerability-curve outputs
+  (the aggregated workbook is written to the project root)
 ```

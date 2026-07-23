@@ -30,7 +30,14 @@ from ema_workbench import load_results
 from ema_workbench.em_framework.salib_samplers import get_SALib_problem
 
 from .ema_model import SCENARIOS, build_model
-from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
+from .paths import (
+    country_results_dir,
+    load_config,
+    result_stem,
+    set_asset_override,
+    set_country_override,
+    set_scenario_override,
+)
 
 # palette (dataviz reference instance, light mode)
 SURFACE = "#fcfcfb"
@@ -78,10 +85,11 @@ plt.rcParams.update(
 
 def newest_sobol_results(cfg: dict) -> Path:
     pattern = f"experiments_{result_stem(cfg)}_sobol_*.tar.gz"
-    files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
+    cdir = country_results_dir(cfg)
+    files = sorted(cdir.glob(pattern), key=lambda p: p.stat().st_mtime)
     if not files:
         raise FileNotFoundError(
-            f"No {pattern} in {cfg['results_dir']}. "
+            f"No {pattern} in {cdir}. "
             "Run: python -m src.run_experiments --sampler sobol --n 512"
         )
     return files[-1]
@@ -148,7 +156,8 @@ def main() -> None:
             )
 
     df = pd.DataFrame(rows)
-    csv_path = cfg["results_dir"] / f"{prefix}_sobol_indices.csv"
+    cdir = country_results_dir(cfg)
+    csv_path = cdir / f"{prefix}_sobol_indices.csv"
     df.to_csv(csv_path, index=False)
 
     # --- figure: one panel per outcome, grouped horizontal bars (ST + S1) ---
@@ -184,8 +193,8 @@ def main() -> None:
     for t in leg.get_texts():
         t.set_color(INK_2)
     fig.suptitle(f"Sobol sensitivity indices per outcome ({prefix})", color=INK, fontsize=13)
-    fig_dir = cfg["results_dir"] / "figures"
-    fig_dir.mkdir(exist_ok=True)
+    fig_dir = cdir / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
     fig.savefig(fig_dir / f"{prefix}_sobol_indices.png", dpi=200)
     plt.close(fig)
 

@@ -53,7 +53,14 @@ from ema_workbench.em_framework.salib_samplers import get_SALib_problem
 from SALib.analyze import sobol
 
 from .ema_model import SCENARIOS, build_model
-from .paths import load_config, result_stem, set_asset_override, set_country_override, set_scenario_override
+from .paths import (
+    country_results_dir,
+    load_config,
+    result_stem,
+    set_asset_override,
+    set_country_override,
+    set_scenario_override,
+)
 
 DEFAULT_MIN_N = 128
 DEFAULT_MAX_N = 8192
@@ -75,7 +82,7 @@ def _powers_of_two(min_n: int, max_n: int) -> list[int]:
 
 def _existing_archive(cfg: dict, n: int) -> Path | None:
     pattern = f"experiments_{result_stem(cfg)}_sobol_n{n}_*.tar.gz"
-    files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
+    files = sorted(country_results_dir(cfg).glob(pattern), key=lambda p: p.stat().st_mtime)
     return files[-1] if files else None
 
 
@@ -96,7 +103,7 @@ def _run_or_load(cfg: dict, model, n: int, workers: int, force: bool):
             results = evaluator.perform_experiments(**kwargs)
 
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out = cfg["results_dir"] / f"experiments_{result_stem(cfg)}_sobol_n{n}_{stamp}.tar.gz"
+    out = country_results_dir(cfg) / f"experiments_{result_stem(cfg)}_sobol_n{n}_{stamp}.tar.gz"
     save_results(results, out)
     print(f"  N={n}: saved {out.name}")
     return results

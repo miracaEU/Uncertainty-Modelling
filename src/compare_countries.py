@@ -5,7 +5,8 @@ Reads, for every country that has completed the workflow:
   - {country}_{asset}_{scenario}_sobol_indices.csv  (Sobol ST/S1 per factor per outcome)
   - newest matching LHS results archive              (EAD distributions)
 
-Produces:
+Per-combo inputs are read from the per-country subfolders (results/<ISO3>/);
+the cross-country outputs stay at the results/ root:
   results/{asset}_{scenario}_country_comparison.csv
   results/figures/{asset}_{scenario}_country_comparison_sobol.png  (ST heatmap, factors x countries)
 
@@ -15,6 +16,7 @@ Usage:
 """
 
 import argparse
+from pathlib import Path
 
 import matplotlib
 
@@ -56,13 +58,20 @@ plt.rcParams.update(
 
 
 def find_countries(cfg: dict, asset: str, scenario: str) -> list[str]:
+    # Per-combo CSVs live in per-country subfolders (results/<ISO3>/); rglob
+    # also picks up any legacy files written flat into results/.
     suffix = f"_{asset}_{scenario}_sobol_indices.csv"
-    return sorted(p.name[: -len(suffix)] for p in cfg["results_dir"].glob(f"*{suffix}"))
+    return sorted(p.name[: -len(suffix)] for p in cfg["results_dir"].rglob(f"*{suffix}"))
+
+
+def sobol_csv_path(cfg: dict, country: str, asset: str, scenario: str) -> Path:
+    name = f"{country}_{asset}_{scenario}_sobol_indices.csv"
+    return next(iter(cfg["results_dir"].rglob(name)))
 
 
 def newest_lhs(cfg: dict, country: str, asset: str, scenario: str):
     pattern = f"experiments_{country}_{asset}_{scenario}_lhs_*.tar.gz"
-    files = sorted(cfg["results_dir"].glob(pattern), key=lambda p: p.stat().st_mtime)
+    files = sorted(cfg["results_dir"].rglob(pattern), key=lambda p: p.stat().st_mtime)
     return files[-1] if files else None
 
 
@@ -86,7 +95,7 @@ def main() -> None:
     for iso in countries:
         set_country_override(iso)
         cfg_i = load_config()
-        sob = pd.read_csv(cfg["results_dir"] / f"{iso}_{asset}_{scenario}_sobol_indices.csv")
+        sob = pd.read_csv(sobol_csv_path(cfg, iso, asset, scenario))
         total = sob[sob["outcome"] == "total_EAD_MEUR"].set_index("factor")
         st_rows[iso] = total["ST"]
 
