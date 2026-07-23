@@ -1,0 +1,11 @@
+# Shell scripts always check out with LF endings, on every platform.
+#
+# They are authored on Windows but executed on the Linux cluster, where a CRLF
+# line ending makes bash fail on the very first lines:
+#   set: pipefail: invalid option name
+# because it reads "pipefail\r" as the option. The same applies to the SLURM
+# job scripts these files generate via heredocs.
+*.sh text eol=lf
+
+# Read by Python on the cluster; keep it LF for consistency.
+config.cluster.yml text eol=lf
