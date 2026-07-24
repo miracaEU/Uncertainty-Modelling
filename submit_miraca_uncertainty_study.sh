@@ -84,6 +84,14 @@ else
     SB_ACCOUNT="# (no --account set; export ACCOUNT=... if your cluster needs one)"
 fi
 
+# Cluster modules loaded for the build AND inside every job, so the venv's
+# osgeo/GDAL bindings find libgdal at runtime. Deliberately ONLY gdal - NOT the
+# python module, whose _ctypes is broken here (missing libffi.so.6); uv supplies
+# a self-contained Python instead (see do_setup). Override if your cluster names
+# the module differently: MODULES="gdal/3.6.2" ...
+MODULES=${MODULES:-"gdal/3.6.2"}
+UV_PYTHON=${UV_PYTHON:-3.12}   # uv-managed standalone CPython for the venv
+
 SOBOL_N=${SOBOL_N:-8192}   # fixed base N for every combination
 LHS_N=${LHS_N:-3000}
 
@@ -195,7 +203,7 @@ submit_combo() {
     # ---- Stage 1: preprocess (1 CPU, high memory) ----------------------------
     local jid_prep
     jid_prep=$(sbatch --parsable <<SLURM
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=prep_${label}
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -209,6 +217,7 @@ set -euo pipefail
 export MIRACA_CONFIG=${MIRACA_CONFIG}
 # Coastal hazard maps are streamed from the CoCLiCo STAC catalogue over HTTPS.
 export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+module load ${MODULES}   # libgdal on LD_LIBRARY_PATH for osgeo
 cd ${REPO}
 ${PYTHON} -m src.preprocess --country ${country} --asset ${asset}
 SLURM
@@ -220,7 +229,7 @@ SLURM
     # flight, every job would otherwise rewrite the same summary .xlsx.
     local jid_run
     jid_run=$(sbatch --parsable --dependency=afterok:${jid_prep} <<SLURM
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=run_${label}
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=${r_cpus}
@@ -238,6 +247,7 @@ export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
+module load ${MODULES}   # libgdal on LD_LIBRARY_PATH for osgeo (inherited by subprocesses)
 cd ${REPO}
 ${PYTHON} run_study.py \
     --countries ${country} \
@@ -258,41 +268,39 @@ LAST_RUN_ID=""
 # ── Reusable steps ───────────────────────────────────────────────────────────
 
 do_setup() {
-    # One-time environment build. Uses uv if it happens to be on PATH (fast),
-    # otherwise the standard-library venv module + pip - so it works whether or
-    # not your cluster ships uv. The repo has no pyproject.toml, hence an
-    # explicit venv rather than `uv run`.
-    #
-    # Base interpreter is auto-detected; override with SETUP_PYTHON if the wrong
-    # one is picked, e.g. after loading a module:
-    #   module load Python/3.12    # name varies - see `module avail python`
-    #   SETUP_PYTHON=$(command -v python3.12) ./submit_miraca_uncertainty_study.sh setup
-    local base_py="${SETUP_PYTHON:-}"
-    if [[ -z "$base_py" ]]; then
-        for cand in python3.12 python3.11 python3.10 python3 python; do
-            if command -v "$cand" >/dev/null 2>&1; then base_py=$cand; break; fi
-        done
-    fi
-    if [[ -z "$base_py" ]]; then
-        echo "No Python interpreter found on PATH. Load one (see 'module avail" >&2
-        echo "python') or set SETUP_PYTHON=/path/to/python3, then re-run setup." >&2
+    # Build the venv with uv, using uv's OWN standalone Python - NOT the cluster
+    # python module, whose _ctypes is broken here (missing libffi.so.6). GDAL is
+    # the one thing that must come from the module: gdal-config + libgdal build
+    # the osgeo bindings, which have no usable PyPI wheel on this cluster.
+    command -v uv >/dev/null 2>&1 || {
+        echo "uv not found on PATH. Install it (user-space) first:" >&2
+        echo "  curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
+        echo "  source \$HOME/.local/bin/env" >&2
         exit 1
-    fi
-    echo "Base interpreter: $("$base_py" --version 2>&1)  ($(command -v "$base_py"))"
+    }
+    module load ${MODULES}
+    command -v gdal-config >/dev/null 2>&1 || {
+        echo "gdal-config not on PATH after 'module load ${MODULES}'." >&2
+        echo "Check the module name with: module avail gdal" >&2
+        exit 1
+    }
 
-    if command -v uv >/dev/null 2>&1; then
-        echo "Building venv with uv ..."
-        uv venv "$VENV" --python "$base_py"
-        uv pip install --python "$PYTHON" -r "${REPO}/requirements.txt"
-    else
-        echo "uv not found - using the standard-library venv module ..."
-        "$base_py" -m venv "$VENV"
-        "$PYTHON" -m pip install --upgrade pip
-        "$PYTHON" -m pip install -r "${REPO}/requirements.txt"
-    fi
+    uv python install "${UV_PYTHON}"
+    rm -rf "$VENV"
+    uv venv "$VENV" --python "${UV_PYTHON}" --python-preference only-managed
+
+    # osgeo/GDAL is built from source against the module's libgdal. Two fixes:
+    #  - LIBRARY_PATH: ld reads it (not LD_LIBRARY_PATH); the module puts libgdal
+    #    in lib64 but GDAL's setup.py links -L.../lib, so mirror LD_LIBRARY_PATH
+    #    across or the link fails with 'cannot find -lgdal'.
+    #  - pin gdal==$(gdal-config --version) so the bindings match the module.
+    export LIBRARY_PATH="${LD_LIBRARY_PATH:-}${LIBRARY_PATH:+:$LIBRARY_PATH}"
+    uv pip install --python "$PYTHON" "gdal==$(gdal-config --version)"
+    uv pip install --python "$PYTHON" -r "${REPO}/requirements.txt"
+
     echo
     echo "Environment ready: $PYTHON"
-    "$PYTHON" -c "import ema_workbench, SALib, geopandas, pystac_client; print('imports OK')"
+    "$PYTHON" -c "from osgeo import gdal; import damagescanner, geopandas, ema_workbench, pandas; print('imports OK', gdal.__version__)"
 }
 
 # Submit the aggregation. With an argument, waits for that colon-separated list
@@ -303,7 +311,7 @@ submit_aggregate() {
     if [[ -n "$dep" ]]; then depflag=(--dependency="afterany:${dep}"); fi
     mkdir -p "$LOG_DIR"
     sbatch --parsable ${depflag[@]+"${depflag[@]}"} <<SLURM
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=miraca_aggregate
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -315,6 +323,7 @@ ${SB_ACCOUNT}
 #SBATCH --error=${LOG_DIR}/err_aggregate
 set -euo pipefail
 export MIRACA_CONFIG=${MIRACA_CONFIG}
+module load ${MODULES}   # src imports pull in geopandas/osgeo -> need libgdal
 cd ${REPO}
 ${PYTHON} -m src.aggregate_results
 SLURM
