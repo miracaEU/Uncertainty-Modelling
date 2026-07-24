@@ -42,11 +42,19 @@
 #
 set -euo pipefail
 
-# ── Paths — ADJUST REPO IF YOUR CLONE IS NAMED DIFFERENTLY ────────────────────
-# Each can be overridden from the environment, e.g.
-#   REPO=/scistor/ivm/yma794/uncertainty-modeling ./submit_miraca_uncertainty_study.sh dry
-USER_DIR=${USER_DIR:-/scistor/ivm/yma794}
-REPO=${REPO:-${USER_DIR}/Uncertainty-Modelling}
+# ── Paths — auto-detected; override any from the environment ─────────────────
+# Nothing here is tied to a specific user, so a colleague can run their own
+# clone unchanged (useful for a test submission from a working account):
+#   REPO    defaults to the directory THIS script lives in, so it always points
+#           at the clone you launched it from - no editing, works for any user.
+#   USER_DIR defaults to the SUBMITTING user's own space (/scistor/ivm/$USER),
+#           so the venv and logs below land in their directory, not someone
+#           else's (whoever runs it must be able to write there).
+# Override explicitly if your layout differs, e.g.
+#   VENV=/scistor/ivm/eks510/.venvs/miraca_uq ./submit_miraca_uncertainty_study.sh pilot
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO=${REPO:-$SCRIPT_DIR}
+USER_DIR=${USER_DIR:-/scistor/ivm/${USER:-$(id -un)}}
 VENV=${VENV:-${USER_DIR}/.venvs/miraca_uq}
 PYTHON=${PYTHON:-${VENV}/bin/python}
 LOG_DIR=${LOG_DIR:-${USER_DIR}/MIRACA_UQ/logs}
@@ -55,7 +63,27 @@ LOG_DIR=${LOG_DIR:-${USER_DIR}/MIRACA_UQ/logs}
 EXPOSURE_DIR=${EXPOSURE_DIR:-/scistor/ivm/eks510/MIRACA_EXPOSURE}
 export MIRACA_CONFIG=${MIRACA_CONFIG:-${REPO}/config.cluster.yml}
 
-PARTITION=${PARTITION:-ivm}
+# Partition is OPTIONAL and unset by default: on this cluster defq is already
+# the default partition (the `*` in `sinfo -s`), and naming one explicitly can
+# be rejected if your association doesn't grant it. Set it only when you need a
+# specific one - e.g. PARTITION=defq-fat for the high-memory nodes, which the
+# XL tier (64-128 GB) may require. Others: defq-thin, defq-gpu, binf, bw.
+PARTITION=${PARTITION:-}
+if [[ -n "$PARTITION" ]]; then
+    SB_PARTITION="#SBATCH --partition=${PARTITION}"
+else
+    SB_PARTITION="# (no --partition set; using the cluster default)"
+fi
+# Some clusters require an explicit accounting group. Find yours with:
+#   sacctmgr show assoc user=$USER format=account,partition,qos
+# then export it, e.g. ACCOUNT=ivm ./submit_miraca_uncertainty_study.sh pilot
+ACCOUNT=${ACCOUNT:-}
+if [[ -n "$ACCOUNT" ]]; then
+    SB_ACCOUNT="#SBATCH --account=${ACCOUNT}"
+else
+    SB_ACCOUNT="# (no --account set; export ACCOUNT=... if your cluster needs one)"
+fi
+
 SOBOL_N=${SOBOL_N:-8192}   # fixed base N for every combination
 LHS_N=${LHS_N:-3000}
 
@@ -101,10 +129,16 @@ prep_res() {   # tier heavy -> "mem time"
 # Stage 2: cpus + --mem-per-cpu (one model-data copy per worker, see header).
 # Big countries get FEWER workers with more RAM each, precisely because of that
 # per-worker duplication - 16 workers x a multi-GB copy would not fit.
+#
+# Sized to fit ONE node of the ivm partition: node240-242/244 have 64 cores and
+# ~123 GB, so a request must stay under that. XL heavy is 8 x 14G = 112 GB,
+# which fits with headroom (8 x 16G = 128 GB would NOT schedule there). If a
+# combination needs more, node243 (ivm-fat, 768 GB) and node001-002 (defq-fat,
+# 1031 GB) are the escape hatches: PARTITION=ivm-fat or defq-fat.
 run_res() {    # tier heavy -> "cpus mem_per_cpu time"
     local t="$1" heavy="$2"
     case "${t}_${heavy}" in
-        XL_1) echo " 8 16G 48:00:00" ;;  XL_0) echo "16  4G 12:00:00" ;;
+        XL_1) echo " 8 14G 48:00:00" ;;  XL_0) echo "16  4G 12:00:00" ;;
         L_1)  echo "12  8G 36:00:00" ;;  L_0)  echo "16  3G 08:00:00" ;;
         M_1)  echo "16  4G 24:00:00" ;;  M_0)  echo "16  2G 06:00:00" ;;
         S_1)  echo "16  2G 12:00:00" ;;  S_0)  echo "16  2G 04:00:00" ;;
@@ -165,7 +199,8 @@ submit_combo() {
 #SBATCH --job-name=prep_${label}
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --partition=${PARTITION}
+${SB_PARTITION}
+${SB_ACCOUNT}
 #SBATCH --mem=${p_mem}
 #SBATCH --time=${p_time}
 #SBATCH --output=${LOG_DIR}/out_prep_${label}
@@ -189,7 +224,8 @@ SLURM
 #SBATCH --job-name=run_${label}
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=${r_cpus}
-#SBATCH --partition=${PARTITION}
+${SB_PARTITION}
+${SB_ACCOUNT}
 #SBATCH --mem-per-cpu=${r_mem}
 #SBATCH --time=${r_time}
 #SBATCH --output=${LOG_DIR}/out_run_${label}
@@ -244,7 +280,8 @@ submit_aggregate() {
 #SBATCH --job-name=miraca_aggregate
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --partition=${PARTITION}
+${SB_PARTITION}
+${SB_ACCOUNT}
 #SBATCH --mem=16G
 #SBATCH --time=02:00:00
 #SBATCH --output=${LOG_DIR}/out_aggregate
@@ -269,7 +306,8 @@ submit_barriers() {   # args: job ids -> prints colon-separated barrier ids
 #SBATCH --job-name=miraca_barrier
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --partition=${PARTITION}
+${SB_PARTITION}
+${SB_ACCOUNT}
 #SBATCH --mem=256M
 #SBATCH --time=00:02:00
 #SBATCH --output=/dev/null
