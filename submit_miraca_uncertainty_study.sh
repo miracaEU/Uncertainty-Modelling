@@ -258,11 +258,38 @@ LAST_RUN_ID=""
 # ── Reusable steps ───────────────────────────────────────────────────────────
 
 do_setup() {
-    # One-time environment build. The repo has no pyproject.toml, so `uv run`
-    # cannot resolve dependencies on its own - we make an explicit venv.
-    module load python/3.12 2>/dev/null || true
-    uv venv "$VENV" --python 3.12
-    uv pip install --python "$PYTHON" -r "${REPO}/requirements.txt"
+    # One-time environment build. Uses uv if it happens to be on PATH (fast),
+    # otherwise the standard-library venv module + pip - so it works whether or
+    # not your cluster ships uv. The repo has no pyproject.toml, hence an
+    # explicit venv rather than `uv run`.
+    #
+    # Base interpreter is auto-detected; override with SETUP_PYTHON if the wrong
+    # one is picked, e.g. after loading a module:
+    #   module load Python/3.12    # name varies - see `module avail python`
+    #   SETUP_PYTHON=$(command -v python3.12) ./submit_miraca_uncertainty_study.sh setup
+    local base_py="${SETUP_PYTHON:-}"
+    if [[ -z "$base_py" ]]; then
+        for cand in python3.12 python3.11 python3.10 python3 python; do
+            if command -v "$cand" >/dev/null 2>&1; then base_py=$cand; break; fi
+        done
+    fi
+    if [[ -z "$base_py" ]]; then
+        echo "No Python interpreter found on PATH. Load one (see 'module avail" >&2
+        echo "python') or set SETUP_PYTHON=/path/to/python3, then re-run setup." >&2
+        exit 1
+    fi
+    echo "Base interpreter: $("$base_py" --version 2>&1)  ($(command -v "$base_py"))"
+
+    if command -v uv >/dev/null 2>&1; then
+        echo "Building venv with uv ..."
+        uv venv "$VENV" --python "$base_py"
+        uv pip install --python "$PYTHON" -r "${REPO}/requirements.txt"
+    else
+        echo "uv not found - using the standard-library venv module ..."
+        "$base_py" -m venv "$VENV"
+        "$PYTHON" -m pip install --upgrade pip
+        "$PYTHON" -m pip install -r "${REPO}/requirements.txt"
+    fi
     echo
     echo "Environment ready: $PYTHON"
     "$PYTHON" -c "import ema_workbench, SALib, geopandas, pystac_client; print('imports OK')"
