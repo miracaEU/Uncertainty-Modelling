@@ -241,6 +241,15 @@ def extract_coastal_profiles(
         f"  [coastal] streamed {tile_count} tiles, {len(profiles)} fragments across "
         f"RPs {sorted(exposed_qty_per_rp)} ({time.time() - t0:.1f}s)"
     )
+    configured = sorted(int(r) for r in coastal_cfg.get("return_periods", []))
+    off_grid = [rp for rp in sorted(exposed_qty_per_rp) if rp not in configured]
+    if off_grid:
+        print(
+            f"  [coastal] NOTE: streamed RPs {off_grid} are not in the configured "
+            f"coastal return_periods {configured}. They are still integrated (the "
+            f"risk model folds streamed RPs into the grid), but verify the STAC "
+            f"item-name RP parsing in _stream_tiles if this looks wrong."
+        )
     return profiles, exposed_qty_per_rp, cell_area_m2
 
 

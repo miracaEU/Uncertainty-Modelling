@@ -131,10 +131,31 @@ class ModelData:
 
 def _load_profiles(path, rps: np.ndarray, seg_group: np.ndarray) -> HazardProfiles:
     prof = pd.read_parquet(path)
+    # Coastal return periods are discovered from the streamed STAC tiles, so a
+    # coastal profile can carry an RP that isn't in the hazard's configured
+    # return_periods (e.g. a frequent RP=1 tile off a low-lying coast). Fold any
+    # such RP into the integration grid instead of letting prof["rp"].map(...)
+    # return NaN -> a huge negative int64 index -> negative p_pair, which made
+    # np.bincount() in _damage_matrix raise "must have no negative elements",
+    # crashing every coastal worker and stalling the whole MultiprocessingEvaluator
+    # until SLURM killed the job at its walltime. For the local-raster hazards
+    # (river/earthquake/windstorm) the profile RPs are always a subset of the
+    # configured ones, so this union is a no-op and leaves their behaviour intact.
+    present = np.unique(prof["rp"].to_numpy())
+    rps = np.array(
+        sorted({int(r) for r in rps} | {int(r) for r in present}), dtype=np.float64
+    )
     n_rp = len(rps)
     rp_to_idx = {int(rp): i for i, rp in enumerate(rps)}
     p_seg = prof["seg"].to_numpy(np.int64)
-    p_rp_idx = prof["rp"].map(rp_to_idx).to_numpy(np.int64)
+    rp_idx = prof["rp"].astype(np.int64).map(rp_to_idx)
+    if rp_idx.isna().any():  # unreachable after the union; guards against future data
+        missing = sorted(set(prof["rp"][rp_idx.isna()]))
+        raise ValueError(
+            f"{getattr(path, 'name', path)}: return periods {missing} are not in "
+            f"the integration grid {rps.tolist()}"
+        )
+    p_rp_idx = rp_idx.to_numpy(np.int64)
     return HazardProfiles(
         rps=rps,
         p_pair=p_seg * n_rp + p_rp_idx,

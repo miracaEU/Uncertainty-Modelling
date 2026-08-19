@@ -1,11 +1,11 @@
 # Regenerable Stage-1 outputs (run: python -m src.preprocess --country <ISO3>)
 data/intermediate/
 
-# Raw EMA Workbench experiment archives (regenerable: python -m src.run_experiments ...)
-# Now written into per-country subfolders (results/<ISO3>/), so match at any depth.
-# Summary CSVs and figures in results/ are kept.
-results/**/*.tar.gz
-results/*.tar.gz
+# All Stage-2 outputs: experiment archives (.tar.gz), per-combo Sobol/feature
+# CSVs, figures and the run/convergence JSONL logs. Large and fully regenerable
+# (python -m src.run_experiments / run_study.py), so the whole folder is ignored
+# - it was 5k+ files. The aggregated summary workbook lives at the repo root.
+results/
 
 # Python
 __pycache__/

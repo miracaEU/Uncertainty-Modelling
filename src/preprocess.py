@@ -231,6 +231,45 @@ def join_basin_anchors(features: gpd.GeoDataFrame, cfg: dict) -> pd.DataFrame:
     return out
 
 
+def drop_unmapped_object_types(
+    features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict
+) -> tuple[gpd.GeoDataFrame, np.ndarray]:
+    """Drop features whose object_type has no vulnerability curve for this asset.
+
+    Rather than assume a curve for an object_type that isn't in src/curves.py,
+    the analysis proceeds with only the mapped types. River + earthquake curves
+    are required for every asset (plus windstorm for the wind-bearing assets),
+    so a type missing any required group is dropped here, before build_segments
+    and hazard extraction, and the feature order is reset so the positional
+    ``seg`` index shared by the segments table and every hazard profile stays
+    0..n-1 over the kept set. Exits (skipping the combo) if nothing is left.
+    """
+    asset_cfg = get_asset_config(cfg["asset_type"])
+    obj = features["object_type"]
+    mapped = obj.isin(asset_cfg.flood_object_group) & obj.isin(asset_cfg.eq_object_group)
+    if asset_cfg.supports_windstorm:
+        mapped &= obj.isin(asset_cfg.wind_object_group)
+    if bool(mapped.all()):
+        return features, geom_kind
+
+    dropped = obj[~mapped].value_counts().to_dict()
+    print(
+        f"  NOTE: dropping {int((~mapped).sum())}/{len(features)} feature(s) with "
+        f"no vulnerability curve for asset '{cfg['asset_type']}'; unmapped "
+        f"object_type(s): {dropped}. Continuing with the mapped types only."
+    )
+    keep = mapped.to_numpy()
+    features = features[keep].reset_index(drop=True)
+    geom_kind = geom_kind[keep]
+    if len(features) == 0:
+        raise SystemExit(
+            f"  All {int((~mapped).sum())} features of {cfg['country']}/"
+            f"{cfg['asset_type']} are unmapped object type(s) {sorted(dropped)}; "
+            f"there is nothing to analyse - skipping this combination."
+        )
+    return features, geom_kind
+
+
 def build_segments(features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict) -> pd.DataFrame:
     """Asset-generic feature attributes (curve groups, costs, protection, basins)."""
     asset_cfg = get_asset_config(cfg["asset_type"])
@@ -324,6 +363,7 @@ def main() -> None:
 
     features = load_exposure(cfg)
     geom_kind = classify_geometry(features)
+    features, geom_kind = drop_unmapped_object_types(features, geom_kind, cfg)
     kind_counts = pd.Series(geom_kind).map({0: "line", 1: "polygon", 2: "point"}).value_counts()
     print(f"  geometry mix: {kind_counts.to_dict()}")
 

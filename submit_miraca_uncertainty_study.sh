@@ -33,6 +33,8 @@
 #   dry         print the submission plan, submit nothing
 #   pilot       2 combos end-to-end - worth running before `all`
 #   submit      submit every combination, but do NOT chain the summary
+#   resubmit    re-run only the combos listed in failed_combos.txt (resume-safe),
+#               then chain the summary - use after a partial run / a code fix
 #   aggregate   build the summary workbook (`all` chains this for you)
 #   status      show this user's queued/running jobs
 #
@@ -135,13 +137,26 @@ prep_res() {   # tier heavy -> "mem time"
 # which fits with headroom (8 x 16G = 128 GB would NOT schedule there). If a
 # combination needs more, node243 (ivm-fat, 768 GB) and node001-002 (defq-fat,
 # 1031 GB) are the escape hatches: PARTITION=ivm-fat or defq-fat.
+#
+# Walltimes on the HEAVY tiers (_1 = roads/rail/power) were raised generously
+# after the first run: a handful of the biggest road/power combos (DEU/ESP/FRA/
+# GBR/ITA roads, FRA/GBR/BGR/CHE/LTU power, LTU/LVA/MKD roads) hit the previous
+# limits mid-run and were cancelled, so these are now sized well above the
+# longest observed runtimes to finish in one submission. Because run_study.py
+# checkpoints per scenario (completed LHS/Sobol archives are skipped on re-run),
+# even a combo that still overruns resumes on the next submission - the bump
+# just avoids needing one.
+# CAVEAT: these exceed the 48h that was verified to schedule on the ivm nodes.
+# Check the partition cap first with `scontrol show partition <p> | grep MaxTime`
+# (or `sinfo -o "%P %l"`); if a request is rejected, lower the offending tier or
+# route it to the big-memory escape hatches PARTITION=ivm-fat / defq-fat.
 run_res() {    # tier heavy -> "cpus mem_per_cpu time"
     local t="$1" heavy="$2"
     case "${t}_${heavy}" in
-        XL_1) echo " 8 14G 48:00:00" ;;  XL_0) echo "16  4G 12:00:00" ;;
-        L_1)  echo "12  8G 36:00:00" ;;  L_0)  echo "16  3G 08:00:00" ;;
-        M_1)  echo "16  4G 24:00:00" ;;  M_0)  echo "16  2G 06:00:00" ;;
-        S_1)  echo "16  2G 12:00:00" ;;  S_0)  echo "16  2G 04:00:00" ;;
+        XL_1) echo " 8 14G 120:00:00" ;;  XL_0) echo "16  4G 12:00:00" ;;
+        L_1)  echo "12  8G 96:00:00" ;;   L_0)  echo "16  3G 08:00:00" ;;
+        M_1)  echo "16  4G 60:00:00" ;;   M_0)  echo "16  2G 06:00:00" ;;
+        S_1)  echo "16  2G 30:00:00" ;;   S_0)  echo "16  2G 04:00:00" ;;
     esac
 }
 
@@ -401,6 +416,48 @@ all)
     echo "Watch progress with: $0 status"
     ;;
 
+resubmit)
+    # ── Re-run ONLY the combos listed in a file, then chain the summary ───────
+    # One "COUNTRY ASSET" per line (# comments and blanks ignored); defaults to
+    # ${REPO}/failed_combos.txt. Each combo goes through the normal prep->run
+    # chain, but nothing is wasted on a re-run: src.preprocess rewrites Stage-1
+    # (curve fixes now let the oil/ports prep-failures through), and run_study.py
+    # skips Stage-1 if already valid and resumes Stage-2 at the first scenario
+    # whose LHS/Sobol archive is missing - so the timed-out combos pick up exactly
+    # where SLURM cut them off. Use this after fixing curves.py / risk_model.py:
+    #   ./submit_miraca_uncertainty_study.sh resubmit
+    #   RESUBMIT_LIST=/path/to/list.txt ./submit_miraca_uncertainty_study.sh resubmit
+    LIST=${RESUBMIT_LIST:-${REPO}/failed_combos.txt}
+    if [[ ! -f "$LIST" ]]; then
+        echo "No combo list at '$LIST' (set RESUBMIT_LIST=/path/to/list)." >&2
+        exit 1
+    fi
+    mkdir -p "$LOG_DIR"
+    echo "== re-submitting combos from ${LIST} =="
+    RUN_IDS=()
+    total=0
+    while read -r C A _; do
+        [[ -z "${C:-}" || "$C" == \#* ]] && continue
+        submit_combo "$C" "$A"
+        RUN_IDS+=("$LAST_RUN_ID")
+        total=$((total + 1))
+    done < "$LIST"
+
+    if [[ $total -eq 0 ]]; then
+        echo "No combos read from ${LIST}." >&2
+        exit 1
+    fi
+
+    echo
+    echo "== chaining the summary workbook behind all ${total} run jobs =="
+    BARRIER_IDS=$(submit_barriers "${RUN_IDS[@]}")
+    AGG_ID=$(submit_aggregate "$BARRIER_IDS")
+    echo
+    echo "Re-submitted ${total} combos ($((total * 2)) prep/run jobs),"
+    echo "             barriers ${BARRIER_IDS//:/ }, aggregate ${AGG_ID}."
+    echo "Watch progress with: $0 status"
+    ;;
+
 dry)
     DRY=1
     echo "Submission plan (nothing submitted):"
@@ -458,7 +515,7 @@ status)
 
 *)
     echo "Unknown mode '$MODE'." >&2
-    echo "Use: all | setup | dry | pilot | submit | aggregate | status" >&2
+    echo "Use: all | setup | dry | pilot | submit | resubmit | aggregate | status" >&2
     exit 1
     ;;
 esac
