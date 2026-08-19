@@ -7,6 +7,9 @@ data/intermediate/
 # - it was 5k+ files. The aggregated summary workbook lives at the repo root.
 results/
 
+# Overview / summary figures (regenerable from the summary workbook)
+overview_figures/
+
 # Python
 __pycache__/
 *.pyc

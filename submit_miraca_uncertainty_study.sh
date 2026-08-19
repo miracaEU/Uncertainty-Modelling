@@ -37,6 +37,9 @@
 #               then chain the summary - use after a partial run / a code fix
 #   recoastal   recompute ONLY the coastal scenario (Stage 2, forced) for the
 #               finished combos in coastal_rerun.txt - after a coastal RP change
+#   addscen     back-fill newly-added scenarios (default the FLOPROS-fixed
+#               flood_noprot_ds / coastal_noprot_ds) across all combos, Stage 2
+#               only; override the set with SCEN="..."
 #   aggregate   build the summary workbook (`all` chains this for you)
 #   status      show this user's queued/running jobs
 #
@@ -544,6 +547,74 @@ SLURM
     echo "  $0 aggregate"
     ;;
 
+addscen)
+    # ── Back-fill one or more scenarios across EVERY combo (Stage 2 only) ─────
+    # For scenarios that were added to the study after the first run (default:
+    # the FLOPROS-fixed protection variants flood_noprot_ds / coastal_noprot_ds,
+    # which drop the protection standard as a Sobol factor). These have no
+    # archives yet, so NO --force is needed - run_study just computes the missing
+    # scenarios and skips everything already done. Scenarios that don't apply to a
+    # combo (coastal for landlocked, etc.) are skipped automatically.
+    #
+    # Stage 1 must already be on disk, so run this ONLY AFTER resubmit/recoastal
+    # have fully drained (otherwise a combo whose Stage 1 isn't finished would
+    # kick off a duplicate preprocess). Walltimes are moderate (single-hazard,
+    # protection fixed => cheaper than the swept variants) and stay <=48h to avoid
+    # the MaxTime question. No aggregate chained - run `$0 aggregate` afterwards.
+    #
+    # Override the scenario list with SCEN, e.g.
+    #   SCEN="flood_noprot_ds" ./submit_miraca_uncertainty_study.sh addscen
+    SCEN=${SCEN:-"flood_noprot_ds coastal_noprot_ds"}
+    mkdir -p "$LOG_DIR"
+    echo "== back-filling scenarios [${SCEN}] across all combos (Stage 2 only) =="
+    total=0
+    for A in "${SEL_ASSETS[@]}"; do
+        for C in $(countries_for_asset "$A"); do
+            country_selected "$C" || continue
+            tier=$(tier_of "$C")
+            if is_heavy "$A"; then heavy=1; else heavy=0; fi
+            read -r r_cpus r_mem _ <<<"$(run_res "$tier" "$heavy")"
+            if [[ $heavy -eq 1 ]]; then s_time="24:00:00"; else s_time="06:00:00"; fi
+            label="${C}_${A}"
+            jid=$(sbatch --parsable <<SLURM
+#!/bin/bash -l
+#SBATCH --job-name=scen_${label}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=${r_cpus}
+${SB_PARTITION}
+${SB_ACCOUNT}
+#SBATCH --mem-per-cpu=${r_mem}
+#SBATCH --time=${s_time}
+#SBATCH --output=${LOG_DIR}/out_scen_${label}
+#SBATCH --error=${LOG_DIR}/err_scen_${label}
+set -euo pipefail
+export MIRACA_CONFIG=${MIRACA_CONFIG}
+export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+module load ${MODULES}
+cd ${REPO}
+${PYTHON} run_study.py \
+    --countries ${C} \
+    --assets ${A} \
+    --scenarios ${SCEN} \
+    --workers ${r_cpus} \
+    --sobol-n ${SOBOL_N} \
+    --lhs-n ${LHS_N} \
+    --python ${PYTHON} \
+    --no-aggregate
+SLURM
+)
+            echo "submitted ${label}: run=${jid} (tier ${tier})"
+            total=$((total + 1))
+        done
+    done
+    echo
+    echo "Submitted ${total} Stage-2 back-fill jobs for [${SCEN}]."
+    echo "When drained, build the workbook with:  $0 aggregate"
+    ;;
+
 dry)
     DRY=1
     echo "Submission plan (nothing submitted):"
@@ -601,7 +672,7 @@ status)
 
 *)
     echo "Unknown mode '$MODE'." >&2
-    echo "Use: all | setup | dry | pilot | submit | resubmit | recoastal | aggregate | status" >&2
+    echo "Use: all | setup | dry | pilot | submit | resubmit | recoastal | addscen | aggregate | status" >&2
     exit 1
     ;;
 esac

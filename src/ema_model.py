@@ -92,7 +92,9 @@ SCENARIOS = [
 # multiplicative-depth (_ds) variant, plus the two single-hazard scenarios.
 DEFAULT_SCENARIOS = [
     "flood_absprot_ds",
+    "flood_noprot_ds",
     "coastal_absprot_ds",
+    "coastal_noprot_ds",
     "earthquake",
     "windstorm",
     "windstorm_absprot",
