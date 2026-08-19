@@ -35,6 +35,8 @@
 #   submit      submit every combination, but do NOT chain the summary
 #   resubmit    re-run only the combos listed in failed_combos.txt (resume-safe),
 #               then chain the summary - use after a partial run / a code fix
+#   recoastal   recompute ONLY the coastal scenario (Stage 2, forced) for the
+#               finished combos in coastal_rerun.txt - after a coastal RP change
 #   aggregate   build the summary workbook (`all` chains this for you)
 #   status      show this user's queued/running jobs
 #
@@ -467,6 +469,81 @@ resubmit)
     echo "Watch progress with: $0 status"
     ;;
 
+recoastal)
+    # ── Recompute ONLY the coastal scenario for already-finished combos ───────
+    # After correcting the coastal return periods to what CoCLiCo actually serves
+    # ([1,100,1000]), the previously-completed coastal EAD must be recomputed so
+    # it is comparable with the freshly-run combos. This re-runs Stage 2's
+    # coastal_absprot_ds scenario with --force-scenarios (LHS/Sobol/analysis
+    # only); Stage 1 is left intact - no re-streaming, no river/EQ/wind rework.
+    # Combos come from $RECOASTAL_LIST (default coastal_rerun.txt); it must list
+    # only combos whose Stage 1 is already on disk (the finished coastal ones -
+    # the failed combos get their coastal from `resubmit` instead).
+    #
+    # Coastal-only is light (minutes to a couple of hours), so walltime is capped
+    # low here rather than taken from the heavy run tiers - avoids the big-tier
+    # MaxTime question entirely. No aggregate is chained: run `$0 aggregate` once
+    # BOTH this and `resubmit` have drained.
+    LIST=${RECOASTAL_LIST:-${REPO}/coastal_rerun.txt}
+    if [[ ! -f "$LIST" ]]; then
+        echo "No combo list at '$LIST' (set RECOASTAL_LIST=/path/to/list)." >&2
+        exit 1
+    fi
+    mkdir -p "$LOG_DIR"
+    echo "== recomputing coastal_absprot_ds from ${LIST} =="
+    total=0
+    while read -r C A _; do
+        [[ -z "${C:-}" || "$C" == \#* ]] && continue
+        tier=$(tier_of "$C")
+        if is_heavy "$A"; then heavy=1; else heavy=0; fi
+        read -r r_cpus r_mem _ <<<"$(run_res "$tier" "$heavy")"
+        if [[ $heavy -eq 1 ]]; then c_time="08:00:00"; else c_time="04:00:00"; fi
+        label="${C}_${A}"
+        jid=$(sbatch --parsable <<SLURM
+#!/bin/bash -l
+#SBATCH --job-name=coast_${label}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=${r_cpus}
+${SB_PARTITION}
+${SB_ACCOUNT}
+#SBATCH --mem-per-cpu=${r_mem}
+#SBATCH --time=${c_time}
+#SBATCH --output=${LOG_DIR}/out_coast_${label}
+#SBATCH --error=${LOG_DIR}/err_coast_${label}
+set -euo pipefail
+export MIRACA_CONFIG=${MIRACA_CONFIG}
+export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+module load ${MODULES}
+cd ${REPO}
+${PYTHON} run_study.py \
+    --countries ${C} \
+    --assets ${A} \
+    --scenarios coastal_absprot_ds \
+    --force-scenarios \
+    --workers ${r_cpus} \
+    --sobol-n ${SOBOL_N} \
+    --lhs-n ${LHS_N} \
+    --python ${PYTHON} \
+    --no-aggregate
+SLURM
+)
+        echo "submitted coastal ${label}: run=${jid} (tier ${tier})"
+        total=$((total + 1))
+    done < "$LIST"
+
+    if [[ $total -eq 0 ]]; then
+        echo "No combos read from ${LIST}." >&2
+        exit 1
+    fi
+    echo
+    echo "Re-ran coastal for ${total} combos."
+    echo "When BOTH this and 'resubmit' have drained, build the workbook with:"
+    echo "  $0 aggregate"
+    ;;
+
 dry)
     DRY=1
     echo "Submission plan (nothing submitted):"
@@ -524,7 +601,7 @@ status)
 
 *)
     echo "Unknown mode '$MODE'." >&2
-    echo "Use: all | setup | dry | pilot | submit | resubmit | aggregate | status" >&2
+    echo "Use: all | setup | dry | pilot | submit | resubmit | recoastal | aggregate | status" >&2
     exit 1
     ;;
 esac

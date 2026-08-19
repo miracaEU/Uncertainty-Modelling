@@ -193,9 +193,18 @@ def main() -> None:
                              "otherwise every job rewrites the same .xlsx concurrently. Run "
                              "`python -m src.aggregate_results` once after they all finish instead.")
     parser.add_argument("--force", action="store_true", help="re-run steps even if their output already exists")
+    parser.add_argument("--force-scenarios", action="store_true",
+                        help="re-run the Stage-2 scenario steps (LHS/Sobol/analysis) even if their archives "
+                             "exist, but LEAVE Stage 1 alone if it is already done. Use to recompute selected "
+                             "--scenarios (e.g. coastal after a return-period/config change) without repeating "
+                             "the expensive GIS overlay. analyze_sobol reads the newest archive, so the fresh "
+                             "run supersedes the old one.")
     parser.add_argument("--fail-fast", action="store_true", help="abort the whole study on the first failed step")
     parser.add_argument("--dry-run", action="store_true", help="print the planned steps without running them")
     args = parser.parse_args()
+    # Stage-2 scenario steps re-run when either --force (everything) or
+    # --force-scenarios (only the scenario steps, Stage 1 left intact) is set.
+    force_scen = args.force or args.force_scenarios
 
     root = Path(__file__).resolve().parent
     study_log = StudyLog(root / "results" / "run_study_log.jsonl")
@@ -266,7 +275,7 @@ def main() -> None:
             log("-" * 70)
 
             # 1. LHS (fixed N) - quick extra-trees importance complement.
-            if not args.force and experiments_exist(cfg, scenario, "lhs", args.lhs_n):
+            if not force_scen and experiments_exist(cfg, scenario, "lhs", args.lhs_n):
                 log(f"  lhs n={args.lhs_n}: SKIP (archive already exists)")
             else:
                 extra = [
@@ -317,7 +326,7 @@ def main() -> None:
                 sobol_min = sobol_max = args.sobol_n
                 mode_label = f"fixed N={args.sobol_n}"
 
-            if not args.force and adaptive_done(cfg, scenario):
+            if not force_scen and adaptive_done(cfg, scenario):
                 log(f"  sobol ({mode_label}): SKIP (convergence record already exists)")
             else:
                 extra = [
@@ -325,7 +334,7 @@ def main() -> None:
                     "--min-n", str(sobol_min), "--max-n", str(sobol_max),
                     "--threshold", str(args.sobol_threshold), "--workers", str(args.workers),
                 ]
-                if args.force:
+                if force_scen:
                     extra.append("--force")
                 ok, elapsed = run_step(args.python, "src.adaptive_sobol", extra, args.dry_run)
                 study_log.record(

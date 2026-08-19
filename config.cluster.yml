@@ -54,7 +54,12 @@ hazards:
     time_horizon: "2010"
     climate_scenario: "None"
     defence: "LOW_DEFENDED"
-    return_periods: [10, 25, 50, 100, 250, 500, 1000]
+    # CoCLiCo cfhp_all only publishes return periods 1 / 100 / 1000 (the STAC
+    # collection's summaries.rp = ['static','1','100','1000']). The earlier
+    # 10/25/50/250/500 were never in the dataset, so they only injected phantom
+    # zero-damage points into the EAD integral. Using exactly what the catalogue
+    # serves puts every country on the same, data-matched RP grid.
+    return_periods: [1, 100, 1000]
     coastpros_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/COASTPROS-EU.xlsx"
     nuts2_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2024_3035.parquet"
     protection_sheet: "COASTPROS-EU"
