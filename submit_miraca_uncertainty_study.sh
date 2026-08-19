@@ -556,27 +556,45 @@ addscen)
     # scenarios and skips everything already done. Scenarios that don't apply to a
     # combo (coastal for landlocked, etc.) are skipped automatically.
     #
-    # Stage 1 must already be on disk, so run this ONLY AFTER resubmit/recoastal
-    # have fully drained (otherwise a combo whose Stage 1 isn't finished would
-    # kick off a duplicate preprocess). Walltimes are moderate (single-hazard,
-    # protection fixed => cheaper than the swept variants) and stay <=48h to avoid
-    # the MaxTime question. No aggregate chained - run `$0 aggregate` afterwards.
-    #
-    # Override the scenario list with SCEN, e.g.
-    #   SCEN="flood_noprot_ds" ./submit_miraca_uncertainty_study.sh addscen
+    # Stage 1 must already be on disk (this is Stage-2 only), so only run it for
+    # combos whose Stage 1 is finished and NOT being rewritten. Two ways:
+    #   * default (no list): every exposure combo - run this only AFTER
+    #     resubmit/recoastal have fully drained, else a combo mid-preprocess races.
+    #   * ADDSCEN_LIST=finished_combos.txt: only the given combos - safe to run
+    #     NOW alongside resubmit/recoastal, since those combos' Stage 1 is idle.
+    # New scenarios have no archives, so no --force; non-applicable scenarios per
+    # combo (coastal for landlocked, etc.) are skipped automatically. Walltimes are
+    # moderate (single hazard, protection fixed => cheaper) and stay <=48h. No
+    # aggregate chained - run `$0 aggregate` afterwards.
+    #   SCEN="flood_noprot_ds" ADDSCEN_LIST=finished_combos.txt ./submit_...sh addscen
     SCEN=${SCEN:-"flood_noprot_ds coastal_noprot_ds"}
     mkdir -p "$LOG_DIR"
-    echo "== back-filling scenarios [${SCEN}] across all combos (Stage 2 only) =="
+    COMBOS=()
+    if [[ -n "${ADDSCEN_LIST:-}" ]]; then
+        [[ -f "$ADDSCEN_LIST" ]] || { echo "No combo list at '$ADDSCEN_LIST'." >&2; exit 1; }
+        while read -r C A _; do
+            [[ -z "${C:-}" || "$C" == \#* ]] && continue
+            COMBOS+=("$C $A")
+        done < "$ADDSCEN_LIST"
+        echo "== back-filling [${SCEN}] for ${#COMBOS[@]} combos from ${ADDSCEN_LIST} (Stage 2 only) =="
+    else
+        for A in "${SEL_ASSETS[@]}"; do
+            for C in $(countries_for_asset "$A"); do
+                country_selected "$C" || continue
+                COMBOS+=("$C $A")
+            done
+        done
+        echo "== back-filling [${SCEN}] across all ${#COMBOS[@]} combos (Stage 2 only) =="
+    fi
     total=0
-    for A in "${SEL_ASSETS[@]}"; do
-        for C in $(countries_for_asset "$A"); do
-            country_selected "$C" || continue
-            tier=$(tier_of "$C")
-            if is_heavy "$A"; then heavy=1; else heavy=0; fi
-            read -r r_cpus r_mem _ <<<"$(run_res "$tier" "$heavy")"
-            if [[ $heavy -eq 1 ]]; then s_time="24:00:00"; else s_time="06:00:00"; fi
-            label="${C}_${A}"
-            jid=$(sbatch --parsable <<SLURM
+    for _combo in "${COMBOS[@]}"; do
+        set -- ${_combo}; C="$1"; A="$2"
+        tier=$(tier_of "$C")
+        if is_heavy "$A"; then heavy=1; else heavy=0; fi
+        read -r r_cpus r_mem _ <<<"$(run_res "$tier" "$heavy")"
+        if [[ $heavy -eq 1 ]]; then s_time="24:00:00"; else s_time="06:00:00"; fi
+        label="${C}_${A}"
+        jid=$(sbatch --parsable <<SLURM
 #!/bin/bash -l
 #SBATCH --job-name=scen_${label}
 #SBATCH --ntasks=1
@@ -606,9 +624,8 @@ ${PYTHON} run_study.py \
     --no-aggregate
 SLURM
 )
-            echo "submitted ${label}: run=${jid} (tier ${tier})"
-            total=$((total + 1))
-        done
+        echo "submitted ${label}: run=${jid} (tier ${tier})"
+        total=$((total + 1))
     done
     echo
     echo "Submitted ${total} Stage-2 back-fill jobs for [${SCEN}]."
@@ -665,9 +682,24 @@ aggregate)
     ;;
 
 status)
-    squeue -u "$USER" -o "%.10i %.28j %.9P %.8T %.10M %.6D %R" | head -50
+    # Compact, non-truncating summary: the raw squeue table is hundreds of lines
+    # with this many jobs, so collapse it to counts by job type x state instead.
+    echo "== queue: jobs by type and state (R=running, PD=pending) =="
+    squeue -u "$USER" -h -o "%j %t" \
+      | awk '{ t=$1; sub(/_[A-Z]{3}_.*/,"",t); c[t"|"$2]++ }
+             END { for (k in c) { split(k,a,"|"); printf "  %-10s %-4s %5d\n", a[1], a[2], c[k] } }' \
+      | sort
+    total=$(squeue -u "$USER" -h 2>/dev/null | wc -l)
+    running=$(squeue -u "$USER" -h -t R 2>/dev/null | wc -l)
+    echo "  --------------------------------------"
+    echo "  TOTAL in queue: ${total}  (running ${running}, pending $((total - running)))"
     echo
-    echo "queued/running: $(squeue -u "$USER" -h | wc -l)"
+    # Completed work on disk grows live: one *_sobol_indices.csv per finished
+    # (country, asset, scenario). Target with the 7 default scenarios ~= 2124.
+    done=$(find "${REPO}/results" -name "*_sobol_indices.csv" 2>/dev/null | wc -l)
+    echo "== done so far: ${done} scenario analyses written (target ~2124) =="
+    echo "   live per-step log:  tail -f ${REPO}/results/run_study_log.jsonl"
+    echo "   one combo's stdout: tail -f ${LOG_DIR}/out_run_DEU_roads"
     ;;
 
 *)
