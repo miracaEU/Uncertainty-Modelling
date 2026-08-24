@@ -1,8 +1,8 @@
 """EMA Workbench model definition: scenario-aware, works for any asset type.
 
-Every scenario computes exactly ONE hazard (the two hazards are never combined
-- they are studied independently so their uncertainty structures don't mix).
-The eight scenarios:
+Every scenario computes exactly ONE hazard (hazards are never combined - they
+are studied independently so their uncertainty structures don't mix).
+The fifteen scenarios:
 
   River flood (six - three protection treatments x two depth treatments):
     flood_baseline        Protection = FLOPROS design standard x protection_scale
@@ -86,10 +86,11 @@ SCENARIOS = [
     "windstorm", "windstorm_absprot",
 ]
 
-# The subset the study orchestrator runs by default. All 14 scenarios above
+# The subset the study orchestrator runs by default. All 15 scenarios above
 # remain available via `run_study.py --scenarios ...`; this just narrows the
-# no-argument run. For both floods we keep only the absolute-protection +
-# multiplicative-depth (_ds) variant, plus the two single-hazard scenarios.
+# no-argument run. For both flood types we keep the absolute-protection and
+# no-protection multiplicative-depth (_ds) variants, plus earthquake and the
+# two windstorm scenarios.
 DEFAULT_SCENARIOS = [
     "flood_absprot_ds",
     "flood_noprot_ds",

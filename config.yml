@@ -20,13 +20,12 @@ basin_data_path: "S:/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_retur
 # here just tells the pipeline where its data lives:
 #   river       - all assets
 #   earthquake  - all assets
-#   windstorm   - airports/education/power only (the roads wind curve W7.2 is
-#                 identically zero, so roads carry no windstorm damage and it
-#                 is skipped for them automatically)
-# Coastal flooding is intentionally not listed: in the reference pipeline its
-# rasters are streamed at runtime from a remote CoCLiCo STAC catalog rather
-# than read from local files, so it needs a different Stage-1 path (a planned
-# follow-up) and cannot be added by a local dir/filename_template alone.
+#   windstorm   - all assets except roads and ports, whose wind curve (W7.2)
+#                 is identically zero, so they carry no windstorm damage and
+#                 it is skipped for them automatically
+#   coastal     - coastal countries only, and NOT local rasters: its maps are
+#                 streamed from the CoCLiCo STAC catalogue (kind: stac), so it
+#                 carries no dir/filename_template - see the block below
 hazards:
   river:
     dir: "S:/eks510/Hazard_data/River_floods"
