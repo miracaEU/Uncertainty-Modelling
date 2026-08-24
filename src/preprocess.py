@@ -45,7 +45,14 @@ import xarray as xr
 from damagescanner.core import VectorExposure
 
 from .coastal import extract_coastal_profiles, sample_coastal_protection
-from .curves import applicable_hazards, country_has_coast, get_asset_config, maxdam_arrays, report_class_for
+from .curves import (
+    applicable_hazards,
+    country_has_coast,
+    get_asset_config,
+    is_mapped,
+    maxdam_arrays,
+    report_class_for,
+)
 from .paths import base_stem, hazard_stem, load_config, set_asset_override, set_country_override
 
 WARMING_CODES = ("15", "20", "30", "40")
@@ -246,9 +253,7 @@ def drop_unmapped_object_types(
     """
     asset_cfg = get_asset_config(cfg["asset_type"])
     obj = features["object_type"]
-    mapped = obj.isin(asset_cfg.flood_object_group) & obj.isin(asset_cfg.eq_object_group)
-    if asset_cfg.supports_windstorm:
-        mapped &= obj.isin(asset_cfg.wind_object_group)
+    mapped = is_mapped(asset_cfg, obj)
     if bool(mapped.all()):
         return features, geom_kind
 

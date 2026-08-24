@@ -514,6 +514,28 @@ def get_asset_config(asset: str) -> AssetConfig:
     return ASSET_CONFIGS[asset]
 
 
+def mapped_object_types(cfg: AssetConfig) -> set[str]:
+    """object_types that have every vulnerability curve this asset requires.
+
+    Single source of truth for the exclusion rule. River + earthquake curves
+    are required for every asset, plus windstorm for the wind-bearing ones;
+    an object_type missing any of them has no defensible curve and is left
+    out of the analysis entirely - Stage 1 (src/preprocess.py), the offline
+    validation checks (src/validate.py) and the reference EAD summaries
+    (src/reference_ead.py) all apply this same predicate, so the three
+    always describe the same set of features.
+    """
+    ok = set(cfg.flood_object_group) & set(cfg.eq_object_group)
+    if cfg.supports_windstorm:
+        ok &= set(cfg.wind_object_group)
+    return ok
+
+
+def is_mapped(cfg: AssetConfig, object_types: pd.Series) -> pd.Series:
+    """Boolean mask of features whose object_type is fully curve-mapped."""
+    return object_types.isin(mapped_object_types(cfg))
+
+
 def maxdam_arrays(cfg: AssetConfig, object_types: pd.Series) -> np.ndarray:
     """Per-segment [min, mean, max] max damage as an (n, 3) array."""
     out = np.empty((len(object_types), 3), dtype=np.float64)

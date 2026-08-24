@@ -23,3 +23,7 @@ venv/
 # OS cruft
 Thumbs.db
 .DS_Store
+
+# Local working notes and generated cluster snapshots, not project content
+Next steps.txt
+finished_combos_now.txt

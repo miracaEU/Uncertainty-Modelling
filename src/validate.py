@@ -50,7 +50,13 @@ from scipy.interpolate import interp1d
 
 from damagescanner.core import VectorScanner, VectorExposure
 
-from .curves import get_asset_config, load_eq_edr_tables, load_flood_curves, load_wind_curves
+from .curves import (
+    get_asset_config,
+    is_mapped,
+    load_eq_edr_tables,
+    load_flood_curves,
+    load_wind_curves,
+)
 from .paths import load_config, set_asset_override, set_country_override
 from .risk_model import (
     ModelData,
@@ -68,10 +74,27 @@ def _representative_choices(groups: dict[str, list[str]]) -> dict[str, str]:
 
 
 def _load_features(cfg: dict) -> gpd.GeoDataFrame:
+    """Exposure exactly as Stage 1 sees it.
+
+    Mirrors preprocess.load_exposure + drop_unmapped_object_types: same
+    columns, same row order, same exclusion of object_types with no curve.
+    The checks compare per-feature against the Stage-2 matrices positionally
+    (index 0..n_seg-1), so the two feature sets have to be identical - an
+    unfiltered read here raises KeyError on an unmapped object_type, and
+    would silently misalign ref against fast wherever a feature was dropped.
+    """
     path = cfg["exposure_dir"] / f"{cfg['country']}_{cfg['asset_type']}_exposure.parquet"
-    return gpd.read_parquet(
+    features = gpd.read_parquet(
         path, columns=["osm_id", "object_type", "geometry"]
     ).reset_index(drop=True)
+    keep = is_mapped(get_asset_config(cfg["asset_type"]), features["object_type"])
+    if not bool(keep.all()):
+        dropped = features["object_type"][~keep].value_counts().to_dict()
+        print(
+            f"  NOTE: excluding {int((~keep).sum())}/{len(features)} feature(s) "
+            f"with no vulnerability curve: {dropped}"
+        )
+    return features[keep].reset_index(drop=True)
 
 
 def _clip_hazard(path, features: gpd.GeoDataFrame):
