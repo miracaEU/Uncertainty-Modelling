@@ -24,6 +24,11 @@ venv/
 Thumbs.db
 .DS_Store
 
-# Local working notes and generated cluster snapshots, not project content
-Next steps.txt
-finished_combos_now.txt
+# Generated combo lists and local working notes. Everything .txt is scratch by
+# default; the four the project actually needs are negated below - add a "!"
+# line here if a new tracked .txt is ever introduced, or git will ignore it.
+*.txt
+!requirements.txt
+!coastal_rerun.txt
+!failed_combos.txt
+!finished_combos.txt

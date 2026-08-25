@@ -1091,7 +1091,7 @@ def _write_heatmap_sheet(writer: pd.ExcelWriter, sheet_name: str, piv: pd.DataFr
         # Border around each column's single highest-ST cell - skipped when
         # every value in the column is (near) zero, e.g. a hazard with no
         # exposure at all (LUX airports has zero river-flood exposure, so
-        # flood_no_protection's ST column is all zeros): argmax would pick
+        # flood_noprot_ds's ST column is all zeros): argmax would pick
         # an arbitrary row with no real meaning, so mark nothing instead.
         for j, col in enumerate(piv.columns):
             series = piv[col].dropna()

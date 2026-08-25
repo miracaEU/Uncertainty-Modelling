@@ -11,8 +11,8 @@ the cross-country outputs stay at the results/ root:
   results/figures/{asset}_{scenario}_country_comparison_sobol.png  (ST heatmap, factors x countries)
 
 Usage:
-    python -m src.compare_countries --asset roads --scenario baseline
-    python -m src.compare_countries --asset roads --scenario baseline --countries LUX DNK
+    python -m src.compare_countries --asset roads --scenario flood_absprot_ds
+    python -m src.compare_countries --asset roads --scenario flood_absprot_ds --countries LUX DNK
 """
 
 import argparse
@@ -79,7 +79,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--countries", nargs="+", default=None)
     parser.add_argument("--asset", default="roads")
-    parser.add_argument("--scenario", choices=SCENARIOS, default="baseline")
+    parser.add_argument("--scenario", choices=SCENARIOS, default="flood_absprot_ds")
     args = parser.parse_args()
 
     set_asset_override(args.asset)

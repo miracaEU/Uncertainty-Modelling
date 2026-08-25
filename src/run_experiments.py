@@ -1,12 +1,14 @@
 """Run EMA Workbench experiments for one (country, asset, scenario) combination.
 
 Usage:
-    python -m src.run_experiments --country LUX --asset roads --scenario baseline --n 3000
-    python -m src.run_experiments --country LUX --asset roads --scenario baseline \\
+    python -m src.run_experiments --country LUX --asset roads --scenario flood_absprot_ds --n 3000
+    python -m src.run_experiments --country LUX --asset roads --scenario flood_absprot_ds \\
         --sampler sobol --n 512 --workers 8
 
-Scenarios (src/ema_model.py::SCENARIOS): baseline, abs_protection,
-flood_no_protection, earthquake_only.
+Scenarios (src/ema_model.py::SCENARIOS): six river-flood variants
+(flood_baseline / flood_absprot / flood_noprot, each with a _ds twin that uses
+a multiplicative depth error instead of an additive one), the same six mirrored
+for coastal, plus earthquake, windstorm and windstorm_absprot.
 
 With --sampler sobol, --n is the SALib base sample size N (use a power of 2);
 the actual number of model runs is N * (2k + 2), k = number of uncertainty
@@ -49,9 +51,9 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=1, help="parallel worker processes")
     parser.add_argument("--tag", type=str, default="", help="optional extra tag for the output filename")
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
-    parser.add_argument("--asset", default=None, help="asset type override (roads/airports/education/power)")
+    parser.add_argument("--asset", default=None, help="asset type override; any asset in src/curves.py::ASSET_CONFIGS")
     parser.add_argument("--scenario", choices=SCENARIOS, default=None,
-                        help=f"modeling scenario (default: baseline); one of {SCENARIOS}")
+                        help=f"modeling scenario (default: src.paths.DEFAULT_SCENARIO); one of {SCENARIOS}")
     args = parser.parse_args()
 
     set_country_override(args.country)

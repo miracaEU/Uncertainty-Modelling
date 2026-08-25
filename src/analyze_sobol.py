@@ -3,7 +3,7 @@
 Expects results produced with `python -m src.run_experiments --sampler sobol`
 (Saltelli sample, second order enabled). Computes first-order (S1) and total
 (ST) Sobol indices per uncertainty factor, for whichever of the "headline"
-outcomes actually exist for this scenario (e.g. earthquake_only has no
+outcomes actually exist for this scenario (e.g. earthquake has no
 EAD_river_MEUR or damage_RP100_river_MEUR - those panels are just skipped).
 
 Produces (in results/):
@@ -11,7 +11,7 @@ Produces (in results/):
   figures/{prefix}_sobol_indices.png  - grouped bar chart per outcome
 
 Usage:
-    python -m src.analyze_sobol --country LUX --asset roads --scenario baseline
+    python -m src.analyze_sobol --country LUX --asset roads --scenario flood_absprot_ds
     python -m src.analyze_sobol --results results/experiments_..._sobol_...tar.gz
 """
 

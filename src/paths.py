@@ -14,7 +14,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "config.yml"
-DEFAULT_SCENARIO = "baseline"
+DEFAULT_SCENARIO = "flood_absprot_ds"
 
 
 def set_country_override(country: str | None) -> None:
@@ -117,7 +117,7 @@ def hazard_stem(cfg: dict, hazard: str) -> str:
 
 
 def result_stem(cfg: dict) -> str:
-    """Scenario-specific filename stem, e.g. 'LUX_roads_abs_protection'.
+    """Scenario-specific filename stem, e.g. 'LUX_roads_flood_absprot_ds'.
 
     Used for every Stage-2 output (experiment archives, summary CSVs,
     figures) so that different scenarios for the same (country, asset) never

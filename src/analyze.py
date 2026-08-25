@@ -12,10 +12,10 @@ The factor set is detected from the results file itself (every scenario has
 a different one - see src/ema_model.py), so this script works unmodified for
 any scenario or asset type. The "vs factor" scatter plots are skipped with a
 printed note when the relevant factor isn't part of the scenario (e.g.
-"ead_vs_protection" is meaningless for earthquake_only).
+"ead_vs_protection" is meaningless for the earthquake scenario).
 
 Usage:
-    python -m src.analyze --country LUX --asset roads --scenario baseline
+    python -m src.analyze --country LUX --asset roads --scenario flood_absprot_ds
     python -m src.analyze --results results/experiments_....tar.gz
 """
 
