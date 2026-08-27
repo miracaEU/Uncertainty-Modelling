@@ -63,6 +63,81 @@ BAND_90 = "#cde2fb"
 BAND_50 = "#86b6ef"
 ACCENT = "#1c5cab"
 
+# --- scenario vocabulary, shared by every figure module ----------------------
+# One definition so a scenario reads the same everywhere. The study's internal
+# name "_noprot" is misleading in a figure: it does NOT mean protection is zero,
+# it means the protection standard is held at the value FLOPROS/COASTPROS
+# actually records, instead of being sampled. The labels below say that plainly.
+# "_ds" twins use a multiplicative depth error rather than an additive offset;
+# they are the study defaults, so they carry the plain label and the additive
+# variants are the ones marked.
+SCENARIO_LABEL = {
+    "flood_absprot_ds": "River flood - protection sampled",
+    "flood_absprot": "River flood - protection sampled (add. depth err.)",
+    "flood_noprot_ds": "River flood - protection as recorded (FLOPROS)",
+    "flood_noprot": "River flood - protection as recorded (add. depth err.)",
+    "flood_baseline_ds": "River flood - protection scaled",
+    "flood_baseline": "River flood - protection scaled (add. depth err.)",
+    "coastal_absprot_ds": "Coastal flood - protection sampled",
+    "coastal_absprot": "Coastal flood - protection sampled (add. depth err.)",
+    "coastal_noprot_ds": "Coastal flood - protection as recorded (COASTPROS)",
+    "coastal_noprot": "Coastal flood - protection as recorded (add. depth err.)",
+    "coastal_baseline_ds": "Coastal flood - protection scaled",
+    "coastal_baseline": "Coastal flood - protection scaled (add. depth err.)",
+    "earthquake": "Earthquake",
+    "windstorm": "Windstorm - design standard RP50",
+    "windstorm_absprot": "Windstorm - design standard sampled",
+}
+
+# Short forms for tight spots (pie titles, panel headings), where the
+# qualifier is wrapped onto a second line.
+SCENARIO_LABEL_SHORT = {
+    "flood_absprot_ds": "River flood (protection sampled)",
+    "flood_absprot": "River flood (protection sampled)",
+    "flood_noprot_ds": "River flood (protection as recorded)",
+    "flood_noprot": "River flood (protection as recorded)",
+    "flood_baseline_ds": "River flood (protection scaled)",
+    "flood_baseline": "River flood (protection scaled)",
+    "coastal_absprot_ds": "Coastal flood (protection sampled)",
+    "coastal_absprot": "Coastal flood (protection sampled)",
+    "coastal_noprot_ds": "Coastal flood (protection as recorded)",
+    "coastal_noprot": "Coastal flood (protection as recorded)",
+    "coastal_baseline_ds": "Coastal flood (protection scaled)",
+    "coastal_baseline": "Coastal flood (protection scaled)",
+    "earthquake": "Earthquake",
+    "windstorm": "Windstorm (design RP50)",
+    "windstorm_absprot": "Windstorm (design sampled)",
+}
+
+# Reading order for every figure that shows more than one scenario: both river
+# flood variants, then both coastal, then the single-hazard ones. Alphabetical
+# order put coastal before river and split the pairs apart.
+SCENARIO_ORDER = [
+    "flood_baseline", "flood_baseline_ds",
+    "flood_absprot", "flood_absprot_ds",
+    "flood_noprot", "flood_noprot_ds",
+    "coastal_baseline", "coastal_baseline_ds",
+    "coastal_absprot", "coastal_absprot_ds",
+    "coastal_noprot", "coastal_noprot_ds",
+    "earthquake",
+    "windstorm", "windstorm_absprot",
+]
+
+
+def scenario_label(scen: str, short: bool = False) -> str:
+    """Human-readable scenario name; falls back to the raw code if unmapped."""
+    table = SCENARIO_LABEL_SHORT if short else SCENARIO_LABEL
+    return table.get(scen, scen)
+
+
+def scenario_sort_key(scen: str) -> tuple[int, str]:
+    """Sort key placing scenarios in SCENARIO_ORDER, unknowns last by name."""
+    try:
+        return (SCENARIO_ORDER.index(scen), "")
+    except ValueError:
+        return (len(SCENARIO_ORDER), scen)
+
+
 COUNTRY_SCOPE = "country"
 SCOPE_DIRS = {"eu_sum": "pan_european", "eu_native": "pan_european_native"}
 
