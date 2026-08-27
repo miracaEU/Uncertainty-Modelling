@@ -1,0 +1,27 @@
+# Makes this repo importable as a package from the network-level study
+# (Power-Network-Uncertainty), which reuses Stage 1, the EAD integration and
+# the curve machinery rather than duplicating them.
+#
+# Deliberately additive: `src/` keeps its name and its purely relative internal
+# imports, so `python -m src.preprocess`, run_study.py and the SLURM submitter
+# all behave exactly as before. The alias only exists for external consumers:
+#
+#   uv pip install -e ../Uncertainty-Modelling
+#   from miraca_uq.risk_model import _integrate_ead
+#
+# Dependencies stay in requirements.txt (unpinned, installed separately) rather
+# than moving here - this file is an import shim, not a packaging migration.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "miraca-uq"
+version = "1.0.0"
+description = "Uncertainty modeling for critical-infrastructure direct-damage risk (MIRACA)"
+requires-python = ">=3.12"
+
+[tool.setuptools]
+packages = ["miraca_uq"]
+package-dir = {miraca_uq = "src"}

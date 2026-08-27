@@ -10,6 +10,10 @@ results/
 # Overview / summary figures (regenerable from the summary workbook)
 overview_figures/
 
+# Country boundary cache, downloaded on first run of src/plot_maps.py.
+# It lives here rather than under data/ because data/ is read-only.
+geo/
+
 # Python
 __pycache__/
 *.pyc
@@ -32,3 +36,4 @@ Thumbs.db
 !coastal_rerun.txt
 !failed_combos.txt
 !finished_combos.txt
+*.egg-info/
