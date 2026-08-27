@@ -69,6 +69,7 @@ import json
 import re
 import tarfile
 from pathlib import Path
+from typing import NamedTuple
 
 import matplotlib
 
@@ -87,7 +88,11 @@ from .plot_pyramid import (
     PROJECT_ROOT,
     SURFACE,
     default_results_dir,
+    scenario_label,
+    scenario_sort_key,
 )
+
+NL = chr(10)  # newline for multi-line figure text, without escaping noise
 
 PERCENTILES = (5, 25, 50, 75, 95)
 HEADLINE = "total_EAD_MEUR"
@@ -299,27 +304,169 @@ def stats_for(name: str, v: np.ndarray) -> dict:
 # ---------------------------------------------------------------------------
 
 
+# Below this a country-level annual expected damage is not a number anyone
+# would act on - it is the model reporting "essentially nothing". Without an
+# absolute floor the log axis chased medians down to 1e-14 EUR/yr and spent
+# most of its width on a dead zone.
+EAD_FLOOR_EUR = 1_000.0
+
+
 def _floor_for(values: pd.Series, scale: str) -> float | None:
-    """Left edge for a log axis: three decades below the smallest positive median."""
+    """Left edge for a log axis.
+
+    Three decades below the smallest positive median, but never below
+    EAD_FLOOR_EUR. Anything at or under the floor is drawn with the
+    "below axis" marker rather than being given axis width of its own.
+    """
     if scale != "log":
         return None
     pos = values[values > 0]
-    return float(pos.min()) / 1000.0 if not pos.empty else None
+    if pos.empty:
+        return EAD_FLOOR_EUR
+    return max(EAD_FLOOR_EUR, float(pos.min()) / 1000.0)
 
 
-def _draw_rows(ax, rows: pd.DataFrame, y, floor, color=ACCENT, thick=3.4, scale="log"):
-    """One range bar per row at the given y positions.
+# --- off-scale rows ---------------------------------------------------------
+#
+# Three mutually exclusive states, decided before anything is drawn.
+#
+# The reason they exist: on a log axis a row whose whole distribution sits at or
+# below the floor has p5, the median, the mean AND p95 all clamped to the same
+# x. Drawing the full idiom there stacks four glyphs into one pixel column, buys
+# nothing, hides the "p5 is zero" ring inside the mean diamond, and asserts a
+# centre the data does not have. So a row that cannot carry a range says so with
+# ONE symbol in the gutter and is otherwise left blank, and the p5 = 0 ring is
+# kept for what it was meant for - a real range whose lower bound is zero.
+ST_EMPTY = "empty"   # not one draw produced damage: max == 0
+ST_BELOW = "below"   # damage occurs, but the whole range is under the floor
+ST_RANGE = "range"   # there is a range worth drawing
+
+# Width of the off-scale gutter, in decades. Just over half a decade seats a
+# marker clear of the fence without stealing width the distributions need.
+GUTTER_DECADES = 0.62
+GUTTER_BG = "#efeee8"
+
+
+class Geometry(NamedTuple):
+    """Where the axis starts and ends, and where off-scale marks go."""
+
+    left: float
+    right: float
+    gutter_x: float
+    fence: float
+
+
+def row_states(rows: pd.DataFrame, floor: float | None) -> np.ndarray:
+    """ST_EMPTY / ST_BELOW / ST_RANGE, one per row.
+
+    max == 0 is the exact test for "not one of the draws produced damage" -
+    stronger than p95 == 0, which a distribution with a thin positive tail also
+    satisfies. On a linear axis there is no floor and therefore no ST_BELOW: a
+    small positive number is simply near zero, which the axis can show honestly.
+    """
+    mx = rows["max"].to_numpy(dtype=float)
+    p95 = rows["p95"].to_numpy(dtype=float)
+    state = np.full(len(rows), ST_RANGE, dtype=object)
+    state[~(mx > 0)] = ST_EMPTY
+    if floor is not None:
+        state[(mx > 0) & (p95 <= floor)] = ST_BELOW
+    return state
+
+
+def _right_limit(rows: pd.DataFrame, floor: float | None, scale: str) -> float:
+    """Right edge, from every mark that is actually drawn.
+
+    Autoscale used to settle this. It cannot any more: pinning the left edge to
+    open the gutter turns x autoscaling off for the whole shared-x group, so the
+    limit has to be computed - and computed from the reference columns too,
+    whose bracket routinely runs an order of magnitude past p95.
+    """
+    cand = [rows["p95"].to_numpy(dtype=float), rows["mean"].to_numpy(dtype=float)]
+    for col in ("ref_mid", "ref_max"):
+        if col in rows.columns:
+            cand.append(rows[col].to_numpy(dtype=float))
+    v = np.concatenate(cand)
+    v = v[np.isfinite(v) & (v > 0)]
+    hi = float(v.max()) if v.size else 1.0
+    if scale == "log" and floor is not None:
+        return max(hi, floor * 10) * 10 ** 0.15
+    return hi * 1.06
+
+
+def geometry(rows: pd.DataFrame, floor: float | None, scale: str) -> Geometry:
+    """Axis limits plus the gutter band, computed once per axes."""
+    right = _right_limit(rows, floor, scale)
+    if scale == "log" and floor is not None:
+        return Geometry(left=floor / 10 ** GUTTER_DECADES, right=right,
+                        gutter_x=floor / 10 ** (GUTTER_DECADES / 2), fence=floor)
+    # Linear: the gutter is a slice of negative x fenced at zero. No real value
+    # can land there, so it reads as off-scale without needing a floor at all.
+    return Geometry(left=-0.085 * right, right=right,
+                    gutter_x=-0.045 * right, fence=0.0)
+
+
+def _grey_offscale_labels(ax, state) -> None:
+    """Fade the y label of every row that has no range to show.
+
+    The gutter symbol says WHICH off-scale state a row is in; the faded label is
+    what makes those rows recede at a glance, so the eye lands on the rows that
+    actually carry a distribution.
+    """
+    for label, st in zip(ax.get_yticklabels(), state):
+        if st != ST_RANGE:
+            label.set_color(MUTED)
+
+
+def _tight_y(ax, ypos, pad: float = 0.7) -> None:
+    """Explicit, inverted y limits with a small pad.
+
+    Replaces invert_yaxis() + matplotlib's default 5% margin, which on a figure
+    with several hundred rows left an empty band a dozen rows deep at each end.
+    """
+    lo, hi = float(np.min(ypos)), float(np.max(ypos))
+    ax.set_ylim(hi + pad, lo - pad)
+
+
+def _titles(ax, title: str, subtitle: str) -> None:
+    """Title with a smaller subtitle beneath it, offset in POINTS.
+
+    An axes-fraction offset scales with figure height, so on the very tall
+    by-country figures the subtitle climbed on top of the title.
+
+    The subtitle may carry newlines, and long ones must use them. It is an
+    annotation ON the axes, so a line that overruns the axes width inflates the
+    axes' tight bbox and constrained layout answers by shrinking the axes - a
+    one-line subtitle a little too long for the figure cost about 60% of the
+    plotting width. The title pad grows with the line count to match.
+    """
+    lines = subtitle.count("\n") + 1
+    ax.annotate(subtitle, xy=(0.0, 1.0), xycoords="axes fraction",
+                xytext=(0, 7), textcoords="offset points",
+                ha="left", va="bottom", fontsize=8.5, color=MUTED)
+    ax.set_title(title, pad=24 + 11.0 * (lines - 1), loc="left")
+
+
+def _draw_rows(ax, rows: pd.DataFrame, y, floor, geom: Geometry,
+               color=ACCENT, thick=3.4, scale="log"):
+    """One range bar per row at the given y positions; returns the row states.
+
+    A row that cannot carry a range (ST_EMPTY, ST_BELOW) gets a single symbol in
+    the left gutter and NOTHING on the axis - no interval, no median tick, no
+    mean diamond. See the state comment above for why.
 
     When the reference columns are present, the deterministic MIRACA_RISK value
     is drawn as a triangle just below the bar, pointing up at its position on
     the axis, with a thin bracket for the reference run's own min-max. That
     idiom keeps it clearly a REFERENCE annotation rather than another statistic
     of the sampled distribution, so it cannot be confused with the median tick
-    or the mean diamond.
+    or the mean diamond. It is kept on the off-scale rows too: "our range is
+    empty and the published number is 3e5 EUR/yr" is the most useful thing such
+    a row has to say.
     """
     p5, p25, p50, p75, p95 = (rows[c].to_numpy() for c in ("p5", "p25", "p50", "p75", "p95"))
     mean_v = rows["mean"].to_numpy()
     zero = rows["p5_is_zero"].to_numpy()
+    state = row_states(rows, floor)
     lo = np.maximum(p5, floor) if floor is not None else p5
     if floor is not None:
         p25, p75, p95 = (np.maximum(a, floor) for a in (p25, p75, p95))
@@ -330,32 +477,49 @@ def _draw_rows(ax, rows: pd.DataFrame, y, floor, color=ACCENT, thick=3.4, scale=
         r_lo = rows.get("ref_min", pd.Series(np.nan, index=rows.index)).to_numpy(float)
         r_hi = rows.get("ref_max", pd.Series(np.nan, index=rows.index)).to_numpy(float)
 
+    gx = geom.gutter_x
     for j, i in enumerate(y):
-        ax.hlines(i, lo[j], p95[j], color=color, linewidth=1.1, alpha=0.85, zorder=3)
-        ax.hlines(i, p25[j], p75[j], color=color, linewidth=thick, alpha=1.0, zorder=4)
-        ax.plot([max(p50[j], floor) if floor else p50[j]], [i], marker="|",
-                markersize=11, markeredgewidth=2.0, color=INK, zorder=6)
-        ax.plot([max(mean_v[j], floor) if floor else mean_v[j]], [i], marker="D",
-                markersize=4.4, markerfacecolor=SURFACE, markeredgecolor=INK,
-                markeredgewidth=1.1, linestyle="none", zorder=6)
-        # Distinguish "the lower bound is genuinely zero" from "it is small and
-        # the log axis cannot reach it" - on a log scale both otherwise just
-        # stop at the left edge.
-        if zero[j]:
-            ax.plot([lo[j]], [i], marker="o", markersize=5.0, markerfacecolor="none",
-                    markeredgecolor=MUTED, markeredgewidth=1.3, linestyle="none", zorder=7)
-        elif floor is not None and p5[j] < floor:
-            ax.plot([floor], [i], marker="<", markersize=5.0, color=MUTED,
+        has_range = state[j] == ST_RANGE
+        if has_range:
+            ax.hlines(i, lo[j], p95[j], color=color, linewidth=1.1, alpha=0.85, zorder=3)
+            ax.hlines(i, p25[j], p75[j], color=color, linewidth=thick, alpha=1.0, zorder=4)
+            ax.plot([max(p50[j], floor) if floor else p50[j]], [i], marker="|",
+                    markersize=11, markeredgewidth=2.0, color=INK, zorder=6)
+            ax.plot([max(mean_v[j], floor) if floor else mean_v[j]], [i], marker="D",
+                    markersize=4.4, markerfacecolor=SURFACE, markeredgecolor=INK,
+                    markeredgewidth=1.1, linestyle="none", zorder=6)
+            # The lower bound is genuinely zero, or it is positive but the log
+            # axis cannot reach it. Both go in the gutter, never on the floor,
+            # so neither can be drawn concentric with the mean diamond.
+            if zero[j]:
+                ax.plot([gx], [i], marker="o", markersize=5.2, markerfacecolor="none",
+                        markeredgecolor=MUTED, markeredgewidth=1.3, linestyle="none",
+                        zorder=7)
+            elif floor is not None and p5[j] < floor:
+                ax.plot([gx], [i], marker="<", markersize=5.4, markerfacecolor="none",
+                        markeredgecolor=MUTED, markeredgewidth=1.2, linestyle="none",
+                        zorder=7)
+        elif state[j] == ST_EMPTY:
+            ax.plot([gx], [i], marker="x", markersize=5.0, color=MUTED,
+                    markeredgewidth=1.5, linestyle="none", zorder=7)
+        else:
+            # ST_BELOW. Filled against the hollow "only the bottom is off-scale"
+            # triangle above: solid means the whole distribution is down there.
+            ax.plot([gx], [i], marker="<", markersize=5.4, color=MUTED,
                     linestyle="none", zorder=7)
 
         if has_ref and np.isfinite(r_mid[j]) and r_mid[j] > 0:
-            yr = i + 0.30
+            # On a row with no bar the reference is the only mark, so it sits on
+            # the row's own line instead of being offset below a bar that is not
+            # there.
+            yr = i + 0.30 if has_range else i
             if np.isfinite(r_lo[j]) and np.isfinite(r_hi[j]) and r_hi[j] > r_lo[j]:
                 b_lo = max(r_lo[j], floor) if floor else r_lo[j]
                 ax.hlines(yr, b_lo, max(r_hi[j], floor) if floor else r_hi[j],
                           color=MUTED, linewidth=1.0, alpha=0.9, zorder=5)
             ax.plot([max(r_mid[j], floor) if floor else r_mid[j]], [yr], marker="^",
                     markersize=5.6, color=INK, linestyle="none", zorder=7)
+    return state
 
 
 def _legend(fig, extra=(), ncol=None, interval_color=ACCENT, reference=False):
@@ -379,22 +543,34 @@ def _legend(fig, extra=(), ncol=None, interval_color=ACCENT, reference=False):
         Line2D([], [], marker="D", markerfacecolor=SURFACE, markeredgecolor=INK,
                markersize=6, linestyle="none", label="mean"),
         Line2D([], [], marker="o", markerfacecolor="none", markeredgecolor=MUTED,
-               markersize=6, linestyle="none", label="p5 = 0"),
+               markersize=6, linestyle="none", label="p5 = 0 (range above)"),
+        Line2D([], [], marker="<", markerfacecolor="none", markeredgecolor=MUTED,
+               markersize=6, linestyle="none", label="p5 below axis"),
         Line2D([], [], marker="<", color=MUTED, markersize=6, linestyle="none",
-               label="p5 below axis"),
+               label="whole range below axis"),
+        Line2D([], [], marker="x", color=MUTED, markersize=6, markeredgewidth=1.5,
+               linestyle="none", label="no damage in any draw"),
         *([Line2D([], [], marker="^", color=INK, markersize=6, linestyle="none",
                   label="MIRACA_RISK (mid, bracket = its min-max)")] if reference else []),
         *extra,
     ]
     leg = fig.legend(handles=handles, frameon=False, fontsize=9,
-                     ncol=ncol or min(len(handles), 6), loc="outside lower center")
+                     ncol=ncol or min(len(handles), 5), loc="outside lower center")
     for t in leg.get_texts():
         t.set_color(INK_2)
 
 
-def _finish(ax, scale, floor, xlabel="total EAD (EUR / yr)"):
+def _finish(ax, scale, floor, geom: Geometry, xlabel="total EAD (EUR / yr)"):
     if scale == "log" and floor is not None:
         ax.set_xscale("log")
+    # Explicit limits rather than autoscale: the gutter has a designed width,
+    # and on a shared-x group the first set_xlim would freeze whatever autoscale
+    # happened to hold at that moment anyway.
+    ax.set_xlim(geom.left, geom.right)
+    # Opaque and above the alternating row stripes, so the gutter reads as its
+    # own strip rather than as the left end of the data area.
+    ax.axvspan(geom.left, geom.fence, color=GUTTER_BG, linewidth=0, zorder=0.6)
+    ax.axvline(geom.fence, color=MUTED, linewidth=0.8, alpha=0.75, zorder=1.5)
     ax.set_xlabel(xlabel)
     ax.grid(axis="y", visible=False)
 
@@ -412,15 +588,18 @@ def plot_country_ranges(sub: pd.DataFrame, asset, scenario, out: Path, scale: st
         ax.axhspan(i - 0.5, i + 0.5, color=BAND_90, alpha=0.25, linewidth=0, zorder=0)
 
     floor = _floor_for(sub["median"], scale)
-    _draw_rows(ax, sub, np.arange(len(sub)), floor, thick=4.0, scale=scale)
+    geom = geometry(sub, floor, scale)
+    state = _draw_rows(ax, sub, np.arange(len(sub)), floor, geom, thick=4.0, scale=scale)
     ax.set_yticks(np.arange(len(sub)), sub["country"])
-    ax.invert_yaxis()
-    _finish(ax, scale, floor)
-    ax.set_title(f"Full-uncertainty range by country - {asset} / {scenario}", pad=20)
-    ax.text(0.0, 1.012,
-            f"{int(sub['n'].max()):,} draws per country ({sub['source'].iloc[0]}), every factor varying"
-            f"  |  sampled independently per country - not summable to a European total",
-            transform=ax.transAxes, fontsize=8.5, color=MUTED)
+    _grey_offscale_labels(ax, state)
+    _tight_y(ax, np.arange(len(sub)))
+    _finish(ax, scale, floor, geom)
+    _titles(ax,
+            f"Full-uncertainty range by country - {asset} / {scenario_label(scenario)}",
+            f"{int(sub['n'].max()):,} draws per country ({sub['source'].iloc[0]}), every factor "
+            f"varying  |  sampled independently per country - not summable to a European total"
+            f"{NL}grey strip at the left = what is happening off the axis, see legend  |  "
+            f"reporting floor {EAD_FLOOR_EUR:,.0f} EUR/yr")
     _legend(fig, reference="ref_mid" in sub.columns)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200)
@@ -432,7 +611,7 @@ def plot_asset_panels(sub: pd.DataFrame, asset, out: Path, scale: str, max_cols=
     are actually comparable. Countries are ordered by their median ACROSS
     scenarios - ordering on one coastal scenario would push the big inland
     countries to the bottom of every panel."""
-    scenarios = sorted(sub["scenario"].unique())
+    scenarios = sorted(sub["scenario"].unique(), key=scenario_sort_key)
     order = sub.groupby("country")["median"].median().sort_values(ascending=False).index.tolist()
     pos = {c: i for i, c in enumerate(order)}
 
@@ -445,6 +624,9 @@ def plot_asset_panels(sub: pd.DataFrame, asset, out: Path, scale: str, max_cols=
     )
     flat = axes.ravel()
     floor = _floor_for(sub["median"], scale)
+    # One geometry for the whole grid: the panels share x, so they must share
+    # the gutter too or the fence would land in a different place in each.
+    geom = geometry(sub, floor, scale)
 
     for ax, scen in zip(flat, scenarios):
         rows = sub[sub["scenario"] == scen].copy()
@@ -452,16 +634,16 @@ def plot_asset_panels(sub: pd.DataFrame, asset, out: Path, scale: str, max_cols=
         rows = rows.sort_values("_y")
         for i in range(0, len(order), 2):
             ax.axhspan(i - 0.5, i + 0.5, color=BAND_90, alpha=0.25, linewidth=0, zorder=0)
-        _draw_rows(ax, rows, rows["_y"].to_numpy(), floor,
+        _draw_rows(ax, rows, rows["_y"].to_numpy(), floor, geom,
                    color=HAZARD_COLORS[hazard_of(scen)], thick=3.2, scale=scale)
-        ax.set_title(scen, fontsize=10)
-        _finish(ax, scale, floor)
+        ax.set_title(scenario_label(scen, short=True), fontsize=9.5)
+        _finish(ax, scale, floor, geom)
         ax.set_xlabel("total EAD (EUR / yr)", fontsize=9)
     for ax in flat[len(scenarios):]:
         ax.set_visible(False)
     for r in range(n_rows):
         axes[r][0].set_yticks(np.arange(len(order)), order)
-    flat[0].invert_yaxis()
+    _tight_y(flat[0], np.arange(len(order)))
     _legend(fig, reference="ref_mid" in sub.columns)
     fig.suptitle(f"Full-uncertainty range by country and scenario - {asset}", fontsize=12)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -479,7 +661,7 @@ def plot_scenarios_by_country(
     difference in width is read directly instead of across two figures. Hazard
     colour is a redundant encoding; every row also carries its scenario name.
     """
-    scenarios = sorted(sub["scenario"].unique())
+    scenarios = sorted(sub["scenario"].unique(), key=scenario_sort_key)
     order = sub.groupby("country")["median"].median().sort_values(ascending=False).index.tolist()
 
     ypos, labels, rows_idx = [], [], []
@@ -493,7 +675,8 @@ def plot_scenarios_by_country(
                 continue
             rows_idx.append(hit.index[0])
             ypos.append(y)
-            labels.append(f"{country} · {scen}" if y == start else f"      {scen}")
+            lab = scenario_label(scen, short=True)
+            labels.append(f"{country} · {lab}" if y == start else f"      {lab}")
             y += 1.0
         if y > start:
             blocks.append((start - 0.5, y - 0.5))
@@ -502,27 +685,33 @@ def plot_scenarios_by_country(
         return
 
     rows = sub.loc[rows_idx].reset_index(drop=True)
-    fig, ax = plt.subplots(figsize=(10.6, 0.19 * len(rows) + 0.35 * len(blocks) + 3.2),
+    fig, ax = plt.subplots(figsize=(13.0, 0.19 * len(rows) + 0.35 * len(blocks) + 2.4),
                            layout="constrained")
     for bi, (lo, hi) in enumerate(blocks):
         if bi % 2 == 0:
             ax.axhspan(lo, hi, color=BAND_90, alpha=0.25, linewidth=0, zorder=0)
 
     floor = _floor_for(sub["median"], scale)
+    geom = geometry(rows, floor, scale)
     yarr = np.asarray(ypos)
+    # Drawn hazard by hazard for the colour, so the states come back in that
+    # order too and have to be scattered back into row order for the labels.
+    state = np.full(len(rows), ST_RANGE, dtype=object)
     for hz, color in HAZARD_COLORS.items():
         m = rows["scenario"].map(hazard_of).to_numpy() == hz
         if m.any():
-            _draw_rows(ax, rows[m], yarr[m], floor, color=color, thick=3.2, scale=scale)
+            state[m] = _draw_rows(ax, rows[m], yarr[m], floor, geom,
+                                  color=color, thick=3.2, scale=scale)
 
     ax.set_yticks(yarr, labels, fontsize=8)
-    ax.invert_yaxis()
-    _finish(ax, scale, floor)
-    ax.set_title(title, pad=20)
-    ax.text(0.0, 1.006,
+    _grey_offscale_labels(ax, state)
+    _tight_y(ax, yarr)
+    _finish(ax, scale, floor, geom)
+    _titles(ax, title,
             f"{int(rows['n'].max()):,} draws per bar ({rows['source'].iloc[0]})  |  "
-            f"colour = hazard family (redundant with the row label)",
-            transform=ax.transAxes, fontsize=8.5, color=MUTED)
+            f"colour = hazard family (redundant with the row label)"
+            f"{NL}grey strip at the left = what is happening off the axis, see legend  |  "
+            f"reporting floor {EAD_FLOOR_EUR:,.0f} EUR/yr")
     hz_present = [h for h in HAZARD_COLORS if (rows["scenario"].map(hazard_of) == h).any()]
     _legend(fig, interval_color=INK_2, reference="ref_mid" in rows.columns,
             extra=[Line2D([], [], color=HAZARD_COLORS[h], linewidth=3.2, label=h)

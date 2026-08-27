@@ -213,7 +213,55 @@ Built from results already on disk - no new model runs:
 & $py -m src.cascade             # nested "unfreeze" ensembles with common random numbers
 & $py -m src.plot_pyramid        # trickle-down pyramids + summary tables
 & $py -m src.ead_ranges          # full-uncertainty EAD ranges per combination
+& $py -m src.plot_heatmap        # the whole study on one grid (spread + zero-inflation)
+& $py -m src.plot_maps           # choropleths of spread and of the top Sobol driver
 ```
+
+`plot_heatmap.py` and `plot_maps.py` both read `EAD_Ranges.csv`, so run
+`ead_ranges` first; the driver maps additionally read `All_Sobol_Indices` from
+the summary workbook. `plot_maps` downloads Eurostat GISCO country boundaries
+once into `geo/` (gitignored) and works offline afterwards.
+
+### Reading the range figures
+
+`ead_ranges.py` puts a grey strip at the left of every range chart. It is not
+part of the axis - it is where a row says what is happening off the scale, and a
+row that lands there carries NO bar, median tick or mean diamond, because on a
+log axis all four would clamp to the same x and stack into an unreadable pile:
+
+| mark | meaning |
+|---|---|
+| open circle | p5 = 0, and there is still a real range above the floor |
+| open left triangle | p5 is positive but below the floor; the rest of the range is on the axis |
+| filled left triangle | the whole p5-p95 band is below the floor (1,000 EUR/yr) |
+| cross | not one draw produced damage: `max == 0` |
+
+Of the 2,116 combinations, 510 have p5 = 0, 397 have their whole band below the
+floor and 273 produced no damage in any of the 16,384 draws.
+
+### Combinations with no driver
+
+Those same 273 are exactly the combinations whose Sobol indices are **all zero**,
+so ranking them by ST picks an arbitrary tie-break winner. `plot_drivers.py` and
+`plot_maps.py` both refuse to, and both split them by whether the assets were
+exposed at all (`exposed_qty_RP100_*`, which carries no uncertainty in this
+study, so the test is exact):
+
+| slice | n | meaning |
+|---|---|---|
+| No exposure | 188 | nothing of that asset type is inside the RP100 footprint |
+| Exposed, never damaged | 85 | assets **are** in the footprint, and no draw produced damage |
+
+The second is a finding rather than a non-event: FIN, GRC, CZE, ROU and HUN each
+have ~2e8 m2 of airport inside the windstorm footprint and the model reports zero
+damage with certainty - the gust never crosses the vulnerability curve's onset,
+which is worth checking rather than hiding. It is drawn with a hatch everywhere
+it appears.
+
+This mattered: before the guard, roughly 13% of every rank-1 pie was a fabricated
+driver, unevenly spread (airports 55, gas 52, oil 38). The airports/windstorm pie
+went from 36 attributed drivers to 20, and coastal-with-recorded-protection loses
+81 of 255. Earthquake is unaffected - it has no zero-variance combinations.
 
 `cascade.py` widens one factor at a time on a shared draw matrix, so the
 step-to-step widening is attributable to the newly freed factor rather than to
@@ -309,6 +357,11 @@ src/aggregate_results.py  whole-study roll-up into one workbook
 src/cascade.py         nested unfreeze ensembles with common random numbers
 src/plot_pyramid.py    trickle-down pyramid figures + summary tables
 src/ead_ranges.py      full-uncertainty EAD ranges from archives on disk
+src/eu_totals.py       per-scenario pan-European totals for one asset (xlsx + chart)
+src/country_ranges.py  per-country x per-scenario EAD ranges for one asset (xlsx)
+src/plot_drivers.py    which factor dominates, ranks 1 and 2, per scenario
+src/plot_maps.py       choropleths: band width (p95/p5) and the top Sobol driver
+src/plot_heatmap.py    countries x (asset, scenario) grids: spread and zero-inflation
 src/reference_ead.py   cache of the deterministic MIRACA_RISK totals
 src/plot_curves.py     plot every curve the pipeline samples among
 data/intermediate/     Stage 1 outputs (parquet, regenerable, gitignored)
