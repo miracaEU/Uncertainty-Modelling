@@ -36,4 +36,11 @@ Thumbs.db
 !coastal_rerun.txt
 !failed_combos.txt
 !finished_combos.txt
+
+# Word documents: local working drafts, such as the DamageScanner bug report
+# whose content now lives in the upstream issues. Binary, so they cannot be
+# diffed or reviewed - keep them out of the repo. Note this is NOT extended to
+# .xlsx: the summary workbook at the repo root is tracked on purpose.
+*.docx
+
 *.egg-info/
