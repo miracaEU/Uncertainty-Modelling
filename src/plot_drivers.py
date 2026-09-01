@@ -46,7 +46,8 @@ The split needs exposed_qty_RP100_* from EAD_Ranges_all_outcomes.csv (written by
 
 Grey "not finished yet" slices come from the expected matrix: every
 (country, asset) with exposure data, crossed with the scenarios whose hazard
-applies to it (src/curves.py::applicable_hazards). An experiment with no Sobol
+applies to it (src/curves.py::applicable_hazards), minus the pairs that carry no
+curve-mapped feature at all (see drop_unrunnable). An experiment with no Sobol
 row yet is counted as unfinished rather than silently dropped, so coverage stays
 visible on the face of the figure. "Unfinished" and the three non-driver states
 are different things: unfinished means no Sobol row exists, the others mean the
@@ -74,9 +75,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from matplotlib.patches import Patch
 
-from .curves import ASSET_CONFIGS, applicable_hazards
+from .curves import (
+    ASSET_CONFIGS,
+    applicable_hazards,
+    get_asset_config,
+    mapped_object_types,
+)
 from .ema_model import SCENARIO_HAZARD
 from .paths import load_config
 from .plot_pyramid import (
@@ -222,6 +229,56 @@ def expected_matrix(cfg: dict, scenarios: list[str]) -> pd.DataFrame:
             if SCENARIO_HAZARD[scen] in hazards:
                 rows.append((country, asset, scen))
     return pd.DataFrame(rows, columns=["country", "asset", "scenario"])
+
+
+def _has_mapped_feature(path: Path, allowed: set[str]) -> bool:
+    """True as soon as one feature carries a curve-mapped object_type."""
+    pf = pq.ParquetFile(path)
+    for batch in pf.iter_batches(batch_size=8192, columns=["object_type"]):
+        if not allowed.isdisjoint(batch.column("object_type").to_pylist()):
+            return True
+    return False
+
+
+def drop_unrunnable(expected: pd.DataFrame, ranked: pd.DataFrame,
+                    cfg: dict) -> pd.DataFrame:
+    """Drop expected rows whose (country, asset) has no curve-mapped feature.
+
+    src/preprocess.py::drop_unmapped_object_types skips a combination when every
+    one of its features has an object_type with no vulnerability curve, so that
+    combination can never produce a Sobol row. It is "not runnable", like
+    windstorm for roads, rather than "not finished yet" - counting it grey reads
+    a permanent data gap as a queue that will eventually drain.
+
+    Deciding this needs the exposure file itself, which is slow to open over the
+    network share, so only pairs with NO Sobol row at all are probed: a pair that
+    produced any row is runnable by demonstration. The cost is therefore
+    proportional to the number of gaps, not to the size of the study.
+    """
+    key = ["country", "asset"]
+    done = set(map(tuple, ranked[key].drop_duplicates().to_numpy()))
+    gaps = sorted({tuple(t) for t in expected[key].drop_duplicates().to_numpy()}
+                  - done)
+    if not gaps:
+        return expected
+
+    expo = Path(cfg["exposure_dir"])
+    unrunnable = []
+    for country, asset in gaps:
+        path = expo / f"{country}_{asset}_exposure.parquet"
+        if not path.exists():
+            continue
+        if not _has_mapped_feature(path, set(mapped_object_types(get_asset_config(asset)))):
+            unrunnable.append((country, asset))
+    if not unrunnable:
+        return expected
+
+    print(f"  {len(unrunnable)} pair(s) have no curve-mapped feature at all and are "
+          "excluded from the expected matrix rather than counted unfinished: "
+          + ", ".join(f"{c}/{a}" for c, a in unrunnable))
+    drop = set(unrunnable)
+    keep = [t not in drop for t in map(tuple, expected[key].to_numpy())]
+    return expected[keep].reset_index(drop=True)
 
 
 RANGES_ALL_OUTCOMES = (PROJECT_ROOT / "overview_figures" / "ead_ranges"
@@ -572,7 +629,6 @@ def main() -> None:
 
     cfg = load_config()
     expected = expected_matrix(cfg, scenarios)
-    print(f"expected experiments: {len(expected)}")
     exposure = exposure_flags()
     if exposure is None:
         print(f"  NOTE: {RANGES_ALL_OUTCOMES.name} not found - combinations with no "
@@ -580,6 +636,8 @@ def main() -> None:
               "'no exposure' and 'exposed, never damaged'. Run "
               "`python -m src.ead_ranges` to get the split.")
     ranked = ranked_drivers(workbook, max_rank=max(ranks), exposure=exposure)
+    expected = drop_unrunnable(expected, ranked, cfg)
+    print(f"expected experiments: {len(expected)}")
     report_unexpected(expected, ranked, scenarios)
 
     for rank in ranks:
