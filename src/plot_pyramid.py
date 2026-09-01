@@ -14,11 +14,17 @@ distinguished by SHAPE rather than colour so the figure survives greyscale
 printing and colour-vision deficiency. A dashed reference line marks the
 step-0 nominal value, so drift of the centre is as visible as the widening.
 
-Output layout under overview_figures/pyramids/:
+Output layout under overview_figures/pyramids/{order}/:
     pan_european/{asset}_{scenario}_pyramid.png          scope "eu_sum"
     pan_european_native/{asset}_{scenario}_pyramid.png   scope "eu_native"
     countries/{ISO3}/{asset}_{scenario}_pyramid.png      scope "country"
     pyramid_summary.xlsx / .csv                          the numbers
+
+{order} mirrors the cascade folder ("workflow-a1b2c3d4"), so figures built from
+different factor orderings cannot overwrite each other - the cascade is
+order-dependent, and two orderings give different intermediate steps for the
+same asset/scenario/country. It is dropped when --cascade-dir points at a plain
+folder of parquets (no cascade_order.txt), and when --out-dir is given.
 
 Scope folders are derived from the scope column, so a cascade run tagged with a
 new --scope-label (e.g. a genuinely pan-European run built on a single European
@@ -33,6 +39,7 @@ Usage:
     python -m src.plot_pyramid --assets power --scenarios flood_noprot_ds
     python -m src.plot_pyramid --scopes eu_sum          # skip the ~2000 country figures
     python -m src.plot_pyramid --countries DEU FRA --log-x
+    python -m src.plot_pyramid --cascade-dir results/cascade/workflow-a1b2c3d4
 """
 
 from __future__ import annotations
@@ -141,6 +148,11 @@ def scenario_sort_key(scen: str) -> tuple[int, str]:
 COUNTRY_SCOPE = "country"
 SCOPE_DIRS = {"eu_sum": "pan_european", "eu_native": "pan_european_native"}
 
+# Marker file src/cascade.py drops in each order-keyed folder. Duplicated here
+# rather than imported: importing cascade would pull in ema_workbench and scipy,
+# which this module deliberately does without (see the header).
+ORDER_FILE = "cascade_order.txt"
+
 PERCENTILES = (5, 25, 50, 75, 95)
 
 plt.rcParams.update(
@@ -196,6 +208,33 @@ def scope_dir(scope: str, country: str) -> Path:
     if scope == COUNTRY_SCOPE:
         return Path("countries") / country
     return Path(SCOPE_DIRS.get(scope, scope))
+
+
+def resolve_cascade_dir(cdir: Path) -> Path:
+    """Accept either a folder of parquets or the parent holding order folders.
+
+    src/cascade.py writes into results/cascade/{order_mode}-{hash}/ so that runs
+    under different factor orderings can never be pooled. Point --cascade-dir at
+    either level: a parent with exactly one order folder resolves to it, and an
+    ambiguous parent lists the choices rather than silently picking one - which
+    would mix incomparable cascades into a single summary table.
+    """
+    if sorted(cdir.glob("*_cascade.parquet")):
+        return cdir
+    subs = sorted(
+        d for d in cdir.glob("*") if d.is_dir() and any(d.glob("*_cascade.parquet"))
+    )
+    if len(subs) == 1:
+        print(f"Reading cascade folder {subs[0].name}")
+        return subs[0]
+    if len(subs) > 1:
+        listing = "\n".join(f"  --cascade-dir {d}" for d in subs)
+        raise SystemExit(
+            f"{cdir} holds cascades for {len(subs)} different factor orderings."
+            f"\nEach folder's {ORDER_FILE} says which; pick one explicitly:"
+            f"\n{listing}"
+        )
+    return cdir
 
 
 def default_results_dir() -> Path:
@@ -435,7 +474,12 @@ def main() -> None:
     args = parser.parse_args()
 
     cdir = Path(args.cascade_dir) if args.cascade_dir else default_results_dir() / "cascade"
+    cdir = resolve_cascade_dir(cdir)
     odir = Path(args.out_dir) if args.out_dir else PROJECT_ROOT / "overview_figures" / "pyramids"
+
+    # Keep figures from different orderings apart, exactly as the cascades are.
+    if args.out_dir is None and (cdir / ORDER_FILE).exists():
+        odir = odir / cdir.name
 
     files = sorted(cdir.glob("*_cascade.parquet"))
     if not files:

@@ -54,8 +54,15 @@ healthcare's "F21_6" have different member sets.
 
 Outputs
 -------
-results/cascade/{asset}_{scenario}_cascade.parquet   per-draw long table
-results/cascade/{asset}_{scenario}_cascade_meta.json reproducibility record
+results/cascade/{order}/{asset}_{scenario}_cascade.parquet   per-draw long table
+results/cascade/{order}/{asset}_{scenario}_cascade_meta.json reproducibility record
+results/cascade/{order}/cascade_order.txt                    what {order} means
+
+{order} is "{order_mode}-{hash}", derived from whatever determines the factor
+order (see "Order identity" below). Because the cascade is order-dependent, this
+keeps runs made under different orderings physically apart, while a later batch
+of countries under the SAME ordering lands in the existing folder and can simply
+be concatenated. Pass --out-dir to override and place results anywhere.
 
 The parquet keeps every draw (not just summary statistics) so the plotting
 layer can re-derive any statistic and run the three-way dependence comparison
@@ -66,11 +73,16 @@ Usage:
     python -m src.cascade --n 2000 --workers 16              # everything
     python -m src.cascade --countries DEU FRA ITA --assets power
     python -m src.cascade --order workflow                   # modelling-chain order
+
+    # incremental: same ordering, so batch 2 joins batch 1 in one folder
+    python -m src.cascade --order workflow --countries ITA NLD ROU AUT HUN EST ALB
+    python -m src.cascade --order workflow --countries ESP PRT GRC SWE FIN --add-countries
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -296,6 +308,106 @@ def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float]) -> l
 
 
 # ---------------------------------------------------------------------------
+# Order identity - one output folder per distinct factor ordering
+# ---------------------------------------------------------------------------
+# The cascade is order-dependent, so results produced under different orderings
+# must never be pooled. Rather than rely on remembering that, the default output
+# folder is DERIVED from whatever determines the order: change the ordering and
+# the results land somewhere else automatically, keep it and a later batch of
+# countries lands in the existing folder, ready to be merged.
+#
+# What determines the order differs by mode:
+#   workflow - WORKFLOW_ORDER alone. Independent of the country set, which is
+#              exactly what makes a workflow run resumable country-by-country:
+#              the draw matrix depends only on (seed, n, k), so draw index i
+#              means the same thing in every batch.
+#   sobol    - the mean ST over the countries IN THE RUN, so the country set is
+#              part of the identity. Two sobol batches over different countries
+#              would assign different factors to the same draw column and are
+#              genuinely not mergeable; they correctly get separate folders.
+
+ORDER_FILE = "cascade_order.txt"
+
+
+def order_signature(order_mode: str, countries: list[str] | None) -> dict:
+    """Canonical description of everything that determines the factor order."""
+    if order_mode == "workflow":
+        return {"order_mode": "workflow", "workflow_order": list(WORKFLOW_ORDER)}
+    return {
+        "order_mode": "sobol",
+        "countries": sorted(countries) if countries else "auto",
+    }
+
+
+def order_canonical(sig: dict) -> str:
+    """Stable one-line form of a signature, used for naming and for matching."""
+    return json.dumps(sig, sort_keys=True, separators=(",", ":"))
+
+
+def order_dir(base: Path, canonical: str, order_mode: str) -> Path:
+    """Folder for this ordering.
+
+    Named from a hash of the signature rather than a running counter, so the
+    same ordering always resolves to the same folder - even if the directory
+    was moved away and later recreated, and regardless of what else exists.
+    """
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:8]
+    return base / f"{order_mode}-{digest}"
+
+
+def write_order_file(out_dir: Path, sig: dict, canonical: str) -> None:
+    """Create, or verify, the human-readable record of this folder's ordering.
+
+    A mismatch means the folder already holds results from a different ordering,
+    so adding to it would silently pool incomparable runs. That is an error, not
+    a warning; pass an explicit --out-dir to override deliberately.
+    """
+    path = out_dir / ORDER_FILE
+    marker = "canonical: "
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith(marker):
+                if line[len(marker):].strip() != canonical:
+                    raise SystemExit(
+                        f"{path} records a different factor ordering than this "
+                        f"run uses. Refusing to mix orderings in one folder - "
+                        f"pass an explicit --out-dir if that is deliberate."
+                    )
+                return
+
+    if sig["order_mode"] == "workflow":
+        head = [
+            "Factor ordering policy: workflow (conceptual modelling chain).",
+            "Matched by exact name first, then the curve_ prefix, then anything",
+            "unrecognised is appended alphabetically. Independent of the country",
+            "set, so further countries may be added to this folder at any time.",
+        ]
+        body = [f"  {i:2d}. {name}" for i, name in enumerate(sig["workflow_order"], 1)]
+    else:
+        head = [
+            "Factor ordering policy: sobol (descending mean Sobol ST).",
+            "The order depends on the countries averaged over, listed below, so",
+            "results here may NOT be merged with a sobol run over another set.",
+        ]
+        cs = sig["countries"]
+        body = ["  " + (", ".join(cs) if isinstance(cs, list) else str(cs))]
+
+    preamble = [
+        "# Written by src/cascade.py - identifies the ordering this folder holds.",
+        "# The folder name is sha256(canonical)[:8]: change the ordering and a new",
+        "# folder is used, so runs under different orderings cannot be pooled by",
+        "# accident. The resolved per-combination order is recorded per run in",
+        "# each *_cascade_meta.json, under the factor_order key.",
+        "",
+    ]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(preamble + head + [""] + body + ["", marker + canonical, ""]),
+        encoding="utf-8",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Sampling
 # ---------------------------------------------------------------------------
 
@@ -400,6 +512,32 @@ def available_countries(cfg: dict, asset: str) -> list[str]:
     return sorted(p.name[: -len(suffix)] for p in idir.glob(f"*{suffix}"))
 
 
+def _assert_addable(meta_path: Path, prev_meta: dict, order: list[str],
+                    n: int, seed: int, order_mode: str) -> None:
+    """Refuse to extend a cascade whose draws would not line up with this run.
+
+    Adding countries is only sound when the new draws are the SAME draws: the
+    matrix depends on (seed, n, k) and the column -> factor mapping on the order,
+    so if any of those differ the stored rows and the new ones are not
+    comparable at equal draw index - which is the one property the pan-European
+    sum and the dependence comparison both rest on.
+    """
+    checks = [
+        ("factor order", prev_meta.get("factor_order"), order),
+        ("n draws", prev_meta.get("n_draws"), n),
+        ("seed", prev_meta.get("seed"), seed),
+        ("order mode", prev_meta.get("order_mode"), order_mode),
+    ]
+    bad = [(w, was, now) for w, was, now in checks if was is not None and was != now]
+    if bad:
+        detail = "; ".join(f"{w} was {was!r}, this run uses {now!r}" for w, was, now in bad)
+        raise SystemExit(
+            f"Cannot add countries to {meta_path.name}: {detail}. The draw matrix "
+            f"would not line up, so old and new rows are not comparable at equal "
+            f"draw index. Recompute the whole combination with --force instead."
+        )
+
+
 def run_combination(
     asset: str,
     scenario: str,
@@ -411,8 +549,15 @@ def run_combination(
     out_dir: Path,
     scope_label: str = EU_SCOPE,
     chunk: int = 250,
+    add_countries: bool = False,
 ) -> Path | None:
-    """Run the full cascade for one (asset, scenario) across `countries`."""
+    """Run the full cascade for one (asset, scenario) across `countries`.
+
+    With add_countries, an existing result is extended rather than replaced:
+    only the requested countries not already stored are evaluated, and the
+    aggregate rows are re-derived over the union. Draw alignment is verified
+    against the stored meta first (see _assert_addable).
+    """
     cfg = load_config()
     specs, constants = scenario_factors(asset, scenario)
     if not specs:
@@ -424,6 +569,33 @@ def run_combination(
     k = len(order)
     n_steps = k + 1
     print(f"  factors ({order_mode}): {' -> '.join(order)}")
+
+    out = out_dir / f"{asset}_{scenario}_cascade.parquet"
+    meta_path = out_dir / f"{asset}_{scenario}_cascade_meta.json"
+
+    # Extending an existing result: keep its country rows, evaluate only what is
+    # missing. The draws line up because u_shared depends solely on (seed, n, k)
+    # and k is fixed by (asset, scenario) - so draw index i means the same thing
+    # in this run as it did in the one that wrote the file.
+    existing = None
+    if add_countries and out.exists():
+        if not meta_path.exists():
+            raise SystemExit(
+                f"Cannot add countries to {out.name}: {meta_path.name} is missing, "
+                f"so the stored draws cannot be verified. Use --force to recompute."
+            )
+        prev_meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        _assert_addable(meta_path, prev_meta, order, n, seed, order_mode)
+
+        existing = pd.read_parquet(out)
+        have = set(existing.loc[existing["scope"] == COUNTRY_SCOPE, "country"].unique())
+        todo = [c for c in countries if c not in have]
+        if not todo:
+            print(f"  all {len(countries)} requested countries already present "
+                  f"({len(have)} stored) - nothing to add")
+            return out
+        print(f"  {len(have)} stored, adding {len(todo)}: {', '.join(todo)}")
+        countries = todo
 
     # One shared draw matrix for every country (CRN), plus a per-country matrix
     # used only for the columns of country-specific factors.
@@ -502,6 +674,11 @@ def run_combination(
         return None
 
     df = pd.concat(frames, ignore_index=True)
+    if existing is not None:
+        # Country rows only: the stored aggregate covered fewer countries and is
+        # rebuilt below over the union.
+        prev = existing[existing["scope"] == COUNTRY_SCOPE]
+        df = pd.concat([prev[df.columns], df], ignore_index=True)
 
     # Pan-European total: sum ACROSS COUNTRIES AT EQUAL DRAW INDEX. Because the
     # shared factors carried the same draw in every country, this reproduces
@@ -515,7 +692,6 @@ def run_combination(
     df = pd.concat([df, eu[df.columns]], ignore_index=True)
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / f"{asset}_{scenario}_cascade.parquet"
     df.to_parquet(out, index=False)
 
     meta = {
@@ -533,9 +709,7 @@ def run_combination(
         "mean_ST_used_for_order": st,
         "written": datetime.now(timezone.utc).isoformat(),
     }
-    (out_dir / f"{asset}_{scenario}_cascade_meta.json").write_text(
-        json.dumps(meta, indent=2, default=str), encoding="utf-8"
-    )
+    meta_path.write_text(json.dumps(meta, indent=2, default=str), encoding="utf-8")
     print(f"  -> {out}  ({len(df):,} rows)")
     return out
 
@@ -553,17 +727,36 @@ def main() -> None:
     parser.add_argument("--order", choices=["sobol", "workflow"], default="sobol")
     parser.add_argument("--seed", type=int, default=20260820)
     parser.add_argument("--chunk", type=int, default=250, help="draws per worker task")
-    parser.add_argument("--out-dir", default=None, help="default: results/cascade")
+    parser.add_argument("--out-dir", default=None,
+                        help="default: results/cascade/{order_mode}-{hash}, one folder "
+                             "per distinct factor ordering. Setting this bypasses that "
+                             "and writes exactly where you say.")
     parser.add_argument("--scope-label", default=EU_SCOPE,
                         help="scope name for the aggregate rows. Use a different label "
                              "(e.g. eu_native) for a run built from a genuinely "
                              "pan-European exposure set rather than a sum of countries; "
                              "the plotting layer gives every scope its own figure folder.")
     parser.add_argument("--force", action="store_true", help="recompute combos already written")
+    parser.add_argument("--add-countries", action="store_true",
+                        help="extend combos already written with any requested country "
+                             "not yet in them, instead of skipping. Refuses if the "
+                             "stored n, seed or factor order differ, since the draws "
+                             "would not line up. Ignored when --force is given.")
     args = parser.parse_args()
 
     cfg = load_config()
-    out_dir = Path(args.out_dir) if args.out_dir else cfg["results_dir"] / "cascade"
+
+    # One folder per distinct factor ordering, so a re-run under a changed
+    # ordering cannot land on top of earlier results, while further countries
+    # under an unchanged ordering accumulate in the folder that already exists.
+    sig = order_signature(args.order, args.countries)
+    canonical = order_canonical(sig)
+    out_dir = (
+        Path(args.out_dir) if args.out_dir
+        else order_dir(cfg["results_dir"] / "cascade", canonical, args.order)
+    )
+    write_order_file(out_dir, sig, canonical)
+    print(f"Output folder: {out_dir}  (ordering recorded in {ORDER_FILE})")
 
     plan = []
     for asset in args.assets:
@@ -582,17 +775,19 @@ def main() -> None:
         out = out_dir / f"{asset}_{scenario}_cascade.parquet"
         print("=" * 70)
         print(f"{asset} / {scenario}  ({len(countries)} countries)")
-        if out.exists() and not args.force:
-            print("  SKIP (already written; --force to redo)")
+        if out.exists() and not args.force and not args.add_countries:
+            print("  SKIP (already written; --force to redo, --add-countries to extend)")
             continue
         run_combination(
             asset=asset, scenario=scenario, countries=countries, n=args.n,
             workers=args.workers, order_mode=args.order, seed=args.seed,
             out_dir=out_dir, scope_label=args.scope_label, chunk=args.chunk,
+            add_countries=args.add_countries and not args.force,
         )
 
     print("=" * 70)
-    print(f"Done. Now build the figures:  python -m src.plot_pyramid")
+    print("Done. Now build the figures:")
+    print(f"  python -m src.plot_pyramid --cascade-dir {out_dir}")
 
 
 if __name__ == "__main__":
