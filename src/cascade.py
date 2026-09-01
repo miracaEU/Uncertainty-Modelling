@@ -123,13 +123,32 @@ CATEGORICAL_NOMINAL = {
 
 # Conceptual modelling-chain order, used by --order workflow. Matched by exact
 # name first, then by the curve_ prefix, then anything unrecognised is appended.
+#
+# This is the CONCEPTUAL chain ("which climate future, how wrong is the hazard
+# map, how do cells become an asset value, how does that become damage, what
+# protection intervenes, what does it cost"), not the literal order of
+# operations in risk_model.compute_risk - there `warming` is applied late, at
+# _shift_rps/_integrate_ead, because it acts on the return-period axis rather
+# than on the damage.
+#
+# Two placements are deliberate:
+#   aggregation - passed INTO _damage_matrix alongside the curves, so it belongs
+#                 next to them: it selects how a curve is applied across cells
+#                 (per_cell vs mean_depth) and has an effect only because the
+#                 curve is nonlinear. Its ST is ~0 study-wide, so its position
+#                 changes the story, not the numbers.
+#   cost_level  - a pure per-segment multiplier (damage = dmg_qty * cost), so it
+#                 commutes with everything and is genuinely last. Unfreezing it
+#                 last makes its d_w90 read as "what cost uncertainty adds on top
+#                 of a fully-resolved physical estimate"; mid-chain it would
+#                 scale every later step and muddy their attribution.
 WORKFLOW_ORDER = [
     "warming",                                        # climate future
     "depth_scale", "depth_offset", "pga_scale", "gust_scale",  # hazard map bias
+    "aggregation",                                    # cell -> asset reduction
     CURVE_PREFIX,                                     # vulnerability curves
-    "cost_level",                                     # cost table
-    "aggregation",                                    # method choice
     "protection_scale", "protection_abs_rp",          # protection standard
+    "cost_level",                                     # cost table
 ]
 
 EU_SCOPE = "eu_sum"
@@ -246,9 +265,10 @@ def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float]) -> l
     "sobol"    - descending mean Sobol ST, so the band widens fastest early and
                  the figure reads as a classic pyramid. Factors with no ST
                  record sort last, alphabetically, for determinism.
-    "workflow" - the conceptual modelling chain (climate -> hazard map ->
-                 vulnerability -> cost -> method -> protection), which reads as
-                 a story rather than a ranking.
+    "workflow" - the conceptual modelling chain (climate -> hazard map bias ->
+                 aggregation -> vulnerability -> protection -> cost), which
+                 reads as a story rather than a ranking. See WORKFLOW_ORDER for
+                 why aggregation sits with the curves and cost sits last.
 
     NOTE the cascade is genuinely order-dependent whenever interactions are
     strong - and they are here (sum of S1 ~ 0.44 vs sum of ST ~ 1.7 for
