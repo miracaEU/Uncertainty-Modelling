@@ -156,6 +156,16 @@ COLORS = {
     "Unfinished": "#d9d8d1",
 }
 HATCH = {EXPOSED_UNDAMAGED: "///"}
+
+# Report mode (--report): the same pies, restyled for inclusion in a written
+# report rather than for monitoring a running study. Set once in main().
+#   - coverage captions collapse to a bare "(n)": in a report the study IS
+#     finished, so a fraction and a percent are both 100% and say nothing.
+#   - "Unfinished" leaves the legend entirely, for the same reason.
+#   - the legend wraps onto two rows so it can carry a larger font.
+#   - margins, inter-pie gaps and the header band all tighten, because the
+#     monitoring layout leaves room for captions a report does not print.
+REPORT = False
 SLICE_ORDER = [
     "Protection standard",
     "Vulnerability curve",
@@ -205,12 +215,18 @@ def display_category(cat):
 # ---------------------------------------------------------------------------
 
 
-def expected_matrix(cfg: dict, scenarios: list[str]) -> pd.DataFrame:
+def expected_matrix(cfg: dict, scenarios: list[str],
+                    countries: list[str] | None = None) -> pd.DataFrame:
     """Every (country, asset, scenario) that SHOULD exist.
 
     Derived from the exposure files actually on disk crossed with the
     applicability rules, so a combination that was never runnable (windstorm for
     roads, coastal for a landlocked country) is never counted as missing.
+
+    `countries` restricts the matrix to a subset. That matters when a scenario
+    was only run for part of the study - the range tests cover seven countries -
+    because comparing their pie against a full 36-country baseline would differ
+    by country mix as much as by the thing under test.
     """
     expo = Path(cfg["exposure_dir"])
     combos = set()
@@ -221,6 +237,10 @@ def expected_matrix(cfg: dict, scenarios: list[str]) -> pd.DataFrame:
         country, _, asset = base.partition("_")
         if country and asset in ASSET_CONFIGS:
             combos.add((country, asset))
+
+    if countries is not None:
+        keep = set(countries)
+        combos = {(c, a) for c, a in combos if c in keep}
 
     rows = []
     for country, asset in sorted(combos):
@@ -286,7 +306,7 @@ RANGES_ALL_OUTCOMES = (PROJECT_ROOT / "overview_figures" / "ead_ranges"
 
 
 def exposure_flags(path: Path = RANGES_ALL_OUTCOMES) -> pd.DataFrame | None:
-    """(country, asset, scenario) -> was anything inside the RP100 footprint?
+    """(country, asset, hazard) -> was anything inside the RP100 footprint?
 
     None if the file is not there, which is not an error - it only costs the
     split between "no exposure" and "exposed but never damaged".
@@ -303,7 +323,16 @@ def exposure_flags(path: Path = RANGES_ALL_OUTCOMES) -> pd.DataFrame | None:
     exp = allo[allo["outcome"].str.startswith("exposed_qty_RP100_")]
     if exp.empty:
         return None
-    g = exp.groupby(["country", "asset", "scenario"], as_index=False)["max"].max()
+    # Keyed on HAZARD, not scenario. What is inside the RP100 footprint depends
+    # on the hazard map and the asset geometry, never on how the protection
+    # standard is treated - verified across all 349 river combinations, where
+    # exposed_qty_RP100_river is identical in every scenario. Keying on scenario
+    # meant a scenario absent from this file (any newly added one) had no flag
+    # at all; keying on hazard makes one computation serve every scenario of
+    # that hazard, including ones added later.
+    exp = exp.copy()
+    exp["hazard"] = exp["outcome"].str.replace("exposed_qty_RP100_", "", regex=False)
+    g = exp.groupby(["country", "asset", "hazard"], as_index=False)["max"].max()
     return g.rename(columns={"max": "exposed_qty_max"})
 
 
@@ -342,11 +371,25 @@ def ranked_drivers(workbook: Path, max_rank: int,
     if exposure is None:
         main.loc[no_var, "category"] = NO_DAMAGE
     else:
-        main = main.merge(exposure, on=key, how="left")
+        main["hazard"] = main["scenario"].map(SCENARIO_HAZARD)
+        main = main.merge(exposure, on=["country", "asset", "hazard"], how="left")
         no_var = main["no_variance"]
+        # The flag is keyed on SCENARIO, so a scenario absent from
+        # EAD_Ranges_all_outcomes.csv has no flag at all. Treating a missing
+        # flag as "not exposed" silently relabels exposed-but-undamaged
+        # combinations as unexposed, and exposure cannot differ by scenario for
+        # one hazard anyway - so fall back to the pooled state and say so.
+        known = main["exposed_qty_max"].notna()
         exposed = main["exposed_qty_max"].fillna(0) > 0
-        main.loc[no_var & exposed, "category"] = EXPOSED_UNDAMAGED
-        main.loc[no_var & ~exposed, "category"] = NO_EXPOSURE
+        main.loc[no_var & known & exposed, "category"] = EXPOSED_UNDAMAGED
+        main.loc[no_var & known & ~exposed, "category"] = NO_EXPOSURE
+        main.loc[no_var & ~known, "category"] = NO_DAMAGE
+        blind = sorted(main.loc[no_var & ~known, "hazard"].dropna().unique())
+        if blind:
+            print(f"  NOTE: no exposure data for hazard(s) {', '.join(blind)} - their "
+                  "zero-variance combinations cannot be split into 'no exposure' "
+                  "vs 'exposed, never damaged'. Run `python -m src.ead_ranges` "
+                  "to get the split.")
     n = int(main.loc[main["rank"] == 1, "no_variance"].sum())
     if n:
         by = main.loc[(main["rank"] == 1) & main["no_variance"], "category"].value_counts()
@@ -422,8 +465,24 @@ def draw_pie(ax, counts: dict, title: str, cover_txt: str, big: bool = False) ->
                 color="#ffffff" if light else INK)
     ax.set_title(title, fontsize=(15 if big else 12), fontweight="bold",
                  color=INK, pad=(10 if big else 6))
-    ax.text(0.5, -0.14 if big else -0.10, cover_txt, transform=ax.transAxes,
-            ha="center", va="top", fontsize=(11 if big else 9), color=INK_2)
+    cap_y = (-0.04 if big else -0.02) if REPORT else (-0.14 if big else -0.10)
+    ax.text(0.5, cap_y, cover_txt, transform=ax.transAxes,
+            ha="center", va="top",
+            fontsize=(12 if big else 10) if REPORT else (11 if big else 9),
+            color=INK_2)
+
+
+def coverage_text(fin: int, nexp: int, noun: str = "") -> str:
+    """Per-pie caption under the wedges.
+
+    Report mode prints just the completed count in brackets; the monitoring
+    default also carries the expected total and the percentage, which is what
+    makes an unfinished study legible while it runs.
+    """
+    if REPORT:
+        return f"({fin})"
+    pct = f"{100 * fin / nexp:.0f}%" if nexp else "-"
+    return f"{fin}/{nexp}{noun} ({pct})"
 
 
 def wrap_scen_name(scen: str) -> str:
@@ -445,8 +504,36 @@ def legend_handles(present: set[str] | None = None) -> list:
     categories that never occur.
     """
     labels = [s for s in SLICE_ORDER if present is None or s in present]
+    if REPORT and "Unfinished" in labels:
+        # Report mode assumes a finished study. If unfinished wedges exist the
+        # legend must still explain them, or the figure shows a grey slice with
+        # no key - so keep the entry and say so rather than quietly dropping it.
+        print("  WARNING: --report but unfinished experiments are present; keeping "
+              "'Unfinished' in the legend. Rebuild the workbook, or the figure "
+              "understates coverage.")
     return [Patch(facecolor=COLORS[s], edgecolor=INK_2 if s in HATCH else SURFACE,
-                  hatch=HATCH.get(s), label=s) for s in labels]
+                  hatch=HATCH.get(s),
+                  label=REPORT_LEGEND_LABEL.get(s, s) if REPORT else s)
+            for s in labels]
+
+
+# Display-only legend text. The pie category stays "Vulnerability curve" as the
+# data key; the report legend spells out both kinds because the study uses both:
+# flood and windstorm read damage-fraction VULNERABILITY curves (F_Vuln_Depth,
+# W_Vuln_V10m_3sec), while earthquake reads FRAGILITY curves (E_Frag_PGA,
+# exceedance probability per damage state) collapsed to an EDR.
+REPORT_LEGEND_LABEL = {"Vulnerability curve": "Vulnerability / fragility curve"}
+
+
+def legend_layout(handles: list) -> dict:
+    """ncol/fontsize for fig.legend.
+
+    Report mode splits the entries over two rows, which buys a larger font
+    without widening the figure; monitoring keeps them on one row.
+    """
+    if REPORT:
+        return {"ncol": int(np.ceil(len(handles) / 2)), "fontsize": 13}
+    return {"ncol": min(len(handles), 8), "fontsize": 11}
 
 
 def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -> Path:
@@ -455,37 +542,48 @@ def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -
     assets = sorted(sc["asset"].unique())
     ncols = 4
     nrows = int(np.ceil((1 + len(assets)) / ncols))
-    fig = plt.figure(figsize=(4.1 * ncols, 4.0 * nrows + 1.4))
-    gs = fig.add_gridspec(nrows, ncols, hspace=0.55, wspace=0.25,
-                          top=0.88, bottom=0.14, left=0.04, right=0.96)
+    cell = 3.5 if REPORT else 4.0
+    colw = 3.5 if REPORT else 4.1
+    fig = plt.figure(figsize=(colw * ncols, cell * nrows + (1.7 if REPORT else 1.4)))
+    gs = fig.add_gridspec(
+        nrows, ncols,
+        hspace=0.30 if REPORT else 0.55, wspace=0.06 if REPORT else 0.25,
+        top=0.915 if REPORT else 0.88, bottom=0.105 if REPORT else 0.14,
+        left=0.02 if REPORT else 0.04, right=0.98 if REPORT else 0.96,
+    )
 
     present: set[str] = set()
     ax0 = fig.add_subplot(gs[0, 0])
     counts, fin, nexp = slice_counts(sc)
     present |= set(counts)
     draw_pie(ax0, counts, "ALL INFRASTRUCTURE",
-             f"{fin}/{nexp} experiments done ({100 * fin / nexp:.0f}%)", big=True)
+             coverage_text(fin, nexp, " experiments done"), big=True)
 
     for i, a in enumerate(assets, start=1):
         r, c = divmod(i, ncols)
         ax = fig.add_subplot(gs[r, c])
         counts, fin, nexp = slice_counts(sc[sc["asset"] == a])
         present |= set(counts)
-        draw_pie(ax, counts, a, f"{fin}/{nexp} countries ({100 * fin / nexp:.0f}%)")
+        draw_pie(ax, counts, a, coverage_text(fin, nexp, " countries"))
 
     fin_all, n_all = int(sc["covered"].sum()), len(sc)
     fig.suptitle(f"{RANK_WORD[rank]} influential parameter - {scenario_label(scen)}",
-                 fontsize=19, fontweight="bold", color=INK, y=0.965)
-    fig.text(0.5, 0.915,
-             f"{RANK_BLURB[rank]} Sobol total-effect driver of total EAD, per country. "
-             f"Coverage so far: {fin_all}/{n_all} experiments "
-             f"({100 * fin_all / n_all:.0f}%)."
-             f"{NL}Neutral slices are not drivers: pale grey = not finished, and the "
-             f"two darker greys are combinations whose Sobol indices are ALL zero.",
-             ha="center", fontsize=12, color=INK_2)
+                 fontsize=19, fontweight="bold", color=INK,
+                 y=0.972 if REPORT else 0.965)
+    # Report mode carries no explainer: the caption belongs in the report text,
+    # where it can be written once instead of repeated on every figure.
+    if not REPORT:
+        fig.text(0.5, 0.915,
+                 f"{RANK_BLURB[rank]} Sobol total-effect driver of total EAD, per country. "
+                 f"Coverage so far: {fin_all}/{n_all} experiments "
+                 f"({100 * fin_all / n_all:.0f}%)."
+                 f"{NL}Neutral slices are not drivers: pale grey = not finished, and the "
+                 f"two darker greys are combinations whose Sobol indices are ALL zero.",
+                 ha="center", fontsize=12, color=INK_2)
     handles = legend_handles(present)
-    fig.legend(handles=handles, loc="lower center", ncol=min(len(handles), 8),
-               frameon=False, fontsize=11, bbox_to_anchor=(0.5, 0.02))
+    fig.legend(handles=handles, loc="lower center", frameon=False,
+               bbox_to_anchor=(0.5, 0.015 if REPORT else 0.02),
+               **legend_layout(handles))
     out = out_dir / f"drivers_{scen}{RANK_SUFFIX[rank]}.png"
     fig.savefig(out, dpi=130)
     plt.close(fig)
@@ -517,22 +615,35 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
     # tall enough for it: it runs to two or three lines depending on the
     # scenario set, and a fixed header put the last line on top of the pie
     # titles in the first row.
-    subtitle = (f"Share of experiments whose {RANK_BLURB[rank].lower()} Sobol driver of "
-                "total EAD is each parameter." + NL +
-                "Neutral slices are not drivers: pale grey = not finished, the darker "
-                "greys = every Sobol index is zero, so there is nothing to attribute.")
-    if any("noprot" in s for s in scenarios):
-        subtitle += (NL + "In the 'fixed' scenarios the protection standard is held "
-                     "constant, so it cannot appear as a driver there.")
+    subtitle = ""
+    if not REPORT:
+        subtitle = (f"Share of experiments whose {RANK_BLURB[rank].lower()} Sobol driver of "
+                    "total EAD is each parameter." + NL +
+                    "Neutral slices are not drivers: pale grey = not finished, the darker "
+                    "greys = every Sobol index is zero, so there is nothing to attribute.")
+        if any("noprot" in s for s in scenarios):
+            subtitle += (NL + "In the 'fixed' scenarios the protection standard is held "
+                         "constant, so it cannot appear as a driver there.")
     # footer must clear BOTH the legend and the per-pie coverage caption that
     # hangs below the bottom row of axes, or the two collide.
-    header = 1.35 + 0.24 * (subtitle.count(NL) + 1)
-    footer, cell = 1.7, 4.0
+    if REPORT:
+        # Two-row legend needs more than one row did, so the footer shrinks only
+        # a little; the real savings are the gaps, margins and shorter header.
+        # No subtitle, but the band must still clear the suptitle AND the
+        # two-line scenario titles that sit above the top row of axes.
+        header = 1.15
+        footer, cell = 1.35, 3.5
+    else:
+        header = 1.35 + 0.24 * (subtitle.count(NL) + 1)
+        footer, cell = 1.7, 4.0
     h = cell * nrows + header + footer
-    fig = plt.figure(figsize=(4.1 * ncols, h))
-    gs = fig.add_gridspec(nrows, ncols, hspace=0.5, wspace=0.25,
-                          top=1 - header / h, bottom=footer / h,
-                          left=0.04, right=0.96)
+    fig = plt.figure(figsize=((3.5 if REPORT else 4.1) * ncols, h))
+    gs = fig.add_gridspec(
+        nrows, ncols,
+        hspace=0.30 if REPORT else 0.5, wspace=0.06 if REPORT else 0.25,
+        top=1 - header / h, bottom=footer / h,
+        left=0.02 if REPORT else 0.04, right=0.98 if REPORT else 0.96,
+    )
 
     present: set[str] = set()
     for j, scen in enumerate(scenarios):
@@ -540,16 +651,17 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
         ax = fig.add_subplot(gs[r, c])
         counts, fin, nexp = slice_counts(merged[merged["scenario"] == scen])
         present |= set(counts)
-        draw_pie(ax, counts, wrap_scen_name(scen), f"{fin}/{nexp} ({100 * fin / nexp:.0f}%)")
+        draw_pie(ax, counts, wrap_scen_name(scen), coverage_text(fin, nexp))
 
     fig.suptitle(
         f"{RANK_WORD[rank]} influential parameter across {scope} - by scenario",
         fontsize=17, fontweight="bold", color=INK, y=1 - 0.40 / h)
-    fig.text(0.5, 1 - 0.82 / h, subtitle, ha="center", va="top",
-             fontsize=11.5, color=INK_2)
+    if subtitle:
+        fig.text(0.5, 1 - 0.82 / h, subtitle, ha="center", va="top",
+                 fontsize=11.5, color=INK_2)
     handles = legend_handles(present)
-    fig.legend(handles=handles, loc="lower center", ncol=min(len(handles), 8),
-               frameon=False, fontsize=11, bbox_to_anchor=(0.5, 0.18 / h))
+    fig.legend(handles=handles, loc="lower center", frameon=False,
+               bbox_to_anchor=(0.5, 0.14 / h), **legend_layout(handles))
     # Per-asset overviews live in their own folder, so everything for one asset
     # (these plus src/eu_totals.py's tables) sits together.
     tag = "" if asset is None else f"_{asset}"
@@ -604,7 +716,24 @@ def main() -> None:
                         help="columns in the cross-scenario overview grid (default: 4)")
     parser.add_argument("--ranks", nargs="+", type=int, default=[1, 2],
                         help="which driver ranks to draw, 1 = most influential (default: 1 2)")
+    parser.add_argument("--countries", nargs="+", default=None,
+                        help="restrict every figure to these ISO3 countries. Use it when "
+                             "comparing a scenario that was only run for a subset against "
+                             "one that covers the whole study.")
+    parser.add_argument("--report", action="store_true",
+                        help="restyle for a written report: bare (n) coverage counts, no "
+                             "Unfinished legend entry, two-row legend, tighter margins. "
+                             "Writes to <out-dir>/report/ unless --out-dir is given.")
     args = parser.parse_args()
+
+    global REPORT, SURFACE
+    REPORT = args.report
+    if REPORT:
+        # Pure white so the PNG blends into a report page instead of sitting on
+        # a faintly off-white tile. SURFACE is read at draw time by the wedge
+        # separators and the legend patch edges as well as the rcParams below,
+        # so swapping it here covers every use.
+        SURFACE = "#ffffff"
 
     scenarios = sorted(args.scenarios or DEFAULT_OVERVIEW_SCENARIOS, key=scenario_sort_key)
     unknown = [s for s in scenarios if s not in SCENARIO_HAZARD]
@@ -618,7 +747,13 @@ def main() -> None:
     workbook = Path(args.workbook) if args.workbook else PROJECT_ROOT / WORKBOOK_NAME
     if not workbook.exists():
         raise SystemExit(f"No workbook at {workbook} - run `python -m src.aggregate_results`.")
-    out_dir = Path(args.out_dir) if args.out_dir else PROJECT_ROOT / "overview_figures"
+    if args.out_dir:
+        out_dir = Path(args.out_dir)
+    else:
+        out_dir = PROJECT_ROOT / "overview_figures"
+        if REPORT:
+            # Report copies sit beside the monitoring set, never on top of it.
+            out_dir = out_dir / "report"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     plt.rcParams.update({
@@ -628,7 +763,9 @@ def main() -> None:
     })
 
     cfg = load_config()
-    expected = expected_matrix(cfg, scenarios)
+    expected = expected_matrix(cfg, scenarios, args.countries)
+    if args.countries:
+        print(f"restricted to {len(args.countries)} countries: {' '.join(sorted(args.countries))}")
     exposure = exposure_flags()
     if exposure is None:
         print(f"  NOTE: {RANGES_ALL_OUTCOMES.name} not found - combinations with no "

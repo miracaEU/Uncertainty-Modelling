@@ -79,52 +79,67 @@ ACCENT = "#1c5cab"
 # they are the study defaults, so they carry the plain label and the additive
 # variants are the ones marked.
 SCENARIO_LABEL = {
-    "flood_absprot_ds": "River flood - protection sampled",
+    "flood_absprot_ds": "River flood - protection sampled, RP 5-200",
     "flood_absprot": "River flood - protection sampled (add. depth err.)",
     "flood_noprot_ds": "River flood - protection as recorded (FLOPROS)",
     "flood_noprot": "River flood - protection as recorded (add. depth err.)",
-    "flood_baseline_ds": "River flood - protection scaled",
+    "flood_baseline_ds": "River flood - protection scaled, x0-2",
     "flood_baseline": "River flood - protection scaled (add. depth err.)",
-    "coastal_absprot_ds": "Coastal flood - protection sampled",
+    "coastal_absprot_ds": "Coastal flood - protection sampled, RP 5-200",
     "coastal_absprot": "Coastal flood - protection sampled (add. depth err.)",
     "coastal_noprot_ds": "Coastal flood - protection as recorded (COASTPROS)",
     "coastal_noprot": "Coastal flood - protection as recorded (add. depth err.)",
-    "coastal_baseline_ds": "Coastal flood - protection scaled",
+    "coastal_baseline_ds": "Coastal flood - protection scaled, x0-2",
     "coastal_baseline": "Coastal flood - protection scaled (add. depth err.)",
     "earthquake": "Earthquake",
     "windstorm": "Windstorm - design standard RP50",
-    "windstorm_absprot": "Windstorm - design standard sampled",
+    "windstorm_absprot": "Windstorm - design standard sampled, RP 25-200",
+    # Protection-range tests: same model, different sampling bracket for the
+    # protection factor. The bracket is in the label because it is the variable
+    # under test - without it two pies in one figure look like duplicates.
+    "flood_absprot_ds_rp10to100": "River flood - protection sampled, RP 10-100",
+    "coastal_absprot_ds_rp10to100": "Coastal flood - protection sampled, RP 10-100",
+    "flood_baseline_ds_sc0p5to1p5": "River flood - protection scaled, x0.5-1.5",
+    "coastal_baseline_ds_sc0p5to1p5": "Coastal flood - protection scaled, x0.5-1.5",
 }
 
 # Short forms for tight spots (pie titles, panel headings), where the
 # qualifier is wrapped onto a second line.
 SCENARIO_LABEL_SHORT = {
-    "flood_absprot_ds": "River flood (protection sampled)",
+    "flood_absprot_ds": "River flood (protection sampled, RP 5-200)",
     "flood_absprot": "River flood (protection sampled)",
     "flood_noprot_ds": "River flood (protection as recorded)",
     "flood_noprot": "River flood (protection as recorded)",
-    "flood_baseline_ds": "River flood (protection scaled)",
+    "flood_baseline_ds": "River flood (protection scaled, x0-2)",
     "flood_baseline": "River flood (protection scaled)",
-    "coastal_absprot_ds": "Coastal flood (protection sampled)",
+    "coastal_absprot_ds": "Coastal flood (protection sampled, RP 5-200)",
     "coastal_absprot": "Coastal flood (protection sampled)",
     "coastal_noprot_ds": "Coastal flood (protection as recorded)",
     "coastal_noprot": "Coastal flood (protection as recorded)",
-    "coastal_baseline_ds": "Coastal flood (protection scaled)",
+    "coastal_baseline_ds": "Coastal flood (protection scaled, x0-2)",
     "coastal_baseline": "Coastal flood (protection scaled)",
     "earthquake": "Earthquake",
     "windstorm": "Windstorm (design RP50)",
-    "windstorm_absprot": "Windstorm (design sampled)",
+    "windstorm_absprot": "Windstorm (design sampled, RP 25-200)",
+    "flood_absprot_ds_rp10to100": "River flood (protection sampled, RP 10-100)",
+    "coastal_absprot_ds_rp10to100": "Coastal flood (protection sampled, RP 10-100)",
+    "flood_baseline_ds_sc0p5to1p5": "River flood (protection scaled, x0.5-1.5)",
+    "coastal_baseline_ds_sc0p5to1p5": "Coastal flood (protection scaled, x0.5-1.5)",
 }
 
 # Reading order for every figure that shows more than one scenario: both river
 # flood variants, then both coastal, then the single-hazard ones. Alphabetical
 # order put coastal before river and split the pairs apart.
+# Protection treatments run from most to least freedom: the standard replaced
+# by a wide sampled bracket, then a narrower one, then the recorded standard
+# merely perturbed, then held fixed. Reading left to right the protection factor
+# is progressively constrained, which is the story these figures tell.
 SCENARIO_ORDER = [
-    "flood_baseline", "flood_baseline_ds",
-    "flood_absprot", "flood_absprot_ds",
+    "flood_absprot", "flood_absprot_ds", "flood_absprot_ds_rp10to100",
+    "flood_baseline", "flood_baseline_ds", "flood_baseline_ds_sc0p5to1p5",
     "flood_noprot", "flood_noprot_ds",
-    "coastal_baseline", "coastal_baseline_ds",
-    "coastal_absprot", "coastal_absprot_ds",
+    "coastal_absprot", "coastal_absprot_ds", "coastal_absprot_ds_rp10to100",
+    "coastal_baseline", "coastal_baseline_ds", "coastal_baseline_ds_sc0p5to1p5",
     "coastal_noprot", "coastal_noprot_ds",
     "earthquake",
     "windstorm", "windstorm_absprot",
