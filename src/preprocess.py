@@ -386,6 +386,13 @@ def main() -> None:
     )
     parser.add_argument("--country", default=None, help="ISO3 override of config country")
     parser.add_argument("--asset", default=None, help="asset type override (roads/airports/education/power)")
+    parser.add_argument(
+        "--slr-only", action="store_true",
+        help="extract only the coastal sea-level-rise states. The river, "
+             "earthquake, windstorm and baseline coastal profiles already on "
+             "disk are left untouched, so this adds the states to an existing "
+             "Stage 1 instead of recomputing it.",
+    )
     args = parser.parse_args()
 
     set_country_override(args.country)
@@ -398,6 +405,9 @@ def main() -> None:
     # with applicability.
     applicable = applicable_hazards(cfg["asset_type"], cfg["country"])
     default_hazards = [h for h in cfg["hazards"] if h in applicable]
+    if args.slr_only:
+        # Nothing else to do: the other hazards are untouched by the states.
+        args.hazards = ["coastal"]
     hazards = args.hazards or default_hazards
     unknown = set(hazards) - set(cfg["hazards"])
     if unknown:
@@ -442,10 +452,15 @@ def main() -> None:
             # Coastal maps are streamed from the remote CoCLiCo STAC catalogue
             # rather than read from local rasters (needs pystac-client + network).
             ccfg = cfg["hazards"]["coastal"]
+            _extract_slr_states(cfg, ccfg, features, geom_kind, meta)
+            if args.slr_only:
+                # The baseline profiles are already on disk and are what every
+                # non-SLR scenario reads. Re-extracting them would cost another
+                # full pass over the catalogue to produce an identical file.
+                continue
             profiles, exposed_per_rp, cell_area_m2 = extract_coastal_profiles(
                 features, geom_kind, ccfg
             )
-            _extract_slr_states(cfg, ccfg, features, geom_kind, meta)
         else:
             profiles, exposed_per_rp, cell_area_m2 = extract_hazard_profiles(
                 features, geom_kind, cfg["hazards"][hazard]
