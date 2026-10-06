@@ -135,6 +135,73 @@ _COASTAL_SCENARIOS = {
     "coastal_noprot_ds": ("fixed", "scale"),
 }
 
+# ---------------------------------------------------------------------------
+# Alternative protection ranges
+# ---------------------------------------------------------------------------
+# The bracket a protection factor is sampled from is an assumption, not data:
+# RP 5-200 and a 0-2 multiplier were both chosen, not derived. Testing another
+# bracket therefore has to be possible WITHOUT redefining what the existing
+# scenarios mean, or an old Sobol index and a new one stop being comparable.
+#
+# So each bracket is its own scenario, named "<base>_<suffix>". The suffix then
+# travels through result_stem() into every output filename, workbook row, cascade
+# folder and figure label for free, and no existing result is overwritten.
+# Variants stay out of DEFAULT_SCENARIOS, so an ordinary run never picks them up.
+#
+#   scale - multiplier on the recorded FLOPROS/COASTPROS standard per feature
+#           (1.0 = exactly the recorded value), so the standard is perturbed
+#           rather than replaced.
+#   abs   - one return period replacing the standard outright, everywhere.
+PROTECTION_RANGES = {
+    "scale": {"": (0.0, 2.0), "sc0p5to1p5": (0.5, 1.5)},
+    "abs": {"": (5.0, 200.0), "rp10to100": (10.0, 100.0)},
+}
+
+# Which base scenarios get range twins, and which factor each varies. Only the
+# _ds (multiplicative depth error) forms, since those are the study defaults.
+_RANGE_BASES = {
+    "flood_baseline_ds": "scale",
+    "coastal_baseline_ds": "scale",
+    "flood_absprot_ds": "abs",
+    "coastal_absprot_ds": "abs",
+}
+
+
+def _register_range_variants() -> None:
+    """Add one scenario per (base, non-default bracket) at import time.
+
+    Registering rather than hardcoding keeps SCENARIOS, SCENARIO_HAZARD and the
+    treatment maps in step automatically, so a new bracket is one dict entry and
+    every consumer that validates against SCENARIOS accepts it immediately.
+    """
+    for base, kind in _RANGE_BASES.items():
+        hazard = SCENARIO_HAZARD[base]
+        treatments = _FLOOD_SCENARIOS if hazard == "river" else _COASTAL_SCENARIOS
+        for suffix in PROTECTION_RANGES[kind]:
+            name = f"{base}_{suffix}"
+            if not suffix or name in SCENARIO_HAZARD:
+                continue
+            SCENARIOS.append(name)
+            SCENARIO_HAZARD[name] = hazard
+            treatments[name] = treatments[base]
+
+
+_register_range_variants()
+
+
+def protection_range(scenario: str, kind: str) -> tuple[float, float]:
+    """(lo, hi) for this scenario's protection factor.
+
+    A scenario whose name ends in a registered suffix takes that bracket;
+    everything else takes the study default.
+    """
+    ranges = PROTECTION_RANGES[kind]
+    for suffix, bounds in ranges.items():
+        if suffix and scenario.endswith(f"_{suffix}"):
+            return bounds
+    return ranges[""]
+
+
 CURVE_PREFIX = "curve_"
 
 _DATA_CACHE: dict[tuple[str, str], ModelData] = {}
@@ -225,9 +292,9 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
     # protection treatment (against FLOPROS for river, COASTPROS for coastal -
     # same parameter names, the baseline differs inside compute_risk)
     if prot_kind == "scale":
-        uncertainties.append(RealParameter("protection_scale", 0.0, 2.0))
+        uncertainties.append(RealParameter("protection_scale", *protection_range(scenario, "scale")))
     elif prot_kind == "abs":
-        uncertainties.append(RealParameter("protection_abs_rp", 5.0, 200.0))
+        uncertainties.append(RealParameter("protection_abs_rp", *protection_range(scenario, "abs")))
     elif prot_kind == "fixed":
         constants.append(Constant("protection_scale", 1.0))
 

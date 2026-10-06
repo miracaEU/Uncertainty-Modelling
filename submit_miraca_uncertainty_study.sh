@@ -337,8 +337,8 @@ submit_aggregate() {
 #SBATCH --cpus-per-task=1
 ${SB_PARTITION}
 ${SB_ACCOUNT}
-#SBATCH --mem=16G
-#SBATCH --time=02:00:00
+#SBATCH --mem=${AGG_MEM:-32G}
+#SBATCH --time=${AGG_TIME:-24:00:00}
 #SBATCH --output=${LOG_DIR}/out_aggregate
 #SBATCH --error=${LOG_DIR}/err_aggregate
 set -euo pipefail
@@ -592,8 +592,15 @@ addscen)
         tier=$(tier_of "$C")
         if is_heavy "$A"; then heavy=1; else heavy=0; fi
         read -r r_cpus r_mem _ <<<"$(run_res "$tier" "$heavy")"
-        if [[ $heavy -eq 1 ]]; then s_time="24:00:00"; else s_time="06:00:00"; fi
+        # Overridable: the longest observed Stage-2 combo (ITA roads,
+        # flood_absprot_ds) ran 36.2h, so 24h is not always enough.
+        if [[ $heavy -eq 1 ]]; then s_time="${SCEN_TIME:-24:00:00}"; else s_time="${SCEN_TIME_LIGHT:-06:00:00}"; fi
         label="${C}_${A}"
+        # Log names carry the scenario too, so two addscen submissions with
+        # different SCEN cannot overwrite each other's logs - they did on
+        # 2026-09-04, when the river and coastal runs both wrote
+        # out_scen_ITA_roads and only one timeout was visible afterwards.
+        tag=${SCEN_TAG:-$(echo ${SCEN} | cut -d' ' -f1)}
         jid=$(sbatch --parsable <<SLURM
 #!/bin/bash -l
 #SBATCH --job-name=scen_${label}
@@ -603,8 +610,8 @@ ${SB_PARTITION}
 ${SB_ACCOUNT}
 #SBATCH --mem-per-cpu=${r_mem}
 #SBATCH --time=${s_time}
-#SBATCH --output=${LOG_DIR}/out_scen_${label}
-#SBATCH --error=${LOG_DIR}/err_scen_${label}
+#SBATCH --output=${LOG_DIR}/out_scen_${tag}_${label}
+#SBATCH --error=${LOG_DIR}/err_scen_${tag}_${label}
 set -euo pipefail
 export MIRACA_CONFIG=${MIRACA_CONFIG}
 export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
