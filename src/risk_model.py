@@ -120,6 +120,10 @@ class ModelData:
     class_idx: np.ndarray           # (n_seg,) index into report_classes
     report_classes: list[str]
     hazards: dict[str, HazardProfiles] = field(default_factory=dict)
+    # label -> coastal profiles under that sea-level-rise state. Populated only
+    # where Stage 1 extracted them; empty for every pre-SLR intermediate set, in
+    # which case compute_risk falls back to hazards["coastal"].
+    coastal_slr: dict[str, HazardProfiles] = field(default_factory=dict)
     anchors: dict = field(default_factory=dict)         # warming code -> (n_seg, 3)
     flood_curve_tables: dict = field(default_factory=dict)  # curve_id -> (x, y)
     eq_curve_tables: dict = field(default_factory=dict)
@@ -245,6 +249,37 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
         group_idx = group_idx_by_hazard.get(hazard, seg_flood_group_idx)
         hazards[hazard] = _load_profiles(prof_path, rps, group_idx)
 
+    # Per-state coastal profiles for the *_slr scenarios. The state matching the
+    # configured baseline has no file of its own - Stage 1 skips re-extracting
+    # it - so it maps to the plain coastal profiles loaded above.
+    coastal_slr = {}
+    ccfg = cfg["hazards"].get("coastal") or {}
+    base_pair = (str(ccfg.get("time_horizon")), str(ccfg.get("climate_scenario")))
+    coastal_rps = np.asarray(sorted(ccfg.get("return_periods", [])), dtype=np.float64)
+    for label, spec in (ccfg.get("slr_states") or {}).items():
+        pair = (str(spec["time_horizon"]), str(spec["climate_scenario"]))
+        if pair == base_pair:
+            if "coastal" in hazards:
+                coastal_slr[label] = hazards["coastal"]
+            continue
+        path = cfg["intermediate_dir"] / f"{hazard_stem(cfg, 'coastal')}_{label}_profiles.parquet"
+        if path.exists():
+            coastal_slr[label] = _load_profiles(path, coastal_rps, seg_flood_group_idx)
+
+    # A scenario carrying the slr factor needs at least two distinct states on
+    # disk. One (or none) means Stage 1 has not run for this country/asset, and
+    # every level would resolve to the same profiles - a silent null result
+    # rather than a finding. Checked here because this runs once per worker,
+    # whereas build_model also serves planning code that must work before
+    # Stage 1 exists.
+    if str(cfg.get("scenario", "")).endswith("_slr") and len(coastal_slr) < 2:
+        raise SystemExit(
+            f"{base_stem(cfg)} / {cfg.get('scenario')}: only {len(coastal_slr)} "
+            f"sea-level-rise state(s) available in {cfg['intermediate_dir']}. "
+            "Run `python -m src.preprocess` for this country/asset first - the "
+            "slr factor would otherwise be constant and report no influence."
+        )
+
     class_to_idx = {c: i for i, c in enumerate(asset_cfg.report_classes)}
     class_idx = seg["report_class"].map(class_to_idx).to_numpy(np.int64)
 
@@ -263,6 +298,7 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
         class_idx=class_idx,
         report_classes=asset_cfg.report_classes,
         hazards=hazards,
+        coastal_slr=coastal_slr,
         anchors=anchors,
         flood_curve_tables=flood_curve_tables,
         eq_curve_tables=eq_curve_tables,
@@ -406,6 +442,7 @@ def compute_risk(
     pga_scale: float = 1.0,
     gust_scale: float = 1.0,
     aggregation: str = "per_cell",
+    slr: str | None = None,
     include_river: bool = True,
     include_earthquake: bool = True,
     include_windstorm: bool = False,
@@ -520,7 +557,10 @@ def compute_risk(
         # depth transform (depth_scale/depth_offset) is identical. It differs
         # from river only in its own protection standard (coast_prot_rp, from
         # COASTPROS) and in having no climate-warming RP shift.
-        hz_c = data.hazards["coastal"]
+        # `slr` names a sea-level-rise state; without it, or where that state
+        # was never extracted, the present-day profiles are used, so every
+        # non-SLR scenario behaves exactly as before.
+        hz_c = data.coastal_slr.get(slr, data.hazards["coastal"]) if slr else data.hazards["coastal"]
         curves_by_group_c = {
             i: data.flood_curve_tables[curve_choices[name]]
             for i, name in enumerate(data.flood_group_order)

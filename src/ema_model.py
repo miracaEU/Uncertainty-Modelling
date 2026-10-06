@@ -167,6 +167,34 @@ _RANGE_BASES = {
 }
 
 
+# Sea-level-rise scenarios. Coastal flood is the only hazard whose climate
+# response is data-side rather than analytical: each (time, SSP) state is a
+# different set of CoCLiCo rasters, so it cannot be applied by shifting return
+# periods the way the river `warming` factor is. These scenarios therefore pair
+# an existing coastal treatment with an `slr` factor selecting among the states
+# Stage 1 extracted.
+#
+# They are separate scenarios rather than an extra factor on the existing
+# coastal ones, so present-day results stay valid and comparable.
+#
+#   _absprot_ds_slr  protection sampled as well - does sea-level rise matter
+#                    more than the protection standard?
+#   _noprot_ds_slr   protection held at the recorded COASTPROS value - does it
+#                    matter more than the curves and the cost table?
+SLR_SUFFIX = "slr"
+SLR_BASES = ["coastal_absprot_ds", "coastal_noprot_ds"]
+
+
+def _register_slr_variants() -> None:
+    for base in SLR_BASES:
+        name = f"{base}_{SLR_SUFFIX}"
+        if name in SCENARIO_HAZARD:
+            continue
+        SCENARIOS.append(name)
+        SCENARIO_HAZARD[name] = SCENARIO_HAZARD[base]
+        _COASTAL_SCENARIOS[name] = _COASTAL_SCENARIOS[base]
+
+
 def _register_range_variants() -> None:
     """Add one scenario per (base, non-default bracket) at import time.
 
@@ -187,6 +215,7 @@ def _register_range_variants() -> None:
 
 
 _register_range_variants()
+_register_slr_variants()
 
 
 def protection_range(scenario: str, kind: str) -> tuple[float, float]:
@@ -297,6 +326,19 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
         uncertainties.append(RealParameter("protection_abs_rp", *protection_range(scenario, "abs")))
     elif prot_kind == "fixed":
         constants.append(Constant("protection_scale", 1.0))
+
+    # Sea-level-rise state, coastal only and only for the _slr scenarios. The
+    # levels come from the config so the factor can never offer a state Stage 1
+    # did not extract; a scenario asking for it with none configured is an error
+    # rather than a silently single-valued factor.
+    if hazard == "coastal" and scenario.endswith(f"_{SLR_SUFFIX}"):
+        states = list((cfg["hazards"].get("coastal") or {}).get("slr_states") or {})
+        if len(states) < 2:
+            raise ValueError(
+                f"{scenario} needs at least two coastal slr_states in the config; "
+                f"found {states}"
+            )
+        uncertainties.append(CategoricalParameter("slr", states))
 
     # depth-error treatment: additive offset OR multiplicative scale
     if depth_kind == "offset":

@@ -60,6 +60,31 @@ hazards:
     # zero-damage points into the EAD integral. Using exactly what the catalogue
     # serves puts every country on the same, data-matched RP grid.
     return_periods: [1, 100, 1000]
+    # --- sea-level-rise states, sampled by the `slr` factor ---------------
+    # Used ONLY by the *_slr scenarios. Each label names a CoCLiCo
+    # (time, scenario) pair; Stage 1 writes one profile file per label,
+    # {country}_{asset}_coastal_{label}_profiles.parquet, so the plain coastal
+    # profiles above are never touched and the non-SLR scenarios are unaffected.
+    #
+    # The label matching the time_horizon/climate_scenario above reuses the
+    # existing coastal profiles rather than re-extracting them, which saves a
+    # full pass over the catalogue.
+    #
+    # High_End is published by CoCLiCo but deliberately excluded: it is a
+    # low-likelihood tail branch, and under uniform sampling it would carry
+    # the same weight as a central projection.
+    slr_states:
+      "2010_None": {time_horizon: "2010", climate_scenario: "None"}
+      "2030_SSP126": {time_horizon: "2030", climate_scenario: "SSP126"}
+      "2030_SSP245": {time_horizon: "2030", climate_scenario: "SSP245"}
+      "2030_SSP585": {time_horizon: "2030", climate_scenario: "SSP585"}
+      "2050_SSP126": {time_horizon: "2050", climate_scenario: "SSP126"}
+      "2050_SSP245": {time_horizon: "2050", climate_scenario: "SSP245"}
+      "2050_SSP585": {time_horizon: "2050", climate_scenario: "SSP585"}
+      "2100_SSP126": {time_horizon: "2100", climate_scenario: "SSP126"}
+      "2100_SSP245": {time_horizon: "2100", climate_scenario: "SSP245"}
+      "2100_SSP585": {time_horizon: "2100", climate_scenario: "SSP585"}
+
     coastpros_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/COASTPROS-EU.xlsx"
     nuts2_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2024_3035.parquet"
     protection_sheet: "COASTPROS-EU"

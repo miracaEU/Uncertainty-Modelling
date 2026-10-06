@@ -334,6 +334,50 @@ def build_segments(features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict)
     return pd.concat([segments, basin_df.reset_index(drop=True)], axis=1)
 
 
+def _extract_slr_states(cfg, ccfg, features, geom_kind, meta) -> None:
+    """One coastal profile file per sea-level-rise state, for the *_slr scenarios.
+
+    Each state is a CoCLiCo (time, scenario) pair and produces
+    {country}_{asset}_coastal_{label}_profiles.parquet. The plain coastal
+    profiles written by the caller are left alone, so scenarios without the slr
+    factor keep reading exactly what they read before.
+
+    The state matching the configured time_horizon/climate_scenario is skipped:
+    its profiles are the ones just written, and load_model_data falls back to
+    them. Re-extracting it would cost a full pass over the catalogue for an
+    identical result. An existing file is skipped too, so a run interrupted
+    part-way resumes instead of starting over - this step is network-bound and
+    the slowest country-asset combination takes about an hour per state.
+    """
+    states = ccfg.get("slr_states") or {}
+    if not states:
+        return
+    base = (str(ccfg.get("time_horizon")), str(ccfg.get("climate_scenario")))
+    for label, spec in states.items():
+        pair = (str(spec["time_horizon"]), str(spec["climate_scenario"]))
+        out = cfg["intermediate_dir"] / f"{hazard_stem(cfg, 'coastal')}_{label}_profiles.parquet"
+        if pair == base:
+            print(f"  [slr] {label}: same as the configured baseline - reusing its profiles")
+            continue
+        if out.exists():
+            print(f"  [slr] {label}: already extracted - skipping")
+            continue
+        print(f"  [slr] {label}: streaming {pair[1]} / {pair[0]} ...")
+        state_cfg = {**ccfg, "time_horizon": pair[0], "climate_scenario": pair[1]}
+        profiles, exposed_per_rp, cell_area_m2 = extract_coastal_profiles(
+            features, geom_kind, state_cfg
+        )
+        profiles.to_parquet(out, index=False)
+        print(f"  [slr] {label}: saved {out.name}")
+        meta.setdefault("coastal_slr", {})[label] = {
+            "time_horizon": pair[0],
+            "climate_scenario": pair[1],
+            "n_profile_rows": int(len(profiles)),
+            "n_segments_exposed": int(profiles["seg"].nunique()),
+            "exposed_quantity_per_rp": exposed_per_rp,
+        }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -397,9 +441,11 @@ def main() -> None:
         if hazard == "coastal":
             # Coastal maps are streamed from the remote CoCLiCo STAC catalogue
             # rather than read from local rasters (needs pystac-client + network).
+            ccfg = cfg["hazards"]["coastal"]
             profiles, exposed_per_rp, cell_area_m2 = extract_coastal_profiles(
-                features, geom_kind, cfg["hazards"]["coastal"]
+                features, geom_kind, ccfg
             )
+            _extract_slr_states(cfg, ccfg, features, geom_kind, meta)
         else:
             profiles, exposed_per_rp, cell_area_m2 = extract_hazard_profiles(
                 features, geom_kind, cfg["hazards"][hazard]

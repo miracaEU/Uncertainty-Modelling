@@ -193,7 +193,11 @@ def category(code: str) -> str:
         return "Vulnerability curve"
     if code in ("protection_abs_rp", "protection_scale"):
         return "Protection standard"
-    if code == "warming":
+    if code in ("warming", "slr"):
+        # River warming levels and coastal sea-level-rise states are both "which
+        # climate future", and the two never occur in the same scenario - warming
+        # is river-only, slr coastal-only - so one slice lets the question "does
+        # the climate future dominate?" be read across both flood hazards.
         return "Climate warming"
     if code == "cost_level":
         return "Cost / max-damage"
