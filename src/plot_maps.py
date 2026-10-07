@@ -119,6 +119,27 @@ MICRO_MARKER_PT = 7.0
 # Single-hue blue, validated as an ordinal ramp against surface #fcfcfb:
 # monotone lightness, every adjacent gap >= 0.06, light end 2.09:1, hue spread 8.
 SPREAD_RAMP = ("#8fb4e0", "#6f99cc", "#5480b6", "#3b649c", "#264a80", "#132a55")
+
+# --palette spectral. Six bins of one hue separate only by lightness, and with
+# the light end pinned at 2.09:1 against the surface there is only so much
+# lightness to divide: adjacent classes of the blue ramp sit 9.9 CIE76 dE apart,
+# which is why the middle of it reads as one colour.
+#
+# This ramp keeps the blue ramp's lightness structure exactly - same L* targets
+# 72/61/51/41/29/17, same monotone ordering, so it is still an ORDINAL scale
+# and still survives greyscale printing - and spends hue on top of it, which
+# raises adjacent separation to 27.1 dE. Built in LCh at fixed L* rather than
+# picked by eye, because the light end has to clear 2.09:1 against #fcfcfb and
+# every off-the-shelf multi-hue ramp (viridis, YlGnBu, YlOrRd) fails that: their
+# pale first class disappears into the surface.
+#
+# Measured, normal vision then simulated dichromacy (Vienot/Brettel), as minimum
+# adjacent dE - blue ramp in brackets for reference:
+#   normal 27.1 (9.9) | deuteranopia 8.3 (7.9) | protanopia 7.8 (8.1) | trit 12.2 (10.5)
+# So it is far better for most readers and no worse than the status quo for
+# dichromats. A warm gold-to-purple ramp scored better on looks and collapsed to
+# 2.2 dE under deuteranopia, so it was rejected.
+SPREAD_RAMP_SPECTRAL = ("#bdb41f", "#53a552", "#00878c", "#00649f", "#54357a", "#491739")
 # Edges chosen so the six classes are roughly equally occupied across the 1,606
 # combinations with a finite factor (deciles: 3.3 / 12.3 / 24.9 / 69.8 / 2791).
 # Even bins on a round 2-5-10-30-100 scale put two thirds of Europe in one class
@@ -136,6 +157,25 @@ CLS_MISSING = -3   # no experiment for this combination
 P5_ZERO_FILL = "#132a55"
 P5_ZERO_HATCH = "////"
 P5_ZERO_HATCH_COLOR = "#9dc2ee"
+# The same two, matched to the spectral ramp's dark end instead of the navy.
+P5_ZERO_FILL_SPECTRAL = "#491739"
+P5_ZERO_HATCH_COLOR_SPECTRAL = "#edb9d2"
+
+
+def use_palette(name: str) -> None:
+    """Swap the spread ramp before anything draws.
+
+    Rebinds module globals rather than threading a palette argument through
+    every drawing function, which is how src/cascade.py handles the same
+    problem. Note that src/plot_heatmap.py imports SPREAD_RAMP by name at import
+    time, so it keeps the blue ramp regardless - deliberately: the heatmap is
+    not part of the map set and its colours are referenced in the text.
+    """
+    global SPREAD_RAMP, P5_ZERO_FILL, P5_ZERO_HATCH_COLOR
+    if name == "spectral":
+        SPREAD_RAMP = SPREAD_RAMP_SPECTRAL
+        P5_ZERO_FILL = P5_ZERO_FILL_SPECTRAL
+        P5_ZERO_HATCH_COLOR = P5_ZERO_HATCH_COLOR_SPECTRAL
 # Clearly darker than CONTEXT_FILL and than the heatmap's "damage in every
 # draw" tint: those two states mean opposite things and sat 4 values apart.
 EMPTY_FILL = "#c9c7bc"
@@ -222,8 +262,15 @@ def _extent(geo: gpd.GeoDataFrame, countries) -> tuple[float, float, float, floa
 
 
 def _panel(ax, geo, fills: dict[str, str], extent, hatched=(),
-           hatch=P5_ZERO_HATCH, hatch_color=P5_ZERO_HATCH_COLOR, labels=True):
-    """One map. `fills` is ISO3 -> face colour; `hatched` gets the p5 = 0 texture."""
+           hatch=P5_ZERO_HATCH, hatch_color=None, labels=True):
+    """One map. `fills` is ISO3 -> face colour; `hatched` gets the p5 = 0 texture.
+
+    hatch_color resolves from the module global at CALL time, not as a default
+    argument: a default is bound at import, which would pin it to the blue
+    ramp's light blue and leave the hatch unreadable under --palette spectral.
+    """
+    if hatch_color is None:
+        hatch_color = P5_ZERO_HATCH_COLOR
     study = [c for c in fills if c in geo.index]
     context = geo.index.difference(study)
 
@@ -440,12 +487,28 @@ def main() -> None:
                     default=["spread", "drivers"])
     ap.add_argument("--assets", nargs="+", default=None)
     ap.add_argument("--scenarios", nargs="+", default=None)
+    ap.add_argument("--palette", choices=["blue", "spectral"], default="blue",
+                    help="spread-map colour ramp. 'blue' is the published "
+                         "single-hue ramp; 'spectral' keeps the same lightness "
+                         "steps but spends hue on them too, raising adjacent-class "
+                         "separation from 9.9 to 27.1 dE. With --palette spectral "
+                         "and no --out-dir, output goes to maps_spectral/ so the "
+                         "two sets sit side by side.")
     args = ap.parse_args()
+
+    use_palette(args.palette)
 
     ranges_csv = Path(args.ranges) if args.ranges else RANGES_CSV
     if not ranges_csv.exists():
         raise SystemExit(f"{ranges_csv} not found - run `python -m src.ead_ranges` first.")
-    odir = Path(args.out_dir) if args.out_dir else OUT_DIR
+    # A non-default palette gets its own folder unless one was named, so a
+    # second set never silently overwrites the published maps.
+    if args.out_dir:
+        odir = Path(args.out_dir)
+    elif args.palette != "blue":
+        odir = OUT_DIR.with_name(f"{OUT_DIR.name}_{args.palette}")
+    else:
+        odir = OUT_DIR
 
     ranges = pd.read_csv(ranges_csv)
     if args.assets:
