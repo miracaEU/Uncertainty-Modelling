@@ -128,10 +128,23 @@ CATEGORICAL_NOMINAL = {
     "warming": "current",     # present-day climate
     "aggregation": "per_cell",  # the reference pipeline's method
 }
-# protection_abs_rp has NO natural no-op - it replaces the design standard
-# outright - so it falls back to the midpoint of its sampled range. That choice
-# shifts where the early steps SIT, not how wide they are; the summary table
-# reports median drift per step so the effect stays visible.
+# protection_abs_rp replaces the design standard outright, so it has no no-op
+# among its own values. Two frozen states are available, set by
+# --protection-nominal:
+#
+#   midpoint  the middle of the sampled range, 102.5 yr. Historical default,
+#             kept so existing cascades stay reproducible. It is an arbitrary
+#             standard that no country actually has, and because EAD is steeply
+#             convex in the protection RP it sits well below the ensemble it
+#             generates - which is why the nominal falls outside the final
+#             p5-p95 in several combinations.
+#   recorded  pass None, which makes compute_risk fall back to
+#             data.prot_rp * protection_scale, i.e. each feature's own recorded
+#             FLOPROS value. This is the true no-op: the frozen state is then
+#             identical to the _noprot_ treatment, so with protection ordered
+#             last every step before it reproduces the _noprot_ scenario and
+#             that scenario need not be run separately.
+PROTECTION_NOMINAL = "midpoint"
 
 # Conceptual modelling-chain order, used by --order workflow. Matched by exact
 # name first, then by the curve_ prefix, then anything unrecognised is appended.
@@ -185,6 +198,10 @@ class FactorSpec:
         self.categories = categories
 
     def nominal(self):
+        if self.name == "protection_abs_rp" and PROTECTION_NOMINAL == "recorded":
+            # None routes compute_risk to the per-feature recorded standard;
+            # no single float can express it, because FLOPROS varies by feature.
+            return None
         if self.kind == "real":
             if self.name in CONTINUOUS_NOMINAL:
                 return CONTINUOUS_NOMINAL[self.name]
@@ -271,7 +288,8 @@ def _mean_st(results_dir: Path, countries, asset: str, scenario: str) -> dict[st
     return {k: float(np.mean(v)) for k, v in acc.items() if v}
 
 
-def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float]) -> list[str]:
+def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float],
+                  order_list: list[str] | None = None) -> list[str]:
     """Order factors for the cascade.
 
     "sobol"    - descending mean Sobol ST, so the band widens fastest early and
@@ -289,13 +307,18 @@ def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float]) -> l
     comparing is worthwhile.
     """
     names = [s.name for s in specs]
-    if mode == "sobol" and st:
+    if order_list is None and mode == "sobol" and st:
         return sorted(names, key=lambda n: (-st.get(n, -1.0), n))
 
+    # An explicit --factor-order replaces WORKFLOW_ORDER but is matched the same
+    # way: exact name first, then the curve_ prefix, then anything unlisted is
+    # appended alphabetically. That means a partial list is legal - naming only
+    # the factors whose position matters is enough.
+    ordering = order_list if order_list is not None else WORKFLOW_ORDER
     rank: dict[str, int] = {}
     for n in names:
-        pos = len(WORKFLOW_ORDER)
-        for i, key in enumerate(WORKFLOW_ORDER):
+        pos = len(ordering)
+        for i, key in enumerate(ordering):
             if key == CURVE_PREFIX:
                 if n.startswith(CURVE_PREFIX):
                     pos = i
@@ -329,10 +352,23 @@ def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float]) -> l
 ORDER_FILE = "cascade_order.txt"
 
 
-def order_signature(order_mode: str, countries: list[str] | None) -> dict:
+def order_signature(order_mode: str, countries: list[str] | None,
+                    explicit: list[str] | None = None) -> dict:
     """Canonical description of everything that determines the factor order."""
+    if explicit:
+        # Its own folder, so a custom ordering never lands on top of the
+        # workflow or sobol results it is meant to be compared against.
+        sig = {"order_mode": "custom", "factor_order": list(explicit)}
+        if PROTECTION_NOMINAL != "midpoint":
+            sig["protection_nominal"] = PROTECTION_NOMINAL
+        return sig
     if order_mode == "workflow":
-        return {"order_mode": "workflow", "workflow_order": list(WORKFLOW_ORDER)}
+        sig = {"order_mode": "workflow", "workflow_order": list(WORKFLOW_ORDER)}
+        # Only added when non-default, so the existing workflow folder keeps its
+        # hash and further countries can still be added to it.
+        if PROTECTION_NOMINAL != "midpoint":
+            sig["protection_nominal"] = PROTECTION_NOMINAL
+        return sig
     return {
         "order_mode": "sobol",
         "countries": sorted(countries) if countries else "auto",
@@ -375,7 +411,17 @@ def write_order_file(out_dir: Path, sig: dict, canonical: str) -> None:
                     )
                 return
 
-    if sig["order_mode"] == "workflow":
+    if sig["order_mode"] == "custom":
+        head = [
+            "Factor ordering policy: custom (--factor-order).",
+            "Matched by exact name first, then the curve_ prefix, then anything",
+            "unrecognised is appended alphabetically. Independent of the country",
+            "set, so further countries may be added to this folder at any time.",
+        ]
+        body = [f"  {i:2d}. {name}" for i, name in enumerate(sig["factor_order"], 1)]
+        if sig.get("protection_nominal"):
+            body += ["", f"  protection_abs_rp frozen at: {sig['protection_nominal']}"]
+    elif sig["order_mode"] == "workflow":
         head = [
             "Factor ordering policy: workflow (conceptual modelling chain).",
             "Matched by exact name first, then the curve_ prefix, then anything",
@@ -383,6 +429,8 @@ def write_order_file(out_dir: Path, sig: dict, canonical: str) -> None:
             "set, so further countries may be added to this folder at any time.",
         ]
         body = [f"  {i:2d}. {name}" for i, name in enumerate(sig["workflow_order"], 1)]
+        if sig.get("protection_nominal"):
+            body += ["", f"  protection_abs_rp frozen at: {sig['protection_nominal']}"]
     else:
         head = [
             "Factor ordering policy: sobol (descending mean Sobol ST).",
@@ -549,6 +597,7 @@ def run_combination(
     out_dir: Path,
     scope_label: str = EU_SCOPE,
     chunk: int = 250,
+    order_list: list[str] | None = None,
     add_countries: bool = False,
 ) -> Path | None:
     """Run the full cascade for one (asset, scenario) across `countries`.
@@ -565,7 +614,7 @@ def run_combination(
         return None
 
     st = _mean_st(cfg["results_dir"], countries, asset, scenario)
-    order = cascade_order(specs, order_mode, st)
+    order = cascade_order(specs, order_mode, st, order_list)
     k = len(order)
     n_steps = k + 1
     print(f"  factors ({order_mode}): {' -> '.join(order)}")
@@ -725,6 +774,17 @@ def main() -> None:
     parser.add_argument("--n", type=int, default=2000, help="draws per cascade step")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--order", choices=["sobol", "workflow"], default="sobol")
+    parser.add_argument("--protection-nominal", choices=["midpoint", "recorded"],
+                        default="midpoint",
+                        help="frozen value of protection_abs_rp. 'recorded' uses each "
+                             "feature's own FLOPROS standard, which is the true no-op "
+                             "and makes the pre-protection steps reproduce the _noprot_ "
+                             "scenario; 'midpoint' keeps the historical 102.5 yr.")
+    parser.add_argument("--factor-order", nargs="+", default=None,
+                        help="explicit factor order, overriding --order. Exact names, "
+                             "with curve_ standing for every curve group; anything not "
+                             "named is appended alphabetically. Results go to their own "
+                             "custom-<hash> folder.")
     parser.add_argument("--seed", type=int, default=20260820)
     parser.add_argument("--chunk", type=int, default=250, help="draws per worker task")
     parser.add_argument("--out-dir", default=None,
@@ -737,6 +797,10 @@ def main() -> None:
                              "pan-European exposure set rather than a sum of countries; "
                              "the plotting layer gives every scope its own figure folder.")
     parser.add_argument("--force", action="store_true", help="recompute combos already written")
+    parser.add_argument("--print-out-dir", action="store_true",
+                        help="print the output folder the given ordering resolves to "
+                             "and exit, creating nothing. Lets a submit script locate "
+                             "the results without hard-coding the order hash.")
     parser.add_argument("--add-countries", action="store_true",
                         help="extend combos already written with any requested country "
                              "not yet in them, instead of skipping. Refuses if the "
@@ -744,17 +808,29 @@ def main() -> None:
                              "would not line up. Ignored when --force is given.")
     args = parser.parse_args()
 
+    global PROTECTION_NOMINAL
+    PROTECTION_NOMINAL = args.protection_nominal
+
     cfg = load_config()
 
     # One folder per distinct factor ordering, so a re-run under a changed
     # ordering cannot land on top of earlier results, while further countries
     # under an unchanged ordering accumulate in the folder that already exists.
-    sig = order_signature(args.order, args.countries)
+    sig = order_signature(args.order, args.countries, args.factor_order)
     canonical = order_canonical(sig)
     out_dir = (
         Path(args.out_dir) if args.out_dir
-        else order_dir(cfg["results_dir"] / "cascade", canonical, args.order)
+        # sig["order_mode"], not args.order: with --factor-order the real mode is
+        # "custom" while args.order still holds its default, which would label a
+        # custom folder "sobol-" and defeat the point of naming it at all.
+        else order_dir(cfg["results_dir"] / "cascade", canonical, sig["order_mode"])
     )
+    if args.print_out_dir:
+        # Read-only on purpose: a submit script asks for the path before the run
+        # exists, and must not leave an empty folder with an order file in it.
+        print(out_dir)
+        return
+
     write_order_file(out_dir, sig, canonical)
     print(f"Output folder: {out_dir}  (ordering recorded in {ORDER_FILE})")
 
@@ -780,8 +856,10 @@ def main() -> None:
             continue
         run_combination(
             asset=asset, scenario=scenario, countries=countries, n=args.n,
-            workers=args.workers, order_mode=args.order, seed=args.seed,
-            out_dir=out_dir, scope_label=args.scope_label, chunk=args.chunk,
+            workers=args.workers,
+            order_mode="custom" if args.factor_order else args.order,
+            seed=args.seed, out_dir=out_dir, scope_label=args.scope_label,
+            chunk=args.chunk, order_list=args.factor_order,
             add_countries=args.add_countries and not args.force,
         )
 
