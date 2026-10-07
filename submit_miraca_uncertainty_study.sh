@@ -91,6 +91,17 @@ else
     SB_ACCOUNT="# (no --account set; export ACCOUNT=... if your cluster needs one)"
 fi
 
+# Hold every job this invocation submits until another job finishes, so a
+# dependent stage can be queued in the same breath as the stage it needs. Used
+# by submit_slr.sh to queue the SLR Stage 2 back-fill behind the Stage 1 retry.
+#   DEPEND=afterok:12345 ./submit_miraca_uncertainty_study.sh addscen
+DEPEND=${DEPEND:-}
+if [[ -n "$DEPEND" ]]; then
+    SB_DEPEND="#SBATCH --dependency=${DEPEND}"
+else
+    SB_DEPEND="# (no --dependency set)"
+fi
+
 # Cluster modules loaded for the build AND inside every job, so the venv's
 # osgeo/GDAL bindings find libgdal at runtime. Deliberately ONLY gdal - NOT the
 # python module, whose _ctypes is broken here (missing libffi.so.6); uv supplies
@@ -608,6 +619,7 @@ addscen)
 #SBATCH --cpus-per-task=${r_cpus}
 ${SB_PARTITION}
 ${SB_ACCOUNT}
+${SB_DEPEND}
 #SBATCH --mem-per-cpu=${r_mem}
 #SBATCH --time=${s_time}
 #SBATCH --output=${LOG_DIR}/out_scen_${tag}_${label}

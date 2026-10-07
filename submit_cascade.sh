@@ -102,14 +102,23 @@ SCEN=\${SCENS[\${SLURM_ARRAY_TASK_ID}]}
 [[ \${SLURM_ARRAY_TASK_ID} -ne 0 ]] && sleep 45
 
 echo "task \${SLURM_ARRAY_TASK_ID}: ${ASSET} / \${SCEN}"
-${PYTHON} -m src.cascade \\
-    --assets ${ASSET} \\
-    --scenarios \${SCEN} \\
-    --n ${N_DRAWS} \\
-    --workers ${C_CPUS} \\
-    --protection-nominal ${PROT_NOMINAL} \\
-    --factor-order ${FACTOR_ORDER} \\
+
+# Arguments as an array, NOT backslash-continued lines. A continuation whose
+# backslash picks up a trailing space silently becomes an escaped space - an
+# empty argument - and the command ends there; that is what killed the first
+# attempt at this job ("--assets: invalid choice: ' '"). Newlines inside ( )
+# need no continuation character at all, so there is nothing left to mangle.
+CASCADE_ARGS=(
+    --assets ${ASSET}
+    --scenarios "\${SCEN}"
+    --n ${N_DRAWS}
+    --workers ${C_CPUS}
+    --protection-nominal ${PROT_NOMINAL}
+    --factor-order ${FACTOR_ORDER}
     --scope-label ${SCOPE_LABEL}
+)
+echo "argv: \${CASCADE_ARGS[@]}"
+${PYTHON} -m src.cascade "\${CASCADE_ARGS[@]}"
 SLURM
 )
 echo "submitted cascade array: ${jid}"
@@ -134,21 +143,25 @@ module load ${MODULES}
 cd ${REPO}
 
 # The order folder is derived from the factor ordering, so ask the cascade
-# itself rather than hard-coding the hash.
-CDIR=\$(${PYTHON} -m src.cascade \\
-    --protection-nominal ${PROT_NOMINAL} \\
-    --factor-order ${FACTOR_ORDER} \\
-    --print-out-dir 2>/dev/null | tail -1)
+# itself rather than hard-coding the hash. Array form for the same reason as
+# above: no continuation characters to pick up stray whitespace.
+PROBE_ARGS=(
+    --protection-nominal ${PROT_NOMINAL}
+    --factor-order ${FACTOR_ORDER}
+    --print-out-dir
+)
+CDIR=\$(${PYTHON} -m src.cascade "\${PROBE_ARGS[@]}" 2>/dev/null | tail -1)
 echo "cascade dir: \${CDIR}"
+if [[ ! -d "\${CDIR}" ]]; then
+    echo "resolved cascade dir does not exist: \${CDIR}" >&2
+    exit 1
+fi
 
 # Merged: one vulnerability-curve level, for reporting.
-${PYTHON} -m src.plot_pyramid --cascade-dir "\${CDIR}" \\
-    --scopes ${SCOPE_LABEL} --merge-curves
+${PYTHON} -m src.plot_pyramid --cascade-dir "\${CDIR}" --scopes ${SCOPE_LABEL} --merge-curves
 # Decomposed: which curve group actually carries the uncertainty. Re-reads the
 # same parquet, so it costs no model time.
-${PYTHON} -m src.plot_pyramid --cascade-dir "\${CDIR}" \\
-    --scopes ${SCOPE_LABEL} \\
-    --out-dir overview_figures/pyramids/custom_by_curve_group
+${PYTHON} -m src.plot_pyramid --cascade-dir "\${CDIR}" --scopes ${SCOPE_LABEL} --out-dir overview_figures/pyramids/custom_by_curve_group
 SLURM
 )
     echo "submitted figures:      ${jid_plot} (after the array)"
