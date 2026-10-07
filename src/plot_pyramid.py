@@ -210,13 +210,15 @@ _PRETTY = {
 }
 
 
-def readable(factor: str) -> str:
+def readable(factor: str) -> str:  # noqa: D401
     """Human label for a factor code, without importing the heavy stack.
 
     The fully-resolved curve descriptions (which object types sit behind
     curve_F1_1 for THIS asset) live in the workbook's Curve_Groups sheet; here
     the curve id alone keeps the axis narrow enough to read.
     """
+    if factor == MERGED_LABEL:
+        return factor
     if factor in _PRETTY:
         return _PRETTY[factor]
     if factor.startswith("curve_"):
@@ -279,6 +281,42 @@ def default_results_dir() -> Path:
 # ---------------------------------------------------------------------------
 
 
+# Set from --merge-curves. Curve groups partition an asset by object sub-type -
+# for roads, F7_4 is motorway/trunk/primary and F7_8 is secondary/tertiary/
+# residential - so freeing them one at a time reads as a sequence of asset
+# classes rather than as a single "which curve is right" unknown. Merging keeps
+# the step where every curve group is free and drops the partial ones, so the
+# cascade shows one vulnerability-curve level.
+MERGE_CURVES = False
+MERGED_LABEL = "vulnerability curves (all)"
+
+
+def merge_curve_steps(rows: pd.DataFrame) -> pd.DataFrame:
+    """Collapse consecutive curve_ steps into the last of them.
+
+    The curve groups are adjacent in WORKFLOW_ORDER, so the last one carries the
+    state with every group free - exactly the aggregate the merged level should
+    show. The derived quantities are recomputed afterwards, because d_w90 must
+    now measure the jump from the step before the first curve group.
+    """
+    is_curve = rows["factor_added"].astype(str).str.startswith(CURVE_STEP_PREFIX)
+    if is_curve.sum() < 2:
+        return rows
+    # Keep a curve row only if the next row is not also a curve row.
+    keep = ~(is_curve & is_curve.shift(-1, fill_value=False))
+    out = rows[keep].copy()
+    out.loc[out["factor_added"].astype(str).str.startswith(CURVE_STEP_PREFIX),
+            "factor_added"] = MERGED_LABEL
+    out["d_w90"] = out["w90"].diff().fillna(0.0)
+    final = out["w90"].iloc[-1]
+    out["share_w90"] = out["d_w90"] / final if final > 0 else np.nan
+    out["drift_median"] = out["median"] - out["median"].iloc[0]
+    return out.reset_index(drop=True)
+
+
+CURVE_STEP_PREFIX = "curve_"
+
+
 def step_stats(df: pd.DataFrame) -> pd.DataFrame:
     """Per-step distribution summary for one (scope, country, asset, scenario).
 
@@ -309,6 +347,8 @@ def step_stats(df: pd.DataFrame) -> pd.DataFrame:
     final_w90 = rows["w90"].iloc[-1]
     rows["share_w90"] = rows["d_w90"] / final_w90 if final_w90 > 0 else np.nan
     rows["drift_median"] = rows["median"] - rows["median"].iloc[0]
+    if MERGE_CURVES:
+        rows = merge_curve_steps(rows)
     return rows
 
 
@@ -381,13 +421,18 @@ def dependence_comparison(df_all: pd.DataFrame, eu_scope: str, seed: int = 7) ->
 # ---------------------------------------------------------------------------
 
 
-def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_x: bool) -> None:
+def draw_axes(ax, stats: pd.DataFrame, title: str, log_x: bool,
+              xlim: tuple[float, float] | None = None, width_axis: bool = True) -> None:
+    """One pyramid on a given axes. Shared by the single and paired figures.
+
+    xlim forces a common value axis, which is what makes two panels comparable;
+    without it matplotlib scales each to its own data and the wider scenario
+    merely looks like the narrower one.
+    """
     n_steps = len(stats)
     y = np.arange(n_steps)
     p5, p25, p50, p75, p95 = (stats[c].to_numpy() for c in ("p5", "p25", "p50", "p75", "p95"))
     mean = stats["mean"].to_numpy()
-
-    fig, ax = plt.subplots(figsize=(10.2, 0.55 * n_steps + 2.6), layout="constrained")
 
     # Funnel silhouette: this is what makes it read as a pyramid rather than as
     # a stack of unrelated bars.
@@ -416,22 +461,26 @@ def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_
         ax.set_xscale("log")
     ax.grid(axis="y", visible=False)
     ax.set_title(title, pad=16)
-    ax.text(0.0, 1.015, subtitle, transform=ax.transAxes, fontsize=9, color=MUTED)
+    if xlim is not None:
+        ax.set_xlim(*xlim)
 
     # Relative 90% width per step, on a twin axis so it cannot collide with the
     # data no matter how far the band extends.
-    ax2 = ax.twinx()
-    ax2.set_ylim(ax.get_ylim())
-    ax2.set_yticks(y, [
-        "-" if not np.isfinite(v) else f"{v:.0%}" for v in stats["w90_rel"]
-    ])
-    ax2.set_ylabel("p5-p95 width\n(% of median)", color=MUTED, fontsize=9)
-    ax2.tick_params(labelsize=9)
-    ax2.grid(False)
-    for spine in ax2.spines.values():
-        spine.set_visible(False)
+    if width_axis:
+        ax2 = ax.twinx()
+        ax2.set_ylim(ax.get_ylim())
+        ax2.set_yticks(y, [
+            "-" if not np.isfinite(v) else f"{v:.0%}" for v in stats["w90_rel"]
+        ])
+        ax2.set_ylabel("p5-p95 width\n(% of median)", color=MUTED, fontsize=9)
+        ax2.tick_params(labelsize=9)
+        ax2.grid(False)
+        for spine in ax2.spines.values():
+            spine.set_visible(False)
 
-    handles = [
+
+def legend_handles_pyramid() -> list:
+    return [
         Patch(facecolor=BAND_90, label="p5-p95"),
         Patch(facecolor=BAND_50, label="p25-p75"),
         Line2D([], [], marker="|", color=INK, markersize=13, markeredgewidth=2.4,
@@ -439,6 +488,13 @@ def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_
         Line2D([], [], marker="D", markerfacecolor=SURFACE, markeredgecolor=INK,
                markersize=6, linestyle="none", label="mean"),
     ]
+
+
+def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_x: bool) -> None:
+    fig, ax = plt.subplots(figsize=(10.2, 0.55 * len(stats) + 2.6), layout="constrained")
+    draw_axes(ax, stats, title, log_x)
+    ax.text(0.0, 1.015, subtitle, transform=ax.transAxes, fontsize=9, color=MUTED)
+    handles = legend_handles_pyramid()
     # Below the axes, not inside: the bottom-right corner is exactly where the
     # widest band lands, so an in-axes legend would sit on top of the result.
     leg = ax.legend(
@@ -456,6 +512,87 @@ def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
+
+
+
+# Scenario pairs that differ only in how the protection standard is treated:
+# sampled over a range, against held at the value the source database records.
+# Drawn side by side on a shared value axis, because the whole point is how much
+# of the final spread is produced by sampling protection rather than by the
+# physical factors - and two panels auto-scaled to their own data would hide
+# exactly that.
+PROTECTION_PAIRS = [
+    ("flood_absprot_ds", "flood_noprot_ds"),
+    ("coastal_absprot_ds", "coastal_noprot_ds"),
+    ("windstorm_absprot", "windstorm"),
+]
+
+
+def pair_figure(stats_a: pd.DataFrame, stats_b: pd.DataFrame, scen_a: str, scen_b: str,
+                asset: str, scope_label: str, n_draws: int, out: Path, log_x: bool) -> None:
+    """Two cascades on one shared value axis."""
+    lo = min(stats_a["p5"].min(), stats_b["p5"].min())
+    hi = max(stats_a["p95"].max(), stats_b["p95"].max())
+    pad = 0.04 * (hi - lo) if hi > lo else 1.0
+    xlim = (max(lo - pad, 0.0) if not log_x else lo / 1.1, hi + pad)
+
+    rows = max(len(stats_a), len(stats_b))
+    fig, axes = plt.subplots(1, 2, figsize=(15.4, 0.58 * rows + 3.0), layout="constrained")
+    for ax, st, scen in ((axes[0], stats_a, scen_a), (axes[1], stats_b, scen_b)):
+        draw_axes(ax, st, scenario_label(scen, short=True), log_x,
+                  xlim=xlim, width_axis=True)
+
+    fig.suptitle(f"Protection standard sampled vs held at the recorded value - "
+                 f"{asset} - {scope_label}", fontsize=13, fontweight="bold", color=INK)
+    # The note rides on the legend rather than being its own artist: a bare
+    # fig.text is not laid out at all and landed on the panel titles.
+    leg = fig.legend(handles=legend_handles_pyramid(), frameon=False, fontsize=9,
+                     ncol=4, loc="outside lower center",
+                     title=f"{n_draws:,} draws per step  |  shared value axis  |  "
+                           f"right-hand numbers are p5-p95 width as a share of the median")
+    leg.get_title().set(fontsize=9, color=MUTED)
+    for t in leg.get_texts():
+        t.set_color(INK_2)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=200)
+    plt.close(fig)
+
+
+def build_pairs(cdir: Path, odir: Path, assets, scopes, countries, log_x) -> int:
+    """One paired figure per (asset, protection pair, scope, country)."""
+    frames: dict[tuple[str, str], pd.DataFrame] = {}
+    meta: dict[tuple[str, str], dict] = {}
+    for path in sorted(cdir.glob("*_cascade.parquet")):
+        df = pd.read_parquet(path)
+        a, sc = df["asset"].iloc[0], df["scenario"].iloc[0]
+        if assets and a not in assets:
+            continue
+        frames[(a, sc)] = df
+        mp = path.with_name(path.name.replace(".parquet", "_meta.json"))
+        meta[(a, sc)] = json.loads(mp.read_text(encoding="utf-8")) if mp.exists() else {}
+
+    n = 0
+    for a in sorted({k[0] for k in frames}):
+        for scen_a, scen_b in PROTECTION_PAIRS:
+            da, db = frames.get((a, scen_a)), frames.get((a, scen_b))
+            if da is None or db is None:
+                continue
+            groups_a = {(sc, c) for sc, c in da[["scope", "country"]].drop_duplicates().to_numpy()}
+            groups_b = {(sc, c) for sc, c in db[["scope", "country"]].drop_duplicates().to_numpy()}
+            for scope, country in sorted(groups_a & groups_b):
+                if scopes and scope not in scopes:
+                    continue
+                if scope == COUNTRY_SCOPE and countries and country not in countries:
+                    continue
+                sa = step_stats(da[(da["scope"] == scope) & (da["country"] == country)])
+                sb = step_stats(db[(db["scope"] == scope) & (db["country"] == country)])
+                label = country if scope == COUNTRY_SCOPE else "pan-European"
+                nd = int(meta.get((a, scen_a), {}).get("n_draws", da["draw"].nunique()))
+                out = (odir / scope_dir(scope, country)
+                       / f"{a}_{scen_a}_vs_{scen_b}_pyramid.png")
+                pair_figure(sa, sb, scen_a, scen_b, a, label, nd, out, log_x)
+                n += 1
+    return n
 
 
 def _write_summary(steps: list[pd.DataFrame], meta: list[dict], dep: list[dict], out_dir: Path) -> None:
@@ -491,7 +628,17 @@ def main() -> None:
     parser.add_argument("--countries", nargs="+", default=None)
     parser.add_argument("--log-x", action="store_true", help="log-scale the value axis")
     parser.add_argument("--no-figures", action="store_true", help="summary tables only")
+    parser.add_argument("--pair-protection", action="store_true",
+                        help="draw sampled-vs-fixed protection pairs side by side on a "
+                             "shared value axis, instead of the single-scenario pyramids.")
+    parser.add_argument("--merge-curves", action="store_true",
+                        help="show one vulnerability-curve level instead of one per "
+                             "object sub-type group. Keeps the step where every curve "
+                             "group is free and drops the partial ones.")
     args = parser.parse_args()
+
+    global MERGE_CURVES
+    MERGE_CURVES = args.merge_curves
 
     cdir = Path(args.cascade_dir) if args.cascade_dir else default_results_dir() / "cascade"
     cdir = resolve_cascade_dir(cdir)
@@ -504,6 +651,11 @@ def main() -> None:
     files = sorted(cdir.glob("*_cascade.parquet"))
     if not files:
         raise SystemExit(f"No *_cascade.parquet in {cdir} - run `python -m src.cascade` first.")
+
+    if args.pair_protection:
+        n = build_pairs(cdir, odir, args.assets, args.scopes, args.countries, args.log_x)
+        print(f"{n} paired figure(s) written under {odir}")
+        return
 
     all_steps, all_meta, all_dep = [], [], []
     n_figs = 0
