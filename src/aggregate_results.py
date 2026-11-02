@@ -260,9 +260,13 @@ FACTOR_DESCRIPTIONS = [
                      "'_ds' flood scenarios use this INSTEAD of depth_offset, to test whether a "
                      "proportional depth error changes the sensitivity picture versus an additive one."),
     ("pga_scale", "Multiplier on earthquake ground motion (PGA), [0.8, 1.2] - a hazard-map "
-                  "uncertainty factor, distinct from the fragility curve choice itself."),
+                  "uncertainty factor, distinct from the fragility curve choice itself. The band is "
+                  "WIDER than the +/-10% used for flood depth and gust speed: damaging ground motion "
+                  "is rare in Europe, so a PGA map at a given return period is extrapolated well "
+                  "beyond the observational record and carries correspondingly larger uncertainty."),
     ("gust_scale", "Multiplier on windstorm 3-sec gust speed, [0.9, 1.1] - the windstorm hazard-map "
-                    "uncertainty factor, analogous to pga_scale for earthquake."),
+                    "uncertainty factor. Plays the same role as pga_scale for earthquake, but over a "
+                    "narrower band; see the pga_scale entry for why the two differ."),
     ("aggregation", "Exposure aggregation order: 'per_cell' applies the damage curve to each "
                     "raster cell then sums (damagescanner's own approach); 'mean_depth' averages "
                     "intensity over the feature first, then applies the curve once."),
@@ -739,7 +743,7 @@ def build_timing_summary(timing_df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
-def load_convergence_log(results_dir: Path) -> pd.DataFrame:
+def load_convergence_log(results_dir: Path, sample_size: int | None = None) -> pd.DataFrame:
     """One row per (country, asset, scenario) adaptive-Sobol search.
 
     Reads results/sobol_convergence_log.jsonl (written by src.adaptive_sobol),
@@ -793,6 +797,20 @@ def load_convergence_log(results_dir: Path) -> pd.DataFrame:
     df = pd.DataFrame(records, columns=cols)
     if df.empty:
         return df
+    if sample_size is not None:
+        # The log is append-only, so a combination re-run at a different N has a
+        # LATER record at that N while the per-combination indices on disk may
+        # have been restored to the original. Keeping the latest record then
+        # reports a sample size the indices were not computed at. Pinning the
+        # size keeps the sheet consistent with the results it describes; the
+        # rerun evidence lives in the Reruns_* sheets, which read the archives
+        # and are unaffected.
+        df = df[df["stop_n"] == sample_size]
+        if df.empty:
+            raise SystemExit(
+                f"No convergence records at N={sample_size}. Drop --sample-size "
+                "to use the most recent record per combination instead."
+            )
     df = df.sort_values("ts").drop_duplicates(["country", "asset", "scenario"], keep="last")
 
     asset_order = {a: i for i, a in enumerate(ASSET_CONFIGS)}
@@ -885,6 +903,10 @@ def _analyze_archive(path: Path, problem: dict, outcome: str) -> pd.DataFrame | 
         {
             "factor_code": problem["names"],
             "S1": np.nan_to_num(si["S1"]),
+            # S1_conf is unused by the rerun comparison but is a column of the
+            # per-combo indices CSV, so restore_sobol_n.py needs it to rebuild
+            # that file faithfully from an archive.
+            "S1_conf": np.nan_to_num(si["S1_conf"]),
             "ST": np.nan_to_num(si["ST"]),
             "ST_conf": np.nan_to_num(si["ST_conf"]),
         }
@@ -1105,6 +1127,12 @@ def _write_heatmap_sheet(writer: pd.ExcelWriter, sheet_name: str, piv: pd.DataFr
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--sample-size", type=int, default=None,
+                        help="report convergence only for records at this Sobol base N "
+                             "(e.g. 8192). Use when combinations were re-run at a "
+                             "different N but the per-combination indices on disk are "
+                             "the originals, so the sheet would otherwise name a sample "
+                             "size the indices were not computed at.")
     parser.add_argument("--output", type=str, default=None,
                         help=f"output .xlsx path (default: {PROJECT_ROOT / OUTPUT_NAME})")
     args = parser.parse_args()
@@ -1157,7 +1185,7 @@ def main() -> None:
                 writer.sheets["All_Feature_Scores"], fscore_df, fraction_cols=["importance"]
             )
 
-        convergence_df = load_convergence_log(results_dir)
+        convergence_df = load_convergence_log(results_dir, args.sample_size)
         convergence_sheets = []
         if not convergence_df.empty:
             print(f"  {len(convergence_df)} adaptive-Sobol convergence records")

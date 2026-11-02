@@ -44,3 +44,8 @@ Thumbs.db
 *.docx
 
 *.egg-info/
+
+# Pre-rerun snapshots of derived per-combination results, and the retry
+# lists generated from the convergence log. Both are reproducible.
+results_snapshot_*/
+sobol_retry/

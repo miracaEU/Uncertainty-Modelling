@@ -30,7 +30,10 @@ scenarios here carry no warming factor).
 Faithful to hazard_coastal.py: same STAC catalogue/collection, the same tile
 filtering (LOW_DEFENDED, present horizon, skip 'static'), and the same
 COASTPROS-EU -> NUTS2 protection assignment (modelled RP, country-mean then 0
-fallback). It is simplified in one place: we key fragments by our own integer
+fallback). The protection join additionally reconciles the NUTS vintages -
+COASTPROS is keyed on 2016, the model joins to 2024 - because the reference's
+vintage made that unnecessary and ours does not; see the comments above
+sample_coastal_protection(). It is simplified in one place: we key fragments by our own integer
 feature index rather than (osm_id, LAU), because our exposure tables are one
 row per feature already, so the reference's cross-LAU aggregation is unneeded.
 """
@@ -253,25 +256,89 @@ def extract_coastal_profiles(
     return profiles, exposed_qty_per_rp, cell_area_m2
 
 
+# --- NUTS vintage reconciliation --------------------------------------------
+# COASTPROS is keyed on the 2016 vintage; the model joins asset centroids to
+# NUTS 2024. Where a region was renumbered in between, the published value has
+# no 2024 code to land on and the region silently falls back to the country
+# mean. These are the renumberings that touch a COASTPROS region.
+NUTS_SUCCESSORS = {
+    # NUTS 2024 code : the COASTPROS (2016) code it inherits from
+    "PT19": "PT16",   # Centro
+    "PT1A": "PT17",   # Grande Lisboa         } 2016 Lisboa (PT17) is exactly
+    "PT1B": "PT17",   # Peninsula de Setubal  } the union of these two
+    "PT1C": "PT18",   # Alentejo
+    "PT1D": "PT16",   # Oeste e Vale do Tejo - new in 2024, carved from Centro
+                      # and Lisboa. Its coastal stretch (Oeste) was Centro's,
+                      # so it inherits PT16. This one is a judgement call; the
+                      # others are exact.
+    "NL36": "NL33",   # Zuid-Holland. No numerical effect - every Dutch value
+                      # is 1000, so the country mean was already 1000 - but it
+                      # makes the provenance right.
+}
+
+# Regions COASTPROS leaves unmodelled but for which it records an unambiguous
+# policy design standard. Only single-number entries are listed: "100-500"
+# (ES63/ES64), "100-50" (ITC3/ITF4/ITF5) and "20, 100 , 1000" (PT18/PT20/PT30)
+# would each need an interpretation rule, which would be a new assumption
+# rather than a recorded value. Italy's country mean (58.1) already falls
+# inside its published 50-100 range, so nothing is gained by guessing there.
+POLICY_OVERRIDES = {
+    "FI19": 20.0,   # Lansi-Suomi
+    "FI1C": 20.0,   # Etela-Suomi
+    "FI1D": 20.0,   # Pohjois- ja Ita-Suomi
+    "FI20": 20.0,   # Aland
+}
+
+# The nearest-region fallback exists for centroids a few metres offshore - a
+# quay or a jetty whose midpoint lands in the water. Uncapped it will happily
+# snap a centroid across an entire sea, which is how 5.9 M British centroids
+# came to carry Irish and Dutch design standards.
+NEAREST_MAX_M = 5000.0
+# Above this share of features falling back, the geometry is wrong rather than
+# the features being offshore, so fail instead of silently inventing values.
+FALLBACK_FAIL_FRAC = 0.50
+
+
 def sample_coastal_protection(features: gpd.GeoDataFrame, coastal_cfg: dict) -> np.ndarray:
     """Per-feature coastal design return period from COASTPROS-EU joined to NUTS2.
 
-    Transcribed (and simplified) from hazard_coastal.py::
-    load_coastal_protection_standards: use each NUTS2 region's modelled RP,
-    falling back to the country mean, then 0 (unprotected). Feature centroids
-    are matched to NUTS2 by 'within', with a nearest-region fallback for
-    coastal features whose centroid falls just outside the land polygons. No
-    network needed - both inputs are local files.
+    Follows hazard_coastal.py::load_coastal_protection_standards - each NUTS2
+    region's modelled RP, falling back to the country mean, then 0 - with three
+    corrections that the reference's NUTS vintage did not need:
+
+      * UK regions are spliced in from NUTS 2016, because NUTS 2024 dropped the
+        United Kingdom and all 32 published UK standards are otherwise lost;
+      * regions renumbered between vintages inherit through NUTS_SUCCESSORS,
+        which is what recovers Lisbon's 274.6 yr and Centro's 103.6 yr;
+      * the nearest-region fallback is distance-capped, so a missing geometry
+        fails loudly instead of borrowing a neighbouring country's standard.
+
+    No network needed - every input is a local file.
     """
     coastpros_path = coastal_cfg["coastpros_path"]
     nuts2_path = coastal_cfg["nuts2_path"]
+    uk_path = coastal_cfg.get("nuts2_uk_path")
     sheet = coastal_cfg.get("protection_sheet", "COASTPROS-EU")
     rp_col = coastal_cfg.get("protection_rp_col", "MODELLED RETURN PERIOD")
     print("  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...")
 
     df = pd.read_excel(coastpros_path, sheet_name=sheet)
     df.columns = df.columns.str.strip()
+    df["NUTS2 ID"] = df["NUTS2 ID"].astype(str).str.strip()
+    df["CNTR_CODE"] = df["CNTR_CODE"].astype(str).str.strip()
+    df = df[df["NUTS2 ID"].str.match(r"^[A-Z]{2}")]          # drop the note rows
     df[rp_col] = pd.to_numeric(df[rp_col], errors="coerce")
+
+    # Recorded policy standards, before the country mean is computed, so a
+    # region with a real standard is never averaged away.
+    n_pol = 0
+    for nuts_id, value in POLICY_OVERRIDES.items():
+        hit = (df["NUTS2 ID"] == nuts_id) & df[rp_col].isna()
+        n_pol += int(hit.sum())
+        df.loc[hit, rp_col] = value
+    if n_pol:
+        print(f"  [coastal] {n_pol} region(s) took a recorded policy standard")
+
     country_mean = df.dropna(subset=[rp_col]).groupby("CNTR_CODE")[rp_col].mean()
     nuts2_rp = (
         df.assign(_rp=df.apply(
@@ -281,12 +348,22 @@ def sample_coastal_protection(features: gpd.GeoDataFrame, coastal_cfg: dict) -> 
         .set_index("NUTS2 ID")["_rp"]
         .to_dict()
     )
+    for new_code, old_code in NUTS_SUCCESSORS.items():
+        if new_code not in nuts2_rp and old_code in nuts2_rp:
+            nuts2_rp[new_code] = nuts2_rp[old_code]
 
-    nuts2 = gpd.read_parquet(nuts2_path) if str(nuts2_path).endswith(".parquet") else gpd.read_file(nuts2_path)
-    nuts2 = nuts2[nuts2["LEVL_CODE"] == 2].to_crs(3035).copy()
-    nuts2["_rp"] = nuts2.apply(
-        lambda r: nuts2_rp.get(r["NUTS_ID"], country_mean.get(r["CNTR_CODE"], 0.0)), axis=1
-    )
+    nuts2 = _read_nuts(nuts2_path)
+    if uk_path is not None and not (nuts2["CNTR_CODE"] == "UK").any():
+        uk = _read_nuts(uk_path)
+        uk = uk[uk["CNTR_CODE"] == "UK"]
+        nuts2 = pd.concat([nuts2, uk], ignore_index=True)
+        nuts2 = gpd.GeoDataFrame(nuts2, geometry="geometry", crs=3035)
+        print(f"  [coastal] spliced {len(uk)} UK regions in from {uk_path.name}")
+
+    nuts2["_rp"] = [
+        nuts2_rp.get(nid, country_mean.get(cc, 0.0))
+        for nid, cc in zip(nuts2["NUTS_ID"], nuts2["CNTR_CODE"])
+    ]
 
     feats_3035 = features.to_crs(3035)
     centroids = gpd.GeoDataFrame(geometry=feats_3035.geometry.centroid, index=features.index, crs=3035)
@@ -295,9 +372,27 @@ def sample_coastal_protection(features: gpd.GeoDataFrame, coastal_cfg: dict) -> 
     joined = joined[~joined.index.duplicated(keep="first")]
     unmatched = joined.index[joined["_rp"].isna()]
     if len(unmatched) > 0:
-        nearest = gpd.sjoin_nearest(centroids.loc[unmatched], cols, how="left")
+        frac = len(unmatched) / max(len(centroids), 1)
+        if frac > FALLBACK_FAIL_FRAC:
+            raise SystemExit(
+                f"{frac:.1%} of feature centroids ({len(unmatched)} of {len(centroids)}) fall "
+                f"outside every NUTS2 polygon in {nuts2_path.name}.\n"
+                "That is a missing-geometry problem, not offshore assets: the nearest-region "
+                "fallback would assign them another country's design standard.\n"
+                "Check that the NUTS vintage covers this country (2024 has no United Kingdom - "
+                "set hazards.coastal.nuts2_uk_path)."
+            )
+        nearest = gpd.sjoin_nearest(
+            centroids.loc[unmatched], cols, how="left", max_distance=NEAREST_MAX_M
+        )
         nearest = nearest[~nearest.index.duplicated(keep="first")]
         joined.loc[unmatched, "_rp"] = nearest["_rp"].values
+        beyond = int(joined.loc[unmatched, "_rp"].isna().sum())
+        print(
+            f"  [coastal] {len(unmatched)} centroid(s) outside every region; "
+            f"{len(unmatched) - beyond} matched within {NEAREST_MAX_M / 1000:.0f} km, "
+            f"{beyond} left unprotected"
+        )
 
     prot = joined["_rp"].reindex(features.index).fillna(0.0).clip(lower=0).to_numpy(np.float64)
     print(
@@ -305,3 +400,12 @@ def sample_coastal_protection(features: gpd.GeoDataFrame, coastal_cfg: dict) -> 
         f"{(prot == 0).mean() * 100:.1f}% unprotected"
     )
     return prot.astype(np.float32)
+
+
+def _read_nuts(path):
+    """NUTS level-2 regions in EPSG:3035, from either a parquet or a geojson."""
+    g = gpd.read_parquet(path) if str(path).endswith(".parquet") else gpd.read_file(path)
+    g = g[g["LEVL_CODE"] == 2][["NUTS_ID", "CNTR_CODE", "geometry"]].copy()
+    g["NUTS_ID"] = g["NUTS_ID"].astype(str).str.strip()
+    g["CNTR_CODE"] = g["CNTR_CODE"].astype(str).str.strip()
+    return g.to_crs(3035)

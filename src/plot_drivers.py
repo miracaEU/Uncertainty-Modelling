@@ -84,7 +84,7 @@ from .curves import (
     get_asset_config,
     mapped_object_types,
 )
-from .ema_model import SCENARIO_HAZARD
+from .ema_model import PROTECTION_RANGES, SCENARIO_HAZARD
 from .paths import load_config
 from .plot_pyramid import (
     INK,
@@ -107,11 +107,16 @@ OUTCOME = "total_EAD_MEUR"
 # down. Read with the caveat that protection is a CONSTANT in the *_noprot
 # variants, so its absence there is by construction and not a finding; the
 # figures state this in their subtitle. Pass --scenarios to narrow the set.
+# The coastal pair is the SEA-LEVEL-RISE pair. The present-day coastal runs
+# cover exactly the same 257 (country, asset) combinations, so the two sets are
+# interchangeable here, and the report treats the SLR runs as the coastal
+# result. Pass --scenarios with coastal_absprot_ds / coastal_noprot_ds to draw
+# the present-day pair instead.
 DEFAULT_OVERVIEW_SCENARIOS = [
     "flood_absprot_ds",
     "flood_noprot_ds",
-    "coastal_absprot_ds",
-    "coastal_noprot_ds",
+    "coastal_absprot_ds_slr",
+    "coastal_noprot_ds_slr",
     "earthquake",
     "windstorm",
     "windstorm_absprot",
@@ -461,14 +466,23 @@ def draw_pie(ax, counts: dict, title: str, cover_txt: str, big: bool = False) ->
         if s / total < 0.05:
             continue
         ang = np.deg2rad((w.theta1 + w.theta2) / 2)
-        x, y = 0.6 * np.cos(ang), 0.6 * np.sin(ang)
+        # A narrow wedge is wider further out - arc length grows with radius -
+        # so a small slice's count is pushed outward rather than straddling the
+        # boundary into its neighbour's colour, which the larger report type
+        # made visible on slices just over the 5% cutoff.
+        r = 0.72 if s / total < 0.08 else 0.6
+        x, y = r * np.cos(ang), r * np.sin(ang)
         light = lab in ("Protection standard", "Vulnerability curve",
                         "Hazard intensity", "Cost / max-damage")
         ax.text(x, y, str(s), ha="center", va="center",
-                fontsize=(13 if big else 10), fontweight="bold",
+                fontsize=(17 if big else 14) if REPORT else (13 if big else 10),
+                fontweight="bold",
                 color="#ffffff" if light else INK)
-    ax.set_title(title, fontsize=(15 if big else 12), fontweight="bold",
-                 color=INK, pad=(10 if big else 6))
+    ax.set_title(title,
+                 fontsize=(18 if big else 15) if REPORT else (15 if big else 12),
+                 fontweight="bold", color=INK, pad=(10 if big else 6))
+    if not cover_txt:
+        return
     cap_y = (-0.04 if big else -0.02) if REPORT else (-0.14 if big else -0.10)
     ax.text(0.5, cap_y, cover_txt, transform=ax.transAxes,
             ha="center", va="top",
@@ -479,28 +493,64 @@ def draw_pie(ax, counts: dict, title: str, cover_txt: str, big: bool = False) ->
 def coverage_text(fin: int, nexp: int, noun: str = "") -> str:
     """Per-pie caption under the wedges.
 
-    Report mode prints just the completed count in brackets; the monitoring
-    default also carries the expected total and the percentage, which is what
-    makes an unfinished study legible while it runs.
+    Report mode prints nothing. In a report the study IS finished, so the
+    count repeats a number the surrounding text already gives, and dropping it
+    returns the space to the titles and wedge labels, which is what has to stay
+    legible once the figure is pasted at page width. The monitoring default
+    carries the expected total and the percentage, which is what makes an
+    unfinished study legible while it runs.
     """
     if REPORT:
-        return f"({fin})"
+        return ""
     pct = f"{100 * fin / nexp:.0f}%" if nexp else "-"
     return f"{fin}/{nexp}{noun} ({pct})"
 
 
-def wrap_scen_name(scen: str) -> str:
+# Report-mode pie titles. The shared short labels carry the sampling bracket
+# ("RP 5-200", "RP 25-200", "+ SLR") because elsewhere two scenarios differ by
+# nothing else. On this figure each one is already unique without it, and the
+# bracket reads better as a sentence in the report text than as a longer second
+# line on seven pies. The consequence is that the coastal pair no longer says
+# "+ SLR" on its face, so the report caption has to: these ARE the sea-level
+# rise runs.
+REPORT_TITLE = {
+    "flood_absprot_ds": "River flood (protection sampled)",
+    "flood_noprot_ds": "River flood (protection as recorded)",
+    "coastal_absprot_ds_slr": "Coastal flood (protection sampled)",
+    "coastal_noprot_ds_slr": "Coastal flood (protection as recorded)",
+    "windstorm_absprot": "Windstorm (design sampled)",
+}
+
+
+def is_bracket_variant(scen: str) -> bool:
+    """True for a protection-RANGE test scenario - a non-default sampling bracket."""
+    return any(scen.endswith(f"_{suffix}")
+               for ranges in PROTECTION_RANGES.values()
+               for suffix in ranges if suffix)
+
+
+def wrap_scen_name(scen: str, plain: bool = False) -> str:
     """Scenario label with its parenthetical qualifier moved to a second line.
 
     Keeps the seven side-by-side pies legible without truncating the qualifier,
     which is what distinguishes a flood pair from each other.
+
+    A bracket variant's qualifier carries two clauses ("protection sampled, RP
+    5-200"), and at report type sizes that single line is wider than the column
+    it sits in - it ran into the pie beside it - so in report mode it breaks
+    again at the comma. Monitoring type is small enough that one line fits.
     """
-    name = scenario_label(scen, short=True)
+    name = (REPORT_TITLE.get(scen) if plain else None) or scenario_label(scen, short=True)
     head, sep, tail = name.partition(" (")
-    return head + NL + "(" + tail if sep else head
+    if not sep:
+        return head
+    qual = "(" + tail
+    if REPORT and len(qual) > 24:
+        qual = qual.replace(", ", "," + NL, 1)
+    return head + NL + qual
 
 
-def legend_handles(present: set[str] | None = None) -> list:
+def legend_handles(present: set[str] | None = None, slr: bool = False) -> list:
     """Legend entries, restricted to the slices actually drawn on this figure.
 
     With every factor shown separately the full list runs to eight. Dropping the
@@ -515,9 +565,15 @@ def legend_handles(present: set[str] | None = None) -> list:
         print("  WARNING: --report but unfinished experiments are present; keeping "
               "'Unfinished' in the legend. Rebuild the workbook, or the figure "
               "understates coverage.")
+    def text(s: str) -> str:
+        if not REPORT:
+            return s
+        if s == "Climate warming" and slr:
+            return REPORT_LEGEND_LABEL_SLR[s]
+        return REPORT_LEGEND_LABEL.get(s, s)
+
     return [Patch(facecolor=COLORS[s], edgecolor=INK_2 if s in HATCH else SURFACE,
-                  hatch=HATCH.get(s),
-                  label=REPORT_LEGEND_LABEL.get(s, s) if REPORT else s)
+                  hatch=HATCH.get(s), label=text(s))
             for s in labels]
 
 
@@ -528,6 +584,14 @@ def legend_handles(present: set[str] | None = None) -> list:
 # exceedance probability per damage state) collapsed to an EDR.
 REPORT_LEGEND_LABEL = {"Vulnerability curve": "Vulnerability / fragility curve"}
 
+# category() folds the river warming level and the coastal sea-level-rise state
+# into one magenta slice - they never co-occur, so one slice reads across both
+# flood hazards. WHICH of the two it is depends on the scenarios drawn, so this
+# label is used only on a figure that actually contains an SLR run. On a
+# river-only figure the magenta is the warming level and nothing else, and
+# naming sea-level rise there would promise a factor the figure does not hold.
+REPORT_LEGEND_LABEL_SLR = {"Climate warming": "Climate warming / SLR"}
+
 
 def legend_layout(handles: list) -> dict:
     """ncol/fontsize for fig.legend.
@@ -536,8 +600,30 @@ def legend_layout(handles: list) -> dict:
     without widening the figure; monitoring keeps them on one row.
     """
     if REPORT:
-        return {"ncol": int(np.ceil(len(handles) / 2)), "fontsize": 13}
+        return {"ncol": int(np.ceil(len(handles) / 2)), "fontsize": 15}
     return {"ncol": min(len(handles), 8), "fontsize": 11}
+
+
+def fit_to_width(fig, artist, texts, frac: float = 0.97,
+                 min_size: float = 10.0) -> None:
+    """Step `texts` down in size until `artist` fits across the figure.
+
+    Neither case can be predicted from the content: matplotlib sizes each
+    legend column to its own labels, so one rank-2 figure overflowed the page
+    by 5% while another with the same nine entries fit, and a suptitle is laid
+    out on one line whatever its length, so the longest scenario name runs off
+    the edge at the report title size. Shrinking the type leaves the row count,
+    the bands and the rest of the layout untouched, which resizing the figure
+    or re-flowing the legend would not.
+    """
+    fig.canvas.draw()
+    while artist.get_window_extent().width > frac * fig.bbox.width:
+        size = texts[0].get_fontsize()
+        if size <= min_size:
+            break
+        for t in texts:
+            t.set_fontsize(size - 0.5)
+        fig.canvas.draw()
 
 
 def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -> Path:
@@ -546,15 +632,29 @@ def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -
     assets = sorted(sc["asset"].unique())
     ncols = 4
     nrows = int(np.ceil((1 + len(assets)) / ncols))
-    cell = 3.5 if REPORT else 4.0
     colw = 3.5 if REPORT else 4.1
-    fig = plt.figure(figsize=(colw * ncols, cell * nrows + (1.7 if REPORT else 1.4)))
-    gs = fig.add_gridspec(
-        nrows, ncols,
-        hspace=0.30 if REPORT else 0.55, wspace=0.06 if REPORT else 0.25,
-        top=0.915 if REPORT else 0.88, bottom=0.105 if REPORT else 0.14,
-        left=0.02 if REPORT else 0.04, right=0.98 if REPORT else 0.96,
-    )
+    width = colw * ncols
+    left, right = (0.02, 0.98) if REPORT else (0.04, 0.96)
+    wspace = 0.06 if REPORT else 0.25
+    if REPORT:
+        # A pie is inscribed in the SMALLER side of its cell, so a cell wider
+        # than it is tall loses the difference as white space either side of
+        # every pie - which at this column count was the largest empty area on
+        # the figure. Deriving the ROW HEIGHT from the cell width makes the
+        # pies fill the grid at a fixed figure width. The bands are then only
+        # as deep as the suptitle, the row titles and the two-row legend need.
+        # The header carries the suptitle AND the first row's pie titles, which
+        # sit above the axes box; sized for the suptitle alone the two overlap.
+        hspace, header, footer = 0.16, 1.15, 0.80
+        cell = (right - left) * width / (ncols + (ncols - 1) * wspace)
+        height = cell * (nrows + (nrows - 1) * hspace) + header + footer
+        top, bottom = 1 - header / height, footer / height
+    else:
+        hspace, height = 0.55, 4.0 * nrows + 1.4
+        top, bottom = 0.88, 0.14
+    fig = plt.figure(figsize=(width, height))
+    gs = fig.add_gridspec(nrows, ncols, hspace=hspace, wspace=wspace,
+                          top=top, bottom=bottom, left=left, right=right)
 
     present: set[str] = set()
     ax0 = fig.add_subplot(gs[0, 0])
@@ -571,9 +671,10 @@ def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -
         draw_pie(ax, counts, a, coverage_text(fin, nexp, " countries"))
 
     fin_all, n_all = int(sc["covered"].sum()), len(sc)
-    fig.suptitle(f"{RANK_WORD[rank]} influential parameter - {scenario_label(scen)}",
-                 fontsize=19, fontweight="bold", color=INK,
-                 y=0.972 if REPORT else 0.965)
+    sup = fig.suptitle(
+        f"{RANK_WORD[rank]} influential parameter - {scenario_label(scen)}",
+        fontsize=20 if REPORT else 19, fontweight="bold", color=INK,
+        y=1 - 0.34 / height if REPORT else 0.965)
     # Report mode carries no explainer: the caption belongs in the report text,
     # where it can be written once instead of repeated on every figure.
     if not REPORT:
@@ -584,10 +685,15 @@ def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -
                  f"{NL}Neutral slices are not drivers: pale grey = not finished, and the "
                  f"two darker greys are combinations whose Sobol indices are ALL zero.",
                  ha="center", fontsize=12, color=INK_2)
-    handles = legend_handles(present)
-    fig.legend(handles=handles, loc="lower center", frameon=False,
-               bbox_to_anchor=(0.5, 0.015 if REPORT else 0.02),
-               **legend_layout(handles))
+    handles = legend_handles(present, slr=scen.endswith("_slr"))
+    # The report anchor is derived from the figure height computed above, so it
+    # holds at any asset count; the monitoring layout keeps its fixed fraction.
+    leg = fig.legend(handles=handles, loc="lower center", frameon=False,
+                     bbox_to_anchor=(0.5, 0.12 / height) if REPORT else (0.5, 0.02),
+                     **legend_layout(handles))
+    if REPORT:
+        fit_to_width(fig, sup, [sup], frac=0.96, min_size=13.0)
+        fit_to_width(fig, leg, leg.get_texts())
     out = out_dir / f"drivers_{scen}{RANK_SUFFIX[rank]}.png"
     fig.savefig(out, dpi=130)
     plt.close(fig)
@@ -612,6 +718,14 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
         if merged.empty:
             raise SystemExit(f"No rows for asset '{asset}'.")
     scope = asset if asset is not None else "all infrastructure"
+    # REPORT_TITLE drops the sampling bracket from the pie title. That is only
+    # safe when no scenario here is a bracket variant: on the range-test figure
+    # the bracket IS the variable under test, so dropping "RP 5-200" from the
+    # baseline while the arm beside it still reads "RP 10-100" would show a
+    # difference between the two that is not the one being made.
+    plain = REPORT and not any(is_bracket_variant(s) for s in scenarios)
+    titles = [wrap_scen_name(s, plain) for s in scenarios]
+    title_lines = max(t.count(NL) + 1 for t in titles)
     n = len(scenarios)
     ncols = max(1, min(ncols, n))
     nrows = int(np.ceil(n / ncols))
@@ -635,8 +749,11 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
         # a little; the real savings are the gaps, margins and shorter header.
         # No subtitle, but the band must still clear the suptitle AND the
         # two-line scenario titles that sit above the top row of axes.
-        header = 1.15
-        footer, cell = 1.35, 3.5
+        # The header has to hold the suptitle AND the tallest scenario title,
+        # which runs to three lines once a qualifier breaks at its comma. A
+        # fixed band sized for two put the suptitle through the top row.
+        header = 0.75 + 0.30 * title_lines
+        footer, cell = 1.25, 3.5
     else:
         header = 1.35 + 0.24 * (subtitle.count(NL) + 1)
         footer, cell = 1.7, 4.0
@@ -655,17 +772,21 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
         ax = fig.add_subplot(gs[r, c])
         counts, fin, nexp = slice_counts(merged[merged["scenario"] == scen])
         present |= set(counts)
-        draw_pie(ax, counts, wrap_scen_name(scen), coverage_text(fin, nexp))
+        draw_pie(ax, counts, titles[j], coverage_text(fin, nexp))
 
-    fig.suptitle(
+    sup = fig.suptitle(
         f"{RANK_WORD[rank]} influential parameter across {scope} - by scenario",
-        fontsize=17, fontweight="bold", color=INK, y=1 - 0.40 / h)
+        fontsize=20 if REPORT else 17, fontweight="bold", color=INK,
+        y=1 - 0.42 / h)
     if subtitle:
         fig.text(0.5, 1 - 0.82 / h, subtitle, ha="center", va="top",
                  fontsize=11.5, color=INK_2)
-    handles = legend_handles(present)
-    fig.legend(handles=handles, loc="lower center", frameon=False,
-               bbox_to_anchor=(0.5, 0.14 / h), **legend_layout(handles))
+    handles = legend_handles(present, slr=any(s.endswith("_slr") for s in scenarios))
+    leg = fig.legend(handles=handles, loc="lower center", frameon=False,
+                     bbox_to_anchor=(0.5, 0.14 / h), **legend_layout(handles))
+    if REPORT:
+        fit_to_width(fig, sup, [sup], frac=0.96, min_size=13.0)
+        fit_to_width(fig, leg, leg.get_texts())
     # Per-asset overviews live in their own folder, so everything for one asset
     # (these plus src/eu_totals.py's tables) sits together.
     tag = "" if asset is None else f"_{asset}"

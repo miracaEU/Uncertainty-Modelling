@@ -85,10 +85,19 @@ hazards:
       "2100_SSP245": {time_horizon: "2100", climate_scenario: "SSP245"}
       "2100_SSP585": {time_horizon: "2100", climate_scenario: "SSP585"}
 
-    coastpros_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/COASTPROS-EU.xlsx"
+    # 2025 release (Zenodo). The 2024 copy on the eks510 share leaves DE93 and
+    # DE94 blank; 2025 gives both 100.045 yr, which also moves the German
+    # country mean 145.17 -> 127.12. Kept in this repo rather than overwriting
+    # the shared eks510 file, which other projects read.
+    coastpros_path: "/scistor/ivm/yma794/Uncertainty-Modelling/data/COASTPROS-EU_2025.xlsx"
     nuts2_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2024_3035.parquet"
+    # NUTS 2024 dropped the United Kingdom entirely, so its 32 published
+    # COASTPROS standards have no polygon to attach to. The 2016 vintage is
+    # read for the UK regions alone - see sample_coastal_protection().
+    nuts2_uk_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/NUTS_RG_01M_2016_3035.geojson"
     protection_sheet: "COASTPROS-EU"
     protection_rp_col: "MODELLED RETURN PERIOD"
+    protection_policy_col: "POLICY RETURN PERIOD"
 
 # --- outputs (relative to the repo folder) -----------------------------------
 intermediate_dir: "data/intermediate"

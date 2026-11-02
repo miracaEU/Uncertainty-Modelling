@@ -340,6 +340,27 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
             )
         uncertainties.append(CategoricalParameter("slr", states))
 
+    # Hazard-map intensity bias: +/-10% on flood depth and gust speed, +/-20% on PGA.
+    # The wider seismic band is deliberate. Damaging ground motion recurs on
+    # centennial-to-millennial timescales in most of Europe, so a PGA map at a given
+    # return period is extrapolated well beyond the instrumental record, and the
+    # ground-motion models it rests on carry large epistemic spread before local site
+    # effects - which pan-European maps proxy only crudely - are added. Flood depth
+    # and gust speed at a comparable return period are constrained by far longer and
+    # denser observational series.
+    #
+    # Recorded retrospectively: the ranges predate this note. pga_scale was set in
+    # the first version of the model, when flood depth error was expressed additively
+    # as depth_offset (+/-0.5 m) and so had no percentage to be compared against;
+    # depth_scale and gust_scale were added later at +/-10%. Note that +/-10% is
+    # NARROWER than the additive form it mirrors - +/-0.5 m on a typical 1.5 m
+    # inundation is about +/-33% - so the flood figure is not an independent estimate
+    # of depth-map error.
+    #
+    # The asymmetry is not cosmetic: pga_scale is the top driver in 12% of earthquake
+    # combinations, while neither depth factor leads anywhere. Widening or narrowing
+    # it would move real results, so it should be changed only with a reason.
+
     # depth-error treatment: additive offset OR multiplicative scale
     if depth_kind == "offset":
         uncertainties.append(RealParameter("depth_offset", -0.5, 0.5))
@@ -370,6 +391,8 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
     _add_curve_params(uncertainties, constants, asset_cfg.eq_groups)
     uncertainties += [
         RealParameter("cost_level", -1.0, 1.0),
+        # +/-20%, wider than the +/-10% used for depth and gust; see the
+        # hazard-map intensity note above _build_water_model's depth block.
         RealParameter("pga_scale", 0.8, 1.2),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]
@@ -398,6 +421,10 @@ def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> 
     _add_curve_params(uncertainties, constants, asset_cfg.wind_groups)
     uncertainties += [
         RealParameter("cost_level", -1.0, 1.0),
+        # +/-10%, matching depth_scale rather than pga_scale. Note this is a
+        # narrower band on a STEEPER response: wind fragility rises much faster
+        # in intensity than a depth-damage curve, so equal input ranges across
+        # hazards do not give equal influence.
         RealParameter("gust_scale", 0.9, 1.1),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]

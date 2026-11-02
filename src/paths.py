@@ -76,7 +76,7 @@ def load_config(config_path: Path | None = None) -> dict:
         # coastal) don't - resolve whatever local paths each one declares.
         if "dir" in hazard_cfg:
             hazard_cfg["dir"] = Path(hazard_cfg["dir"])
-        for path_key in ("coastpros_path", "nuts2_path"):
+        for path_key in ("coastpros_path", "nuts2_path", "nuts2_uk_path"):
             if path_key in hazard_cfg:
                 hazard_cfg[path_key] = Path(hazard_cfg[path_key])
 

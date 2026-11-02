@@ -40,7 +40,11 @@ from .paths import (
 )
 
 # palette (dataviz reference instance, light mode)
-SURFACE = "#fcfcfb"
+# Pure white, so a figure dropped into the report has no visible panel edge
+# against the page. SURFACE doubles as the colour of anything meant to read
+# as a hole in the page - marker faces, cell edges, text halos - so it has
+# to stay in step with figure.facecolor wherever it is used.
+SURFACE = "#ffffff"
 INK = "#0b0b0b"
 INK_2 = "#52514e"
 MUTED = "#898781"

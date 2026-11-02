@@ -60,7 +60,63 @@ from matplotlib.patches import Patch
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # --- palette (matches src/analyze.py so the whole study looks like one set) ---
-SURFACE = "#fcfcfb"
+# Pure white, so a figure dropped into the report has no visible panel edge
+# against the page. SURFACE doubles as the colour of anything meant to read
+# as a hole in the page - marker faces, cell edges, text halos - so it has
+# to stay in step with figure.facecolor wherever it is used.
+SURFACE = "#ffffff"
+
+# --report switches these three. The cascade stores EAD in millions of euros;
+# the report wants billions, spelled out, and a pure white page rather than the
+# off-white the screen figures use.
+REPORT = False
+# The twin axis carrying p5-p95 width as a % of the median. On by default; the
+# report figures drop it with --no-width-axis, where the same numbers are in the
+# summary CSV and a second tick column only crowds the page.
+WIDTH_AXIS = True
+VALUE_SCALE = 1.0
+VALUE_LABEL = "total EAD (M EUR / yr)"
+REPORT_SURFACE = "#ffffff"
+REPORT_VALUE_SCALE = 1.0 / 1000.0
+REPORT_VALUE_LABEL = "Expected annual damage (Billion Euros per year)"
+
+
+def use_report_style() -> None:
+    """Pure white page, EAD in billions, black furniture, larger type."""
+    global REPORT, SURFACE, VALUE_SCALE, VALUE_LABEL
+    REPORT = True
+    SURFACE = REPORT_SURFACE
+    VALUE_SCALE = REPORT_VALUE_SCALE
+    VALUE_LABEL = REPORT_VALUE_LABEL
+    # rcParams were set at import from the old SURFACE, so rebinding the name is
+    # not enough - the page would stay off-white.
+    #
+    # The greys below go black. On screen a grey tick label reads as secondary
+    # to the data, which is what it is; printed, or scaled down into a report
+    # column, it reads as faint. The GRID stays pale deliberately - it is the
+    # one piece of furniture that sits BEHIND the bands, and a black grid would
+    # compete with them rather than support them.
+    plt.rcParams.update({
+        "figure.facecolor": SURFACE,
+        "axes.facecolor": SURFACE,
+        "savefig.facecolor": SURFACE,
+        "font.size": 13,
+        "axes.titlesize": 15,
+        "axes.labelcolor": INK,
+        "xtick.color": INK,
+        "ytick.color": INK,
+        "axes.edgecolor": INK,
+    })
+
+
+def furniture(colour: str) -> str:
+    """A non-data line's colour: black on a report page, its grey on screen."""
+    return INK if REPORT else colour
+
+
+def legend_size() -> int:
+    """Legend type, matched to the rest of the report set."""
+    return 12 if REPORT else 9
 INK = "#0b0b0b"
 INK_2 = "#52514e"
 MUTED = "#898781"
@@ -427,12 +483,17 @@ def draw_axes(ax, stats: pd.DataFrame, title: str, log_x: bool,
 
     xlim forces a common value axis, which is what makes two panels comparable;
     without it matplotlib scales each to its own data and the wider scenario
-    merely looks like the narrower one.
+    merely looks like the narrower one. It is given in DISPLAY units, i.e.
+    already multiplied by VALUE_SCALE.
     """
     n_steps = len(stats)
     y = np.arange(n_steps)
-    p5, p25, p50, p75, p95 = (stats[c].to_numpy() for c in ("p5", "p25", "p50", "p75", "p95"))
-    mean = stats["mean"].to_numpy()
+    # The cascade stores EAD in millions; --report divides to billions. Scaled
+    # here rather than in step_stats so the summary tables keep their own unit
+    # and only the drawing changes.
+    p5, p25, p50, p75, p95 = (stats[c].to_numpy() * VALUE_SCALE
+                              for c in ("p5", "p25", "p50", "p75", "p95"))
+    mean = stats["mean"].to_numpy() * VALUE_SCALE
 
     # Funnel silhouette: this is what makes it read as a pyramid rather than as
     # a stack of unrelated bars.
@@ -448,7 +509,8 @@ def draw_axes(ax, stats: pd.DataFrame, title: str, log_x: bool,
                 markeredgecolor=INK, markeredgewidth=1.3, linestyle="none", zorder=6)
 
     # Nominal reference, so a drifting centre is as legible as a widening band.
-    ax.axvline(p50[0], color=BASELINE, linestyle="--", linewidth=1.0, zorder=0)
+    ax.axvline(p50[0], color=furniture(BASELINE), linestyle="--", linewidth=1.0,
+               zorder=0)
 
     labels = [
         "nominal (all factors fixed)" if s == 0 else f"+ {readable(f)}"
@@ -456,27 +518,209 @@ def draw_axes(ax, stats: pd.DataFrame, title: str, log_x: bool,
     ]
     ax.set_yticks(y, labels)
     ax.invert_yaxis()
-    ax.set_xlabel("total EAD (M EUR / yr)")
+    ax.set_xlabel(VALUE_LABEL)
     if log_x:
         ax.set_xscale("log")
     ax.grid(axis="y", visible=False)
-    ax.set_title(title, pad=16)
+    # In report mode the subtitle is dropped but its space is kept, so the title
+    # does not sit hard against the top of the plot.
+    ax.set_title(title, pad=30 if REPORT else 16)
     if xlim is not None:
         ax.set_xlim(*xlim)
 
     # Relative 90% width per step, on a twin axis so it cannot collide with the
     # data no matter how far the band extends.
-    if width_axis:
+    if width_axis and WIDTH_AXIS:
         ax2 = ax.twinx()
         ax2.set_ylim(ax.get_ylim())
         ax2.set_yticks(y, [
             "-" if not np.isfinite(v) else f"{v:.0%}" for v in stats["w90_rel"]
         ])
-        ax2.set_ylabel("p5-p95 width\n(% of median)", color=MUTED, fontsize=9)
+        ax2.set_ylabel("p5-p95 width (% of median)", color=MUTED, fontsize=9)
         ax2.tick_params(labelsize=9)
         ax2.grid(False)
         for spine in ax2.spines.values():
             spine.set_visible(False)
+
+
+# The forked final step. A second hue for the alternative branch, chosen to sit
+# beside the blue trunk rather than compete with it.
+FORK_BAND_90 = "#fadfc6"
+FORK_BAND_50 = "#f0b073"
+FORK_ACCENT = "#b35c0a"
+
+
+def draw_fork_split(ax, trunk: pd.DataFrame, term_abs: pd.Series, term_mul: pd.Series,
+                    label_abs: str, label_mul: str, title: str, log_x: bool) -> None:
+    """Chain ending in the multiplicative step, then a detached alternative.
+
+    Scaling the recorded standard by 0.5-1.5x PERTURBS the nominal, so it
+    belongs in the chain and is drawn as its continuation. Replacing the
+    standard with a draw over RP 5-200 discards the recorded value instead, so
+    it is a different scenario rather than a further step, and is drawn below a
+    visible break with no funnel connecting it.
+    """
+    chain = pd.concat([trunk, term_mul.to_frame().T], ignore_index=True)
+    n = len(chain)
+    y = np.arange(n)
+    # Just enough clearance for the break rule: the separation is carried by the
+    # rule and the colour, so extra whitespace only pushes the alternative out of
+    # the reader's eye.
+    y_alt = float(n - 1) + 0.85
+
+    p5, p25, p50, p75, p95 = (chain[c].to_numpy(dtype=float) * VALUE_SCALE
+                              for c in ("p5", "p25", "p50", "p75", "p95"))
+    mean = chain["mean"].to_numpy(dtype=float) * VALUE_SCALE
+
+    ax.fill_betweenx(y, p5, p95, color=BAND_90, alpha=0.75, linewidth=0, zorder=1)
+    ax.fill_betweenx(y, p25, p75, color=BAND_50, alpha=0.85, linewidth=0, zorder=2)
+    for i in y:
+        ax.hlines(i, p5[i], p95[i], color=ACCENT, linewidth=1.0, alpha=0.75, zorder=3)
+        ax.hlines(i, p25[i], p75[i], color=ACCENT, linewidth=3.4, alpha=0.95, zorder=4)
+        ax.plot([p50[i]], [i], marker="|", markersize=15, markeredgewidth=2.4,
+                color=INK, zorder=6)
+        ax.plot([mean[i]], [i], marker="D", markersize=5.6, markerfacecolor=SURFACE,
+                markeredgecolor=INK, markeredgewidth=1.3, linestyle="none", zorder=6)
+
+    # The break. Drawn across the full width in axes coordinates so it reads as
+    # "the chain stops here", not as anything belonging to the data. Unlabelled:
+    # the row label and the change of colour already say it.
+    y_break = (n - 1) + 0.42
+    ax.axhline(y_break, color=furniture(MUTED), linewidth=1.0,
+               linestyle=(0, (6, 4)), zorder=7)
+
+    a5, a25, a50, a75, a95 = (float(term_abs[c]) * VALUE_SCALE
+                              for c in ("p5", "p25", "p50", "p75", "p95"))
+    amean = float(term_abs["mean"]) * VALUE_SCALE
+    ax.barh(y_alt, a95 - a5, left=a5, height=0.60, color=FORK_BAND_90, alpha=0.80,
+            linewidth=0, zorder=1)
+    ax.barh(y_alt, a75 - a25, left=a25, height=0.60, color=FORK_BAND_50, alpha=0.90,
+            linewidth=0, zorder=2)
+    ax.hlines(y_alt, a5, a95, color=FORK_ACCENT, linewidth=1.0, alpha=0.85, zorder=3)
+    ax.hlines(y_alt, a25, a75, color=FORK_ACCENT, linewidth=3.4, alpha=0.95, zorder=4)
+    ax.plot([a50], [y_alt], marker="|", markersize=15, markeredgewidth=2.4,
+            color=INK, zorder=6)
+    ax.plot([amean], [y_alt], marker="D", markersize=5.6, markerfacecolor=SURFACE,
+            markeredgecolor=INK, markeredgewidth=1.3, linestyle="none", zorder=6)
+
+    ax.axvline(p50[0], color=furniture(BASELINE), linestyle="--", linewidth=1.0,
+               zorder=0)
+
+    labels = ["nominal (all factors fixed)" if s == 0 else f"+ {readable(f)}"
+              for s, f in zip(trunk["step"], trunk["factor_added"])] + [label_mul]
+    ax.set_yticks(list(y) + [y_alt], labels + [label_abs])
+    ax.set_ylim(y_alt + 0.9, -0.8)
+    ax.set_xlabel(VALUE_LABEL)
+    if log_x:
+        ax.set_xscale("log")
+    ax.grid(axis="y", visible=False)
+    ax.set_title(title, pad=30 if REPORT else 16)
+
+    if not WIDTH_AXIS:
+        return
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ticks = ["-" if not np.isfinite(v) else f"{v:.0%}" for v in chain["w90_rel"]]
+    ax2.set_yticks(list(y) + [y_alt], ticks + [f"{float(term_abs['w90_rel']):.0%}"])
+    ax2.set_ylabel("p5-p95 width (% of median)", color=MUTED, fontsize=9)
+    ax2.tick_params(labelsize=9)
+    ax2.grid(False)
+    for spine in ax2.spines.values():
+        spine.set_visible(False)
+
+
+def draw_fork(ax, trunk: pd.DataFrame, term_a: pd.Series, term_b: pd.Series,
+              label_a: str, label_b: str, title: str, log_x: bool) -> None:
+    """One cascade whose LAST step forks into two alternatives.
+
+    Valid only because the two scenarios share their trunk bit-for-bit: with
+    protection ordered last and the LHS matrix filled column by column from one
+    seeded generator, every factor before it occupies the same column in both,
+    so steps 0..n-1 are the same draws, not merely the same distribution. The
+    caller checks that; here it is assumed.
+
+    The two terminal rows are drawn below a gap and in different hues, because
+    they are ALTERNATIVES to one another rather than successive steps - reading
+    them as a continuation of the funnel would say the band widens twice.
+    """
+    n = len(trunk)
+    y_trunk = np.arange(n)
+    y_final = float(n)
+
+    def cols(s):
+        return [s[c] * VALUE_SCALE for c in ("p5", "p25", "p50", "p75", "p95", "mean")]
+
+    p5, p25, p50, p75, p95 = (trunk[c].to_numpy() * VALUE_SCALE
+                              for c in ("p5", "p25", "p50", "p75", "p95"))
+    mean = trunk["mean"].to_numpy() * VALUE_SCALE
+
+    ax.fill_betweenx(y_trunk, p5, p95, color=BAND_90, alpha=0.75, linewidth=0, zorder=1)
+    ax.fill_betweenx(y_trunk, p25, p75, color=BAND_50, alpha=0.85, linewidth=0, zorder=2)
+    for i in y_trunk:
+        ax.hlines(i, p5[i], p95[i], color=ACCENT, linewidth=1.0, alpha=0.75, zorder=3)
+        ax.hlines(i, p25[i], p75[i], color=ACCENT, linewidth=3.4, alpha=0.95, zorder=4)
+        ax.plot([p50[i]], [i], marker="|", markersize=15, markeredgewidth=2.4,
+                color=INK, zorder=6)
+        ax.plot([mean[i]], [i], marker="D", markersize=5.6, markerfacecolor=SURFACE,
+                markeredgecolor=INK, markeredgewidth=1.3, linestyle="none", zorder=6)
+
+    # Both treatments on ONE row, nested: the two are alternative versions of the
+    # same step, so giving each its own row said the cascade had two more levels
+    # than it has. Drawn outer-first with the taller band behind, so whichever
+    # reaches further is visible and the other sits inside it.
+    outer, inner = term_a, term_b
+    o5, o25, o50, o75, o95, omean = cols(outer)
+    i5, i25, i50, i75, i95, imean = cols(inner)
+    H_OUT, H_IN = 0.62, 0.30
+    OFF = 0.0
+
+    ax.barh(y_final, o95 - o5, left=o5, height=H_OUT, color=BAND_90, alpha=0.75,
+            linewidth=0, zorder=1)
+    ax.barh(y_final, o75 - o25, left=o25, height=H_OUT, color=BAND_50, alpha=0.85,
+            linewidth=0, zorder=2)
+    ax.barh(y_final, i95 - i5, left=i5, height=H_IN, color=FORK_BAND_90, alpha=0.95,
+            linewidth=0, zorder=3)
+    ax.barh(y_final, i75 - i25, left=i25, height=H_IN, color=FORK_BAND_50, alpha=0.95,
+            linewidth=0, zorder=4)
+
+    # Markers split above and below the centre line so the two sets never collide.
+    for s_, acc, dy, half in ((outer, ACCENT, -0.19, H_OUT / 2),
+                              (inner, FORK_ACCENT, 0.19, H_IN / 2)):
+        v5, v25, v50, v75, v95, vmean = cols(s_)
+        yy = y_final + dy + OFF
+        ax.hlines(yy, v5, v95, color=acc, linewidth=1.0, alpha=0.85, zorder=5)
+        ax.hlines(yy, v25, v75, color=acc, linewidth=3.0, alpha=0.95, zorder=5)
+        ax.plot([v50], [yy], marker="|", markersize=11, markeredgewidth=2.4,
+                color=INK, zorder=6)
+        ax.plot([vmean], [yy], marker="D", markersize=5.6, markerfacecolor=SURFACE,
+                markeredgecolor=INK, markeredgewidth=1.3, linestyle="none", zorder=6)
+
+    ax.axvline(p50[0], color=furniture(BASELINE), linestyle="--", linewidth=1.0,
+               zorder=0)
+
+    labels = ["nominal (all factors fixed)" if s == 0 else f"+ {readable(f)}"
+              for s, f in zip(trunk["step"], trunk["factor_added"])]
+    ax.set_yticks(list(y_trunk) + [y_final], labels + ["+ protection standard"])
+    ax.set_ylim(y_final + 0.9, -0.8)
+    ax.set_xlabel(VALUE_LABEL)
+    if log_x:
+        ax.set_xscale("log")
+    ax.grid(axis="y", visible=False)
+    ax.set_title(title, pad=30 if REPORT else 16)
+
+    if not WIDTH_AXIS:
+        return
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ticks = ["-" if not np.isfinite(v) else f"{v:.0%}" for v in trunk["w90_rel"]]
+    # One row, two numbers: outer first, matching the legend's order.
+    ticks.append(f"{term_a['w90_rel']:.0%} / {term_b['w90_rel']:.0%}")
+    ax2.set_yticks(list(y_trunk) + [y_final], ticks)
+    ax2.set_ylabel("p5-p95 width (% of median)", color=MUTED, fontsize=9)
+    ax2.tick_params(labelsize=9)
+    ax2.grid(False)
+    for spine in ax2.spines.values():
+        spine.set_visible(False)
 
 
 def legend_handles_pyramid() -> list:
@@ -493,16 +737,17 @@ def legend_handles_pyramid() -> list:
 def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_x: bool) -> None:
     fig, ax = plt.subplots(figsize=(10.2, 0.55 * len(stats) + 2.6), layout="constrained")
     draw_axes(ax, stats, title, log_x)
-    ax.text(0.0, 1.015, subtitle, transform=ax.transAxes, fontsize=9, color=MUTED)
+    if not REPORT:
+        ax.text(0.0, 1.015, subtitle, transform=ax.transAxes, fontsize=9, color=MUTED)
     handles = legend_handles_pyramid()
     # Below the axes, not inside: the bottom-right corner is exactly where the
     # widest band lands, so an in-axes legend would sit on top of the result.
     leg = ax.legend(
-        handles=handles, frameon=False, fontsize=9, ncol=4,
+        handles=handles, frameon=False, fontsize=legend_size(), ncol=4,
         loc="upper center", bbox_to_anchor=(0.5, -0.10),
     )
     for t in leg.get_texts():
-        t.set_color(INK_2)
+        t.set_color(furniture(INK_2))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200)
@@ -531,8 +776,10 @@ PROTECTION_PAIRS = [
 def pair_figure(stats_a: pd.DataFrame, stats_b: pd.DataFrame, scen_a: str, scen_b: str,
                 asset: str, scope_label: str, n_draws: int, out: Path, log_x: bool) -> None:
     """Two cascades on one shared value axis."""
-    lo = min(stats_a["p5"].min(), stats_b["p5"].min())
-    hi = max(stats_a["p95"].max(), stats_b["p95"].max())
+    # Display units: draw_axes scales the data, so a shared xlim must be scaled
+    # too or the panels would be framed in millions while plotted in billions.
+    lo = min(stats_a["p5"].min(), stats_b["p5"].min()) * VALUE_SCALE
+    hi = max(stats_a["p95"].max(), stats_b["p95"].max()) * VALUE_SCALE
     pad = 0.04 * (hi - lo) if hi > lo else 1.0
     xlim = (max(lo - pad, 0.0) if not log_x else lo / 1.1, hi + pad)
 
@@ -546,13 +793,14 @@ def pair_figure(stats_a: pd.DataFrame, stats_b: pd.DataFrame, scen_a: str, scen_
                  f"{asset} - {scope_label}", fontsize=13, fontweight="bold", color=INK)
     # The note rides on the legend rather than being its own artist: a bare
     # fig.text is not laid out at all and landed on the panel titles.
-    leg = fig.legend(handles=legend_handles_pyramid(), frameon=False, fontsize=9,
+    leg = fig.legend(handles=legend_handles_pyramid(), frameon=False,
+                     fontsize=legend_size(),
                      ncol=4, loc="outside lower center",
                      title=f"{n_draws:,} draws per step  |  shared value axis  |  "
                            f"right-hand numbers are p5-p95 width as a share of the median")
-    leg.get_title().set(fontsize=9, color=MUTED)
+    leg.get_title().set(fontsize=legend_size(), color=furniture(MUTED))
     for t in leg.get_texts():
-        t.set_color(INK_2)
+        t.set_color(furniture(INK_2))
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200)
     plt.close(fig)
@@ -595,6 +843,91 @@ def build_pairs(cdir: Path, odir: Path, assets, scopes, countries, log_x) -> int
     return n
 
 
+FORK_PAIR = ("flood_absprot_ds", "flood_baseline_ds_sc0p5to1p5")
+FORK_LABELS = ("replaced by a draw, RP 5-200 yr",
+               "scaled 0.5-1.5x of the recorded standard")
+# For the split style the two rows are labelled in place, so they read without
+# the legend. Scaling PERTURBS the recorded standard, so it continues the chain;
+# replacing DISCARDS it, so it is a scenario of its own.
+SPLIT_LABEL_MUL = "+ protection scaled 0.5-1.5x"
+SPLIT_LABEL_ABS = "protection sampled, RP 5-200 years"
+
+
+def build_fork(cdir: Path, odir: Path, scopes, log_x: bool, style: str = "split") -> int:
+    """One figure per (asset, scope): shared trunk, then the two protection
+    treatments - nested on one row ("nested") or chain-plus-detached ("split")."""
+    scen_a, scen_b = FORK_PAIR
+    frames = {}
+    for path in sorted(cdir.glob("*_cascade.parquet")):
+        df = pd.read_parquet(path)
+        frames[(df["asset"].iloc[0], df["scenario"].iloc[0])] = df
+
+    n = 0
+    for asset in sorted({k[0] for k in frames}):
+        da, db = frames.get((asset, scen_a)), frames.get((asset, scen_b))
+        if da is None or db is None:
+            continue
+        for scope, country in sorted({(s, c) for s, c in
+                                      da[["scope", "country"]].drop_duplicates().to_numpy()}):
+            if scopes and scope not in scopes:
+                continue
+            sa = da[(da["scope"] == scope) & (da["country"] == country)]
+            sb = db[(db["scope"] == scope) & (db["country"] == country)]
+            if sb.empty:
+                continue
+
+            # The whole figure rests on the two sharing a trunk. Verified on the
+            # raw draws, not on the summary statistics: equal percentiles could
+            # still come from different samples, and the claim being made is the
+            # stronger one.
+            last = int(sa["step"].max())
+            for step in range(last):
+                x = sa[sa["step"] == step].sort_values("draw")["total_EAD_MEUR"].to_numpy()
+                y = sb[sb["step"] == step].sort_values("draw")["total_EAD_MEUR"].to_numpy()
+                if len(x) != len(y) or not np.array_equal(x, y):
+                    raise SystemExit(
+                        f"{asset} / {scope}: step {step} differs between {scen_a} "
+                        f"and {scen_b}, so they do not share a trunk and cannot be "
+                        "drawn as one forked cascade. Re-run both with protection "
+                        "ordered last and the same seed."
+                    )
+
+            stats_a, stats_b = step_stats(sa), step_stats(sb)
+            trunk = stats_a.iloc[:-1].reset_index(drop=True)
+            label = country if scope == COUNTRY_SCOPE else "pan-European"
+            title = f"Uncertainty cascade - {asset} - {label} - protection treated two ways"
+            out = (odir / scope_dir(scope, country)
+                   / f"{asset}_protection_{style}_pyramid.png")
+
+            fig, ax = plt.subplots(figsize=(10.2, 0.55 * (len(trunk) + 2) + 3.0),
+                                   layout="constrained")
+            if style == "split":
+                draw_fork_split(ax, trunk, stats_a.iloc[-1], stats_b.iloc[-1],
+                                SPLIT_LABEL_ABS, SPLIT_LABEL_MUL, title, log_x)
+                handles = legend_handles_pyramid() + [
+                    Patch(facecolor=FORK_BAND_50, label="alternative scenario"),
+                ]
+            else:
+                draw_fork(ax, trunk, stats_a.iloc[-1], stats_b.iloc[-1],
+                          *FORK_LABELS, title, log_x)
+                # The final row carries both treatments nested, so the legend is
+                # what tells them apart - the row label cannot.
+                handles = legend_handles_pyramid() + [
+                    Patch(facecolor=BAND_50, label=f"protection {FORK_LABELS[0]}"),
+                    Patch(facecolor=FORK_BAND_50, label=f"protection {FORK_LABELS[1]}"),
+                ]
+            leg = ax.legend(handles=handles, frameon=False,
+                            fontsize=legend_size(), ncol=5,
+                            loc="upper center", bbox_to_anchor=(0.5, -0.09))
+            for t in leg.get_texts():
+                t.set_color(furniture(INK_2))
+            out.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(out, dpi=200)
+            plt.close(fig)
+            n += 1
+    return n
+
+
 def _write_summary(steps: list[pd.DataFrame], meta: list[dict], dep: list[dict], out_dir: Path) -> None:
     steps_df = pd.concat(steps, ignore_index=True) if steps else pd.DataFrame()
     meta_df = pd.DataFrame(meta)
@@ -631,14 +964,37 @@ def main() -> None:
     parser.add_argument("--pair-protection", action="store_true",
                         help="draw sampled-vs-fixed protection pairs side by side on a "
                              "shared value axis, instead of the single-scenario pyramids.")
+    parser.add_argument("--fork-protection", action="store_true",
+                        help="one cascade with a SHARED trunk whose final step forks "
+                             "into the absolute (RP 5-200) and multiplicative "
+                             "(x0.5-1.5) protection treatments. Valid only because "
+                             "the two scenarios share every earlier step draw for "
+                             "draw, which is checked before drawing.")
+    parser.add_argument("--fork-style", choices=["split", "nested"], default="split",
+                        help="split (default): the multiplicative treatment continues "
+                             "the chain, the absolute one sits below a visible break "
+                             "as a separate scenario. nested: both on one row, the "
+                             "narrower inside the wider.")
+    parser.add_argument("--no-width-axis", action="store_true",
+                        help="drop the right-hand axis showing p5-p95 width as a "
+                             "percent of the median. The same numbers are in the "
+                             "summary CSV; on a report page the second tick column "
+                             "only crowds the row labels.")
+    parser.add_argument("--report", action="store_true",
+                        help="report styling: pure white page, EAD in billions of "
+                             "euros with the unit spelled out, and no subtitle "
+                             "(its space is kept so the title still clears the plot).")
     parser.add_argument("--merge-curves", action="store_true",
                         help="show one vulnerability-curve level instead of one per "
                              "object sub-type group. Keeps the step where every curve "
                              "group is free and drops the partial ones.")
     args = parser.parse_args()
 
-    global MERGE_CURVES
+    global MERGE_CURVES, WIDTH_AXIS
     MERGE_CURVES = args.merge_curves
+    WIDTH_AXIS = not args.no_width_axis
+    if args.report:
+        use_report_style()
 
     cdir = Path(args.cascade_dir) if args.cascade_dir else default_results_dir() / "cascade"
     cdir = resolve_cascade_dir(cdir)
@@ -655,6 +1011,11 @@ def main() -> None:
     if args.pair_protection:
         n = build_pairs(cdir, odir, args.assets, args.scopes, args.countries, args.log_x)
         print(f"{n} paired figure(s) written under {odir}")
+        return
+
+    if args.fork_protection:
+        n = build_fork(cdir, odir, args.scopes, args.log_x, args.fork_style)
+        print(f"{n} forked figure(s) written under {odir}")
         return
 
     all_steps, all_meta, all_dep = [], [], []

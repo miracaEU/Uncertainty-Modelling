@@ -133,15 +133,22 @@ def stability(top: pd.DataFrame, scenarios: list[str],
     return pd.DataFrame(rows)
 
 
-def coverage_figure(geo, study: list[str], out_dir: Path,
-                    tested: list[str], assets: dict[str, int] | None = None) -> Path:
+def coverage_figure(geo, study: list[str], out_dir: Path, tested: list[str],
+                    assets: dict[str, int] | None = None,
+                    river_only: bool = False, asset_note: bool = True) -> Path:
+    # river_only: the coastal bracket arms are not reported, so the river/coastal
+    # split carries no information - every tested country is tested the same way,
+    # and colouring the three landlocked ones differently would imply a lesser
+    # coverage they do not have.
     coastal = [c for c in tested if c not in LANDLOCKED]
     # Only STUDY countries get a fill. Anything else renders as context: passing
     # a fill for every GISCO country made _panel draw its micro-state square
     # marker for each one, scattering grey squares across the Atlantic.
     fills = {}
     for c in study:
-        if c in coastal:
+        if river_only:
+            fills[c] = BOTH_FILL if c in tested else OUT_FILL
+        elif c in coastal:
             fills[c] = BOTH_FILL
         elif c in tested:
             fills[c] = RIVER_ONLY_FILL
@@ -157,27 +164,42 @@ def coverage_figure(geo, study: list[str], out_dir: Path,
         axes[0].annotate(iso, (pt.x, pt.y), ha="center", va="center",
                          fontsize=7.5, fontweight="bold", color="#ffffff",
                          zorder=6, path_effects=halo)
-    axes[0].set_title("Countries covered by the protection-range tests",
-                      fontsize=11, fontweight="bold", color=INK, pad=6)
+    axes[0].set_title(
+        "Countries covered by the river protection-range tests" if river_only
+        else "Countries covered by the protection-range tests",
+        fontsize=11, fontweight="bold", color=INK, pad=6)
 
-    handles = [
-        Patch(facecolor=BOTH_FILL, edgecolor=BORDER,
-              label=f"River and coastal tests ({len(coastal)})"),
-        Patch(facecolor=RIVER_ONLY_FILL, edgecolor=BORDER,
-              label=f"River only - landlocked ({len(tested) - len(coastal)})"),
-        Patch(facecolor=OUT_FILL, edgecolor=BORDER,
-              label=f"Study country, not tested ({len(study) - len(tested)})"),
-    ]
+    if river_only:
+        handles = [
+            Patch(facecolor=BOTH_FILL, edgecolor=BORDER,
+                  label=f"River protection-range tests ({len(tested)})"),
+            Patch(facecolor=OUT_FILL, edgecolor=BORDER,
+                  label=f"Study country, not tested ({len(study) - len(tested)})"),
+        ]
+    else:
+        handles = [
+            Patch(facecolor=BOTH_FILL, edgecolor=BORDER,
+                  label=f"River and coastal tests ({len(coastal)})"),
+            Patch(facecolor=RIVER_ONLY_FILL, edgecolor=BORDER,
+                  label=f"River only - landlocked ({len(tested) - len(coastal)})"),
+            Patch(facecolor=OUT_FILL, edgecolor=BORDER,
+                  label=f"Study country, not tested ({len(study) - len(tested)})"),
+        ]
     # Not every country carries every asset - Iceland has no gas exposure -
     # so the caption is built from what is actually there rather than asserting ten.
     note = "All ten asset types in every tested country."
-    if assets:
+    if not asset_note:
+        # _legend passes the subtitle through as the legend title, and a title
+        # of None draws nothing - so this removes the caption rather than
+        # replacing it with an empty line that still takes space.
+        note = None
+    elif assets:
         full = max(assets.values())
         short = sorted(c for c in tested if assets.get(c, full) < full)
         if short:
             bits = ", ".join(f"{c}: {assets[c]}" for c in short)
             note = f"{full} asset types per tested country, except {bits}."
-    _legend(fig, handles, ncol=3, subtitle=note)
+    _legend(fig, handles, ncol=len(handles), subtitle=note)
     out = out_dir / "range_test_coverage.png"
     fig.savefig(out, dpi=200)
     plt.close(fig)
@@ -186,12 +208,14 @@ def coverage_figure(geo, study: list[str], out_dir: Path,
 
 def stability_figure(top: pd.DataFrame, geo, out_dir: Path, river: list[str],
                      coastal: list[str], suptitle: str, treatments: str,
-                     name: str, tested: list[str]) -> Path:
-    panels = [("River flood", river, tested),
-              ("Coastal flood", coastal,
-               [c for c in tested if c not in LANDLOCKED])]
+                     name: str, tested: list[str],
+                     river_only: bool = False) -> Path:
+    panels = [("River flood", river, tested)]
+    if not river_only:
+        panels.append(("Coastal flood", coastal,
+                       [c for c in tested if c not in LANDLOCKED]))
     extent = _extent(geo, tested)
-    fig, axes = _figure(2, aspect=1.0, max_cols=2)
+    fig, axes = _figure(len(panels), aspect=1.0, max_cols=2)
 
     for ax, (title, scens, countries) in zip(axes, panels):
         st = stability(top, scens, countries)
@@ -232,6 +256,13 @@ def main() -> None:
                     help="default: overview_figures/report/range_tests")
     ap.add_argument("--countries", nargs="+", default=None,
                     help=f"tested subset (default: {' '.join(TEST_COUNTRIES)})")
+    ap.add_argument("--no-asset-note", action="store_true",
+                    help="drop the caption counting asset types per tested country "
+                         "from the coverage map.")
+    ap.add_argument("--river-only", action="store_true",
+                    help="the report covers the river bracket arms only: one fill "
+                         "for every tested country on the coverage map, and the "
+                         "stability map drops its coastal panel.")
     args = ap.parse_args()
     tested = args.countries or TEST_COUNTRIES
 
@@ -249,9 +280,13 @@ def main() -> None:
     top = driver_table(workbook)
     study = sorted(set(top["country"]) & set(geo.index))
 
-    assets = top.groupby("country")["asset"].nunique().to_dict()
-    print(f"wrote {coverage_figure(geo, study, out_dir, tested, assets).name}  "
-          f"({len(tested)} tested of {len(study)} study countries)")
+    # Counted over the scenarios the figure actually covers, so the caption
+    # cannot claim an asset that only the coastal arms carry.
+    scope = top[top["scenario"].isin(RIVER_SET)] if args.river_only else top
+    assets = scope.groupby("country")["asset"].nunique().to_dict()
+    name = coverage_figure(geo, study, out_dir, tested, assets,
+                           args.river_only, not args.no_asset_note).name
+    print(f"wrote {name}  ({len(tested)} tested of {len(study)} study countries)")
 
     coastal_countries = [c for c in tested if c not in LANDLOCKED]
     variants = [
@@ -266,8 +301,10 @@ def main() -> None:
     ]
     for head, river, coastal, suptitle, treatments, name in variants:
         print(f"\n{head}:")
-        for label, scens, countries in (("river", river, tested),
-                                        ("coastal", coastal, coastal_countries)):
+        panels = [("river", river, tested)]
+        if not args.river_only:
+            panels.append(("coastal", coastal, coastal_countries))
+        for label, scens, countries in panels:
             st = stability(top, scens, countries)
             tot_n, tot_same = int(st["n"].sum()), int(st["same"].sum())
             pct = f"{100 * tot_same / tot_n:.0f}%" if tot_n else "-"
@@ -276,7 +313,7 @@ def main() -> None:
             print(f"  {label:8s} {tot_same}/{tot_n} pairs keep the same driver ({pct})")
             print(f"           {detail}")
         out = stability_figure(top, geo, out_dir, river, coastal,
-                               suptitle, treatments, name, tested)
+                               suptitle, treatments, name, tested, args.river_only)
         print(f"  wrote {out.name}")
     print(f"\nFigures in {out_dir}")
 

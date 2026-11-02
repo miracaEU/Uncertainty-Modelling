@@ -393,6 +393,14 @@ def main() -> None:
              "disk are left untouched, so this adds the states to an existing "
              "Stage 1 instead of recomputing it.",
     )
+    parser.add_argument(
+        "--segments-only", action="store_true",
+        help="rebuild {country}_{asset}_segments.parquet and stop, without "
+             "touching any hazard profile. The protection standards live in "
+             "that one table, so a change to FLOPROS/COASTPROS needs nothing "
+             "re-extracted - and re-extracting coastal would re-stream the "
+             "whole CoCLiCo catalogue for an identical result.",
+    )
     args = parser.parse_args()
 
     set_country_override(args.country)
@@ -445,6 +453,18 @@ def main() -> None:
             "geometry_mix": kind_counts.to_dict(),
         }
     )
+
+    if args.segments_only:
+        # The protection standards are columns of the segments table, so a
+        # change to FLOPROS/COASTPROS is fully applied by the write above.
+        meta["segments_only_rebuild"] = meta["created"]
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
+        print(
+            f"\n--segments-only: rebuilt {seg_path.name} "
+            f"({len(segments)} rows); hazard profiles left untouched."
+        )
+        return
 
     for hazard in hazards:
         print(f"\nExtracting {hazard} profiles (the expensive step)...")

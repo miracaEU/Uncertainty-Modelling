@@ -121,6 +121,16 @@ and the two windstorm scenarios. The rest stay available via `--scenarios`.
 | `pga_scale` | real | [0.8, 1.2] | earthquake | `earthquake` |
 | `gust_scale` | real | [0.9, 1.1] | windstorm | both windstorm scenarios |
 
+The intensity-bias factors are not all the same width. `pga_scale` spans +/-20%
+where `depth_scale` and `gust_scale` span +/-10%, because damaging ground motion
+recurs rarely enough in Europe that a PGA map at a given return period is
+extrapolated well beyond the instrumental record, while flood depth and gust
+speed at a comparable return period rest on far longer observational series. The
+asymmetry has consequences: `pga_scale` is the top driver in about 12% of
+earthquake combinations, whereas neither depth factor leads anywhere. See the
+note above the depth block in `src/ema_model.py` for the full reasoning,
+including why the +/-10% figure is not an independent estimate of depth error.
+
 ### Curve groups
 
 Within one asset, object types that share the *exact same* curve list are
@@ -314,6 +324,10 @@ is visible.
   unprotected share.
 
 ## Extending
+
+How to extend the pipeline mechanically is below. *What* is worth extending,
+and why - known gaps, deferred decisions and open questions - is in
+[FUTURE_WORK.md](FUTURE_WORK.md).
 
 - **Another country**: `--country {ISO3}` on any script / `run_study.py`, no
   code changes.

@@ -102,6 +102,16 @@ else
     SB_DEPEND="# (no --dependency set)"
 fi
 
+# Re-run Stage-2 scenario steps whose archives already exist. addscen is for
+# scenarios that have never been run, so it does NOT force by default - that is
+# what makes it safe to re-issue. Set this when deliberately recomputing a
+# combination at a different sample size: the old archive keeps its own
+# n{N}_{timestamp} name, analyze_sobol reads the newest, and the aggregator
+# pairs the two into its precision comparison.
+#   FORCE_SCEN=1 SOBOL_N=32768 ./submit_miraca_uncertainty_study.sh addscen
+FORCE_SCEN_FLAG=""
+[[ -n "${FORCE_SCEN:-}" ]] && FORCE_SCEN_FLAG="--force-scenarios"
+
 # Cluster modules loaded for the build AND inside every job, so the venv's
 # osgeo/GDAL bindings find libgdal at runtime. Deliberately ONLY gdal - NOT the
 # python module, whose _ctypes is broken here (missing libffi.so.6); uv supplies
@@ -639,7 +649,7 @@ ${PYTHON} run_study.py \
     --workers ${r_cpus} \
     --sobol-n ${SOBOL_N} \
     --lhs-n ${LHS_N} \
-    --python ${PYTHON} \
+    --python ${PYTHON} ${FORCE_SCEN_FLAG} \
     --no-aggregate
 SLURM
 )

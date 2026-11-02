@@ -30,7 +30,11 @@ from matplotlib.colors import LinearSegmentedColormap
 from .ema_model import SCENARIOS
 from .paths import load_config, set_asset_override, set_country_override, set_scenario_override
 
-SURFACE = "#fcfcfb"
+# Pure white, so a figure dropped into the report has no visible panel edge
+# against the page. SURFACE doubles as the colour of anything meant to read
+# as a hole in the page - marker faces, cell edges, text halos - so it has
+# to stay in step with figure.facecolor wherever it is used.
+SURFACE = "#ffffff"
 INK = "#0b0b0b"
 INK_2 = "#52514e"
 MUTED = "#898781"
@@ -108,6 +112,11 @@ def main() -> None:
                 ("EAD_river_MEUR", "river"),
                 ("EAD_earthquake_MEUR", "earthquake"),
             ]:
+                # Each scenario reports only its own hazard's EAD, so a flood
+                # archive has no EAD_earthquake_MEUR and vice versa. Skip what
+                # this scenario did not produce rather than failing the run.
+                if oc not in outcomes:
+                    continue
                 v = np.asarray(outcomes[oc])
                 row[f"{label}_EAD_median"] = float(np.median(v))
                 row[f"{label}_EAD_p5"] = float(np.percentile(v, 5))
