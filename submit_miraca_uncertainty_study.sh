@@ -81,6 +81,24 @@ if [[ -n "$PARTITION" ]]; then
 else
     SB_PARTITION="# (no --partition set; using the cluster default)"
 fi
+# Nodes to keep long jobs off, e.g. EXCLUDE=node009, which ran identical work
+# 2.3x slower than node013 and cost a 120h DEU roads earthquake run.
+EXCLUDE=${EXCLUDE:-}
+if [[ -n "$EXCLUDE" ]]; then
+    SB_EXCLUDE="#SBATCH --exclude=${EXCLUDE}"
+else
+    SB_EXCLUDE="# (no --exclude set)"
+fi
+# Lower these jobs' priority so work already queued, or queued later at the
+# default, is scheduled first - while these still fill whatever capacity is idle.
+# Used to run a subset ahead of the rest of the same scenario:
+#   NICE=1000 SCEN=... ADDSCEN_LIST=rest.txt ./submit_miraca_uncertainty_study.sh addscen
+NICE=${NICE:-}
+if [[ -n "$NICE" ]]; then
+    SB_NICE="#SBATCH --nice=${NICE}"
+else
+    SB_NICE="# (no --nice set)"
+fi
 # Some clusters require an explicit accounting group. Find yours with:
 #   sacctmgr show assoc user=$USER format=account,partition,qos
 # then export it, e.g. ACCOUNT=ivm ./submit_miraca_uncertainty_study.sh pilot
@@ -111,6 +129,11 @@ fi
 #   FORCE_SCEN=1 SOBOL_N=32768 ./submit_miraca_uncertainty_study.sh addscen
 FORCE_SCEN_FLAG=""
 [[ -n "${FORCE_SCEN:-}" ]] && FORCE_SCEN_FLAG="--force-scenarios"
+# Same, but re-run ONLY the Sobol step: the LHS archive, _feature_scores.csv and
+# the LHS figures are left untouched. What a convergence rerun at a larger N
+# wants (src/plan_convergence_reruns.py writes these):
+#   FORCE_SOBOL=1 SOBOL_N=32768 SCEN=... ADDSCEN_LIST=... ./submit_...sh addscen
+[[ -n "${FORCE_SOBOL:-}" ]] && FORCE_SCEN_FLAG="--force-sobol"
 
 # Cluster modules loaded for the build AND inside every job, so the venv's
 # osgeo/GDAL bindings find libgdal at runtime. Deliberately ONLY gdal - NOT the
@@ -249,6 +272,8 @@ submit_combo() {
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 #SBATCH --mem=${p_mem}
 #SBATCH --time=${p_time}
@@ -275,6 +300,8 @@ SLURM
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=${r_cpus}
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 #SBATCH --mem-per-cpu=${r_mem}
 #SBATCH --time=${r_time}
@@ -357,6 +384,8 @@ submit_aggregate() {
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 #SBATCH --mem=${AGG_MEM:-32G}
 #SBATCH --time=${AGG_TIME:-24:00:00}
@@ -384,6 +413,8 @@ submit_barriers() {   # args: job ids -> prints colon-separated barrier ids
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 #SBATCH --mem=256M
 #SBATCH --time=00:02:00
@@ -529,6 +560,8 @@ recoastal)
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=${r_cpus}
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 #SBATCH --mem-per-cpu=${r_mem}
 #SBATCH --time=${c_time}
@@ -628,6 +661,8 @@ addscen)
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=${r_cpus}
 ${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
 ${SB_ACCOUNT}
 ${SB_DEPEND}
 #SBATCH --mem-per-cpu=${r_mem}

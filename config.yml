@@ -98,6 +98,14 @@ hazards:
     protection_rp_col: "MODELLED RETURN PERIOD"
     protection_policy_col: "POLICY RETURN PERIOD"
 
+# --- Sobol design ------------------------------------------------------------
+# second_order: false samples N(k+2) rows (A, AB_i, B) instead of N(2k+2): S1 and
+# ST are estimated exactly as before, S2 is not available. Applies to NEW
+# samples only; existing archives are read in whichever layout they were
+# written (src/sobol_design.py). Runs up to 2026-11-04 used true.
+sobol:
+  second_order: false
+
 # --- outputs (relative to this project folder) -------------------------------
 intermediate_dir: "data/intermediate"
 results_dir: "results"

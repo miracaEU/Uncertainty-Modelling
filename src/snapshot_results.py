@@ -19,6 +19,7 @@ duplicate of the live combination or invent a phantom scenario.
 from __future__ import annotations
 
 import argparse
+import filecmp
 import shutil
 from pathlib import Path
 
@@ -60,7 +61,8 @@ def main() -> None:
     if missing_cols:
         raise SystemExit(f"{args.list} lacks column(s): {sorted(missing_cols)}")
 
-    copied = skipped = 0
+    copied = skipped = same = 0
+    clash = []
     for row in combos.to_dict("records"):
         c, a, s = row["country"], row["asset"], row["scenario"]
         for pat in PATTERNS:
@@ -70,6 +72,14 @@ def main() -> None:
                 skipped += 1
                 continue
             dst = dest_root / rel
+            # A snapshot is never overwritten: an identical copy is already
+            # safe, and a different one is an older state worth keeping.
+            if dst.exists():
+                if filecmp.cmp(src, dst, shallow=False):
+                    same += 1
+                else:
+                    clash.append(dst)
+                continue
             if not args.dry_run:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dst)
@@ -77,6 +87,14 @@ def main() -> None:
 
     verb = "would copy" if args.dry_run else "copied"
     print(f"{verb} {copied} file(s) for {len(combos)} combination(s) -> {dest_root}")
+    if same:
+        print(f"{same} file(s) already in the snapshot, identical")
+    if clash:
+        print(f"!! {len(clash)} file(s) already in the snapshot with DIFFERENT content - left as "
+              "they are, and the live file NOT backed up. Use another --tag:")
+        for p in clash:
+            print(f"   {p}")
+        raise SystemExit(1)
     print(f"{skipped} expected file(s) absent (not every combination writes every figure)")
     if not args.dry_run:
         print("\nThe experiment archives were NOT copied - they are already "

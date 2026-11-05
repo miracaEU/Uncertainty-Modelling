@@ -61,6 +61,7 @@ from .paths import (
     set_country_override,
     set_scenario_override,
 )
+from .sobol_design import second_order_enabled, sobol_layout
 
 DEFAULT_MIN_N = 128
 DEFAULT_MAX_N = 8192
@@ -94,7 +95,8 @@ def _run_or_load(cfg: dict, model, n: int, workers: int, force: bool):
             print(f"  N={n}: loading existing archive {existing.name}")
             return load_results(str(existing))
 
-    kwargs = {"scenarios": n, "uncertainty_sampling": Samplers.SOBOL}
+    kwargs = {"scenarios": n, "uncertainty_sampling": Samplers.SOBOL,
+              "uncertainty_sampling_kwargs": {"calc_second_order": second_order_enabled(cfg)}}
     if workers > 1:
         with MultiprocessingEvaluator(model, n_processes=workers) as evaluator:
             results = evaluator.perform_experiments(**kwargs)
@@ -109,7 +111,7 @@ def _run_or_load(cfg: dict, model, n: int, workers: int, force: bool):
     return results
 
 
-def _worst_ratio(problem: dict, y: np.ndarray) -> tuple[float | None, str | None, int]:
+def _worst_ratio(problem: dict, y: np.ndarray, second_order: bool) -> tuple[float | None, str | None, int]:
     """Return (worst ST_conf/ST among relevant factors, top factor, n_relevant).
 
     worst ratio is None when the outcome has (near-)zero variance or no factor
@@ -117,7 +119,7 @@ def _worst_ratio(problem: dict, y: np.ndarray) -> tuple[float | None, str | None
     """
     if np.var(y) < 1e-30:
         return None, None, 0
-    si = sobol.analyze(problem, y, calc_second_order=True, print_to_console=False)
+    si = sobol.analyze(problem, y, calc_second_order=second_order, print_to_console=False)
     st = np.nan_to_num(np.asarray(si["ST"]), nan=0.0)
     stc = np.nan_to_num(np.asarray(si["ST_conf"]), nan=0.0)
     names = np.asarray(problem["names"])
@@ -145,11 +147,15 @@ def run_adaptive(
     for n in _powers_of_two(min_n, max_n):
         experiments, outcomes = _run_or_load(cfg, model, n, workers, force)
         y = np.asarray(outcomes[CONVERGENCE_OUTCOME], dtype=float)
-        worst, top_factor, n_relevant = _worst_ratio(problem, y)
+        # Layout from the rows themselves: a loaded archive may predate the
+        # current sobol.second_order setting.
+        _, second_order = sobol_layout(y.size, k, n)
+        worst, top_factor, n_relevant = _worst_ratio(problem, y, second_order)
         rounds.append(
             {
                 "n": n,
                 "n_runs": len(experiments),
+                "second_order": second_order,
                 "worst_ratio": worst,
                 "top_factor": top_factor,
                 "n_relevant": n_relevant,

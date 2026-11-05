@@ -84,7 +84,7 @@ from .curves import (
     get_asset_config,
     mapped_object_types,
 )
-from .ema_model import PROTECTION_RANGES, SCENARIO_HAZARD
+from .ema_model import INTENSITY_RANGES, PROTECTION_RANGES, SCENARIO_HAZARD
 from .paths import load_config
 from .plot_pyramid import (
     INK,
@@ -523,9 +523,10 @@ REPORT_TITLE = {
 
 
 def is_bracket_variant(scen: str) -> bool:
-    """True for a protection-RANGE test scenario - a non-default sampling bracket."""
+    """True for a RANGE test scenario - a non-default protection or intensity bracket."""
     return any(scen.endswith(f"_{suffix}")
-               for ranges in PROTECTION_RANGES.values()
+               for table in (PROTECTION_RANGES, INTENSITY_RANGES)
+               for ranges in table.values()
                for suffix in ranges if suffix)
 
 

@@ -87,6 +87,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from .curves import ASSET_CONFIGS
 from .ema_model import SCENARIOS, build_model
 from .paths import PROJECT_ROOT, load_config, set_asset_override, set_country_override, set_scenario_override
+from .sobol_design import archive_n, sobol_layout
 
 OUTPUT_NAME = "MIRACA_uncertainty_study_summary.xlsx"
 
@@ -216,7 +217,10 @@ SCENARIO_DESCRIPTIONS = [
                      "(coastal sea-level rise is not modelled here). Coastal (non-landlocked) "
                      "countries only - absent for e.g. LUX."),
     ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
-                    "curve choice(s), cost_level, pga_scale, aggregation."),
+                    "curve choice(s), cost_level, pga_scale (x0.8-1.2), aggregation."),
+    ("earthquake_pga0p9to1p1", "Range test: as earthquake, but pga_scale is sampled from "
+                               "x0.9-1.1 instead of x0.8-1.2 - the +/-10% band depth_scale and "
+                               "gust_scale use. Run on the range-test country subset only."),
     ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826), not sampled. "
                    "Factors: wind curve choice(s), cost_level, gust_scale, aggregation. Only defined "
                    "for wind-damaging assets - roads/ports carry no windstorm damage (their only wind "
@@ -311,7 +315,8 @@ RERUN_DESCRIPTIONS = [
                                    "'new'. Combos only ever run once are not shown - nothing to compare yet. "
                                    "Always on total_EAD_MEUR, the headline outcome."),
     ("old_n / new_n", "The Sobol sample size N used for the earlier/later run (actual experiment count is "
-                       "N x (2k+2) for k uncertain factors, per the Saltelli scheme)."),
+                       "N x (2k+2) for k uncertain factors, per the Saltelli scheme, or N x (k+2) "
+                       "for runs sampled without the second-order rows)."),
     ("old_top_factor / new_top_factor", "(Reruns_Overview) Whichever factor had the single highest ST at "
                                          "that N. If this differs old-to-new, the extra runs didn't just "
                                          "tighten confidence, they changed which factor looks most important."),
@@ -349,7 +354,8 @@ CONVERGENCE_DESCRIPTIONS = [
                     "relevant factor at that N."),
     ("n_factors / total_runs / elapsed_s", "n_factors = number of uncertainty factors (k). total_runs "
                                             "= model evaluations summed across every N tried "
-                                            "(each N costs N x (2k+2) runs). elapsed_s = wall-clock for "
+                                            "(each N costs N x (2k+2) runs, N x (k+2) without the "
+                                            "second-order rows). elapsed_s = wall-clock for "
                                             "the whole adaptive search."),
 ]
 
@@ -839,6 +845,39 @@ ARCHIVE_RE = re.compile(
 )
 
 
+def index_sobol_archives(results_dir: Path) -> dict[tuple[str, str, str], dict[int, Path]]:
+    """Every Sobol experiment archive, as {(country, asset, scenario): {N: path}}.
+
+    Where one combination has several archives at the same N (a fix re-run at
+    unchanged sample size), the newest by mtime wins. Archives are written to
+    results/<ISO3>/ only, so each country folder is globbed directly - an rglob
+    over the whole tree also walks every figures/ folder and is very slow on
+    the network share.
+    """
+    groups: dict[tuple[str, str, str], dict[int, Path]] = {}
+    for cdir in sorted(results_dir.iterdir()):
+        if not (cdir.is_dir() and len(cdir.name) == 3 and cdir.name.isupper()):
+            continue
+        for path in cdir.glob("experiments_*_sobol_n*_*.tar.gz"):
+            m = ARCHIVE_RE.match(path.name)
+            if not m:
+                continue
+            country, rest, n = m.group("country"), m.group("rest"), int(m.group("n"))
+            asset = scenario = None
+            for a in ASSET_CONFIGS:
+                prefix = f"{a}_"
+                if rest.startswith(prefix):
+                    asset, scenario = a, rest[len(prefix):]
+                    break
+            if asset is None or scenario not in SCENARIOS:
+                continue
+            by_n = groups.setdefault((country, asset, scenario), {})
+            existing = by_n.get(n)
+            if existing is None or path.stat().st_mtime > existing.stat().st_mtime:
+                by_n[n] = path
+    return groups
+
+
 def find_sobol_rerun_pairs(results_dir: Path) -> list[dict]:
     """Group every Sobol experiment archive by (country, asset, scenario).
 
@@ -849,25 +888,7 @@ def find_sobol_rerun_pairs(results_dir: Path) -> list[dict]:
     Fully general: picks up whatever reruns exist for any country/asset/
     scenario, not just the LUX-only batch that motivated this feature.
     """
-    groups: dict[tuple[str, str, str], dict[int, Path]] = {}
-    for path in results_dir.rglob("experiments_*_sobol_n*_*.tar.gz"):
-        m = ARCHIVE_RE.match(path.name)
-        if not m:
-            continue
-        country, rest, n = m.group("country"), m.group("rest"), int(m.group("n"))
-        asset = scenario = None
-        for a in ASSET_CONFIGS:
-            prefix = f"{a}_"
-            if rest.startswith(prefix):
-                asset, scenario = a, rest[len(prefix):]
-                break
-        if asset is None or scenario not in SCENARIOS:
-            continue
-        by_n = groups.setdefault((country, asset, scenario), {})
-        existing = by_n.get(n)
-        if existing is None or path.stat().st_mtime > existing.stat().st_mtime:
-            by_n[n] = path
-
+    groups = index_sobol_archives(results_dir)
     pairs = []
     for (country, asset, scenario), by_n in groups.items():
         if len(by_n) < 2:
@@ -898,7 +919,8 @@ def _analyze_archive(path: Path, problem: dict, outcome: str) -> pd.DataFrame | 
         return None
     from SALib.analyze import sobol as salib_sobol
 
-    si = salib_sobol.analyze(problem, y, calc_second_order=True, print_to_console=False)
+    _, second_order = sobol_layout(y.size, problem["num_vars"], archive_n(path))
+    si = salib_sobol.analyze(problem, y, calc_second_order=second_order, print_to_console=False)
     return pd.DataFrame(
         {
             "factor_code": problem["names"],

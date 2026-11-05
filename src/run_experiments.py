@@ -12,7 +12,8 @@ for coastal, plus earthquake, windstorm and windstorm_absprot.
 
 With --sampler sobol, --n is the SALib base sample size N (use a power of 2);
 the actual number of model runs is N * (2k + 2), k = number of uncertainty
-factors (varies by scenario - see ema_model.py). Analyze Sobol results with
+factors (varies by scenario - see ema_model.py), or N * (k + 2) when the config
+sets sobol.second_order: false (S1/ST only). Analyze Sobol results with
 `python -m src.analyze_sobol`.
 
 Results are saved as a tar.gz into a per-country subfolder (results/<ISO3>/),
@@ -33,6 +34,7 @@ from ema_workbench import (
 )
 
 from .ema_model import SCENARIOS, build_model
+from .sobol_design import runs_per_base, second_order_enabled
 from .paths import (
     country_results_dir,
     load_config,
@@ -70,8 +72,11 @@ def main() -> None:
             print(f"WARNING: Sobol base sample n={args.n} is not a power of 2; "
                   "SALib convergence properties are better with one.")
         k = len(model.uncertainties)
-        print(f"Sobol/Saltelli: N={args.n}, k={k} -> {args.n * (2 * k + 2)} model runs")
+        second_order = second_order_enabled(cfg)
+        print(f"Sobol/Saltelli: N={args.n}, k={k} -> {args.n * runs_per_base(k, second_order)} "
+              f"model runs (second order {'included' if second_order else 'not sampled'})")
         kwargs["uncertainty_sampling"] = Samplers.SOBOL
+        kwargs["uncertainty_sampling_kwargs"] = {"calc_second_order": second_order}
 
     if args.workers > 1:
         with MultiprocessingEvaluator(model, n_processes=args.workers) as evaluator:

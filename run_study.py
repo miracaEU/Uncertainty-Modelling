@@ -80,11 +80,16 @@ def log(msg: str) -> None:
 
 
 class StudyLog:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, enabled: bool = True):
         self.path = path
+        # Off for --dry-run: a dry run's zero-second steps would otherwise land in
+        # the log that runtimes and walltimes are read from.
+        self.enabled = enabled
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def record(self, **fields) -> None:
+        if not self.enabled:
+            return
         fields["ts"] = datetime.now(timezone.utc).isoformat()
         with open(self.path, "a", encoding="utf-8") as f:
             f.write(json.dumps(fields) + "\n")
@@ -199,15 +204,21 @@ def main() -> None:
                              "--scenarios (e.g. coastal after a return-period/config change) without repeating "
                              "the expensive GIS overlay. analyze_sobol reads the newest archive, so the fresh "
                              "run supersedes the old one.")
+    parser.add_argument("--force-sobol", action="store_true",
+                        help="re-run ONLY the Sobol step (and analyze_sobol) of the selected --scenarios, "
+                             "e.g. at a larger --sobol-n for convergence. LHS and its analysis are skipped "
+                             "outright, so the LHS archive, _feature_scores.csv and its figures are left "
+                             "exactly as they are.")
     parser.add_argument("--fail-fast", action="store_true", help="abort the whole study on the first failed step")
     parser.add_argument("--dry-run", action="store_true", help="print the planned steps without running them")
     args = parser.parse_args()
     # Stage-2 scenario steps re-run when either --force (everything) or
     # --force-scenarios (only the scenario steps, Stage 1 left intact) is set.
     force_scen = args.force or args.force_scenarios
+    force_sobol = force_scen or args.force_sobol
 
     root = Path(__file__).resolve().parent
-    study_log = StudyLog(root / "results" / "run_study_log.jsonl")
+    study_log = StudyLog(root / "results" / "run_study_log.jsonl", enabled=not args.dry_run)
 
     plan = [(a, c) for a in args.assets for c in args.countries]
     log(f"Plan: {len(plan)} (asset, country) pairs x {len(args.scenarios)} scenarios")
@@ -275,7 +286,9 @@ def main() -> None:
             log("-" * 70)
 
             # 1. LHS (fixed N) - quick extra-trees importance complement.
-            if not force_scen and experiments_exist(cfg, scenario, "lhs", args.lhs_n):
+            if args.force_sobol:
+                log("  lhs + analyze (lhs): SKIP (--force-sobol, left untouched)")
+            elif not force_scen and experiments_exist(cfg, scenario, "lhs", args.lhs_n):
                 log(f"  lhs n={args.lhs_n}: SKIP (archive already exists)")
             else:
                 extra = [
@@ -296,21 +309,22 @@ def main() -> None:
                 else:
                     log(f"  lhs n={args.lhs_n}: done in {elapsed:.0f}s")
 
-            ok, elapsed = run_step(
-                args.python, "src.analyze",
-                ["--country", country, "--asset", asset, "--scenario", scenario],
-                args.dry_run,
-            )
-            study_log.record(
-                combo=combo, step="analyze_lhs", scenario=scenario,
-                ok=ok, elapsed_s=round(elapsed, 1),
-            )
-            if not ok:
-                log("  analyze (lhs): FAILED")
-                failures.append(f"{combo}/{scenario} analyze_lhs")
-                if args.fail_fast:
-                    log("Aborting (--fail-fast).")
-                    _finalize(args, failures)
+            if not args.force_sobol:
+                ok, elapsed = run_step(
+                    args.python, "src.analyze",
+                    ["--country", country, "--asset", asset, "--scenario", scenario],
+                    args.dry_run,
+                )
+                study_log.record(
+                    combo=combo, step="analyze_lhs", scenario=scenario,
+                    ok=ok, elapsed_s=round(elapsed, 1),
+                )
+                if not ok:
+                    log("  analyze (lhs): FAILED")
+                    failures.append(f"{combo}/{scenario} analyze_lhs")
+                    if args.fail_fast:
+                        log("Aborting (--fail-fast).")
+                        _finalize(args, failures)
 
             # 2. Sobol. By default a fixed N (--sobol-n, 8192) for every
             #    combination, for consistency. With --adaptive, N is instead
@@ -326,7 +340,7 @@ def main() -> None:
                 sobol_min = sobol_max = args.sobol_n
                 mode_label = f"fixed N={args.sobol_n}"
 
-            if not force_scen and adaptive_done(cfg, scenario):
+            if not force_sobol and adaptive_done(cfg, scenario):
                 log(f"  sobol ({mode_label}): SKIP (convergence record already exists)")
             else:
                 extra = [
@@ -334,7 +348,7 @@ def main() -> None:
                     "--min-n", str(sobol_min), "--max-n", str(sobol_max),
                     "--threshold", str(args.sobol_threshold), "--workers", str(args.workers),
                 ]
-                if force_scen:
+                if force_sobol:
                     extra.append("--force")
                 ok, elapsed = run_step(args.python, "src.adaptive_sobol", extra, args.dry_run)
                 study_log.record(

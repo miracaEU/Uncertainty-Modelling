@@ -91,6 +91,10 @@ DESIGN = [
          "same question with a treatment anchored to values countries have built."),
         ("coastal_baseline_ds_sc0p5to1p5", "scaled 0.5-1.5x recorded", "-",
          "The anchored treatment applied to the coastal protection standard."),
+        ("earthquake_pga0p9to1p1", "none (as in reference)", "-",
+         "Narrows the ground-motion bias from x0.8-1.2 to x0.9-1.1, the band the "
+         "flood depth and gust factors use. Tests how much of pga_scale's influence "
+         "comes from being given the widest intensity range."),
     ]),
 ]
 

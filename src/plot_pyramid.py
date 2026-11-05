@@ -159,6 +159,8 @@ SCENARIO_LABEL = {
     "coastal_baseline_ds_sc0p5to1p5": "Coastal flood - protection scaled, x0.5-1.5",
     "coastal_absprot_ds_slr": "Coastal flood - protection sampled + sea-level rise",
     "coastal_noprot_ds_slr": "Coastal flood - protection as recorded + sea-level rise",
+    # Intensity-range test: the PGA bias narrowed from x0.8-1.2.
+    "earthquake_pga0p9to1p1": "Earthquake - PGA scaled, x0.9-1.1",
 }
 
 # Short forms for tight spots (pie titles, panel headings), where the
@@ -185,6 +187,7 @@ SCENARIO_LABEL_SHORT = {
     "coastal_baseline_ds_sc0p5to1p5": "Coastal flood (protection scaled, x0.5-1.5)",
     "coastal_absprot_ds_slr": "Coastal flood (protection sampled + SLR)",
     "coastal_noprot_ds_slr": "Coastal flood (protection as recorded + SLR)",
+    "earthquake_pga0p9to1p1": "Earthquake (PGA x0.9-1.1)",
 }
 
 # Reading order for every figure that shows more than one scenario: both river
@@ -202,7 +205,7 @@ SCENARIO_ORDER = [
     "coastal_baseline", "coastal_baseline_ds", "coastal_baseline_ds_sc0p5to1p5",
     "coastal_noprot", "coastal_noprot_ds",
     "coastal_absprot_ds_slr", "coastal_noprot_ds_slr",
-    "earthquake",
+    "earthquake", "earthquake_pga0p9to1p1",
     "windstorm", "windstorm_absprot",
 ]
 

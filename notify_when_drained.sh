@@ -153,6 +153,18 @@ WATCHED=\$(paste -sd, ${JOBLIST})
         n=\$(ls "\${d}" 2>/dev/null | grep -c '_cascade.parquet' || true)
         echo "  \${d}  \${n} parquet(s)"
     done
+
+    # The convergence reruns end in a retest job (src/plan_convergence_reruns.py);
+    # its log says whether the old archives survived and what still fails.
+    echo
+    echo "--- newest convergence retest ---"
+    LAST=\$(ls -t convergence/reruns/*/retest_*.out 2>/dev/null | head -1)
+    if [[ -n "\${LAST}" ]]; then
+        echo "  \${LAST}"
+        tail -n 30 "\${LAST}"
+    else
+        echo "  (no retest log yet)"
+    fi
 } >> "\${REPORT}" 2>&1
 
 cat "\${REPORT}"

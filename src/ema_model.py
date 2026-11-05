@@ -66,6 +66,8 @@ only one available curve becomes a Constant (there is nothing to vary);
 groups with >1 curve become a CategoricalParameter.
 """
 
+import os
+
 from ema_workbench import CategoricalParameter, Constant, Model, RealParameter, ScalarOutcome
 
 from .curves import AssetConfig, applicable_hazards, get_asset_config
@@ -166,6 +168,17 @@ _RANGE_BASES = {
     "coastal_absprot_ds": "abs",
 }
 
+# Hazard-intensity brackets, on the same "<base>_<suffix>" scheme. The +/-20% on
+# PGA is the widest intensity band in the model (see the note above the depth
+# block in _build_water_model), so it is the one worth testing narrower:
+#   pga - multiplier on the PGA map; x0.9-1.1 matches depth_scale and gust_scale.
+INTENSITY_RANGES = {
+    "pga": {"": (0.8, 1.2), "pga0p9to1p1": (0.9, 1.1)},
+}
+_INTENSITY_RANGE_BASES = {
+    "earthquake": "pga",
+}
+
 
 # Sea-level-rise scenarios. Coastal flood is the only hazard whose climate
 # response is data-side rather than analytical: each (time, SSP) state is a
@@ -212,6 +225,15 @@ def _register_range_variants() -> None:
             SCENARIOS.append(name)
             SCENARIO_HAZARD[name] = hazard
             treatments[name] = treatments[base]
+    # Intensity brackets have no treatment map to extend: build_model dispatches
+    # them on their hazard.
+    for base, kind in _INTENSITY_RANGE_BASES.items():
+        for suffix in INTENSITY_RANGES[kind]:
+            name = f"{base}_{suffix}"
+            if not suffix or name in SCENARIO_HAZARD:
+                continue
+            SCENARIOS.append(name)
+            SCENARIO_HAZARD[name] = SCENARIO_HAZARD[base]
 
 
 _register_range_variants()
@@ -224,7 +246,15 @@ def protection_range(scenario: str, kind: str) -> tuple[float, float]:
     A scenario whose name ends in a registered suffix takes that bracket;
     everything else takes the study default.
     """
-    ranges = PROTECTION_RANGES[kind]
+    return _bracket(scenario, PROTECTION_RANGES[kind])
+
+
+def intensity_range(scenario: str, kind: str) -> tuple[float, float]:
+    """(lo, hi) for this scenario's hazard-intensity factor; as protection_range."""
+    return _bracket(scenario, INTENSITY_RANGES[kind])
+
+
+def _bracket(scenario: str, ranges: dict[str, tuple[float, float]]) -> tuple[float, float]:
     for suffix, bounds in ranges.items():
         if suffix and scenario.endswith(f"_{suffix}"):
             return bounds
@@ -233,7 +263,11 @@ def protection_range(scenario: str, kind: str) -> tuple[float, float]:
 
 CURVE_PREFIX = "curve_"
 
-_DATA_CACHE: dict[tuple[str, str], ModelData] = {}
+_DATA_CACHE: dict[tuple, ModelData] = {}
+# Everything load_config() takes from the environment that can change which
+# data a worker needs. Keying on these, not on the parsed config, means the
+# config file is read once per worker instead of once per experiment.
+_DATA_ENV = ("MIRACA_CONFIG", "MIRACA_COUNTRY", "MIRACA_ASSET")
 
 
 def scenario_applies(scenario: str, asset: str, country: str | None = None) -> bool:
@@ -259,11 +293,17 @@ def _get_data() -> ModelData:
     variables are not picklable. Workers inherit the parent's environment at
     spawn time, so the MIRACA_COUNTRY/MIRACA_ASSET overrides set by the CLI
     scripts before evaluation starts are still visible here.
+
+    The cache is keyed on those environment variables, so the config file is
+    only opened on a cache miss. Re-reading it on every experiment put one
+    network-storage open per model run on the cluster: cheap combinations
+    spent nearly all their time waiting on it, and a stuck open
+    (nfs_set_open_stateid_lock) hung a whole job, because ema_workbench
+    collects results in submission order.
     """
-    cfg = load_config()
-    key = (cfg["country"], cfg["asset_type"])
+    key = tuple(os.environ.get(v) for v in _DATA_ENV)
     if key not in _DATA_CACHE:
-        _DATA_CACHE[key] = load_model_data(cfg)
+        _DATA_CACHE[key] = load_model_data(load_config())
     return _DATA_CACHE[key]
 
 
@@ -385,7 +425,7 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
     return model
 
 
-def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
+def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> Model:
     uncertainties: list = []
     constants: list = []
     _add_curve_params(uncertainties, constants, asset_cfg.eq_groups)
@@ -393,7 +433,8 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
         RealParameter("cost_level", -1.0, 1.0),
         # +/-20%, wider than the +/-10% used for depth and gust; see the
         # hazard-map intensity note above _build_water_model's depth block.
-        RealParameter("pga_scale", 0.8, 1.2),
+        # earthquake_pga0p9to1p1 narrows it to +/-10% (INTENSITY_RANGES).
+        RealParameter("pga_scale", *intensity_range(scenario, "pga")),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]
     constants += [
@@ -403,7 +444,7 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig) -> Model:
         Constant("include_coastal", False),
     ]
     outcomes = ["total_EAD_MEUR", "EAD_earthquake_MEUR"] + _class_outcomes(asset_cfg)
-    model = Model(f"{cfg['country']}_{cfg['asset_type']}_earthquake", function=flood_risk_model)
+    model = Model(f"{cfg['country']}_{cfg['asset_type']}_{scenario}", function=flood_risk_model)
     model.uncertainties = uncertainties
     model.constants = constants
     model.outcomes = [ScalarOutcome(name) for name in outcomes]
@@ -461,8 +502,8 @@ def build_model(cfg: dict | None = None) -> Model:
         return _build_water_model(cfg, asset_cfg, scenario, hazard="river")
     if scenario in _COASTAL_SCENARIOS:
         return _build_water_model(cfg, asset_cfg, scenario, hazard="coastal")
-    if scenario == "earthquake":
-        return _build_earthquake_model(cfg, asset_cfg)
+    if SCENARIO_HAZARD.get(scenario) == "earthquake":
+        return _build_earthquake_model(cfg, asset_cfg, scenario)
     if scenario in ("windstorm", "windstorm_absprot"):
         return _build_windstorm_model(cfg, asset_cfg, scenario)
     raise ValueError(f"Unknown scenario '{scenario}'; choose from {SCENARIOS}")

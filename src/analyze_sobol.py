@@ -1,7 +1,8 @@
 """Sobol variance decomposition of experiment results, any scenario/asset.
 
 Expects results produced with `python -m src.run_experiments --sampler sobol`
-(Saltelli sample, second order enabled). Computes first-order (S1) and total
+(Saltelli sample, with or without the second-order rows - the layout is read
+off the row count, see src/sobol_design.py). Computes first-order (S1) and total
 (ST) Sobol indices per uncertainty factor, for whichever of the "headline"
 outcomes actually exist for this scenario (e.g. earthquake has no
 EAD_river_MEUR or damage_RP100_river_MEUR - those panels are just skipped).
@@ -38,6 +39,7 @@ from .paths import (
     set_country_override,
     set_scenario_override,
 )
+from .sobol_design import archive_n, sobol_layout
 
 # palette (dataviz reference instance, light mode)
 # Pure white, so a figure dropped into the report has no visible panel edge
@@ -120,12 +122,12 @@ def main() -> None:
     problem = get_SALib_problem(model.uncertainties)
     k = problem["num_vars"]
     n_runs = len(experiments)
-    if n_runs % (2 * k + 2) != 0:
-        raise SystemExit(
-            f"{n_runs} runs is not a multiple of 2k+2={2 * k + 2}: "
-            "this results file was not produced with --sampler sobol."
-        )
-    print(f"{n_runs} runs, k={k} factors, base N={n_runs // (2 * k + 2)}")
+    try:
+        n_base, second_order = sobol_layout(n_runs, k, archive_n(path))
+    except ValueError as exc:
+        raise SystemExit(f"{exc}: this results file was not produced with --sampler sobol.")
+    print(f"{n_runs} runs, k={k} factors, base N={n_base}, "
+          f"second order {'included' if second_order else 'not sampled'}")
 
     sobol_outcomes = [o for o in PREFERRED_OUTCOMES if o in outcomes]
     print(f"Outcomes analyzed: {sobol_outcomes}")
@@ -139,7 +141,7 @@ def main() -> None:
             zeros = np.zeros(k)
             indices[outcome] = {"S1": zeros, "S1_conf": zeros, "ST": zeros, "ST_conf": zeros}
         else:
-            si = sobol.analyze(problem, y, calc_second_order=True, print_to_console=False)
+            si = sobol.analyze(problem, y, calc_second_order=second_order, print_to_console=False)
             si = {key: np.nan_to_num(np.asarray(si[key]), nan=0.0)
                   for key in ("S1", "S1_conf", "ST", "ST_conf")}
             indices[outcome] = si

@@ -146,7 +146,8 @@ SCENARIO_BAND_LABEL = {
     "coastal_noprot": ("Coastal flood (protection fixed)", "no depth error"),
     "coastal_noprot_ds": ("Coastal flood (protection fixed)", "no sea-level rise"),
     "coastal_noprot_ds_slr": ("Coastal flood (protection fixed)", "with sea-level rise"),
-    "earthquake": ("Earthquake", ""),
+    "earthquake": ("Earthquake", "PGA x0.8-1.2"),
+    "earthquake_pga0p9to1p1": ("Earthquake", "PGA x0.9-1.1"),
     # Windstorm's factor is a design standard rather than a flood protection
     # standard, so the noun differs; the sentence shape does not.
     "windstorm": ("Windstorm (design fixed)", "RP50"),

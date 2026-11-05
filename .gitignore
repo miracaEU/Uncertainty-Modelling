@@ -10,6 +10,21 @@ results/
 # Overview / summary figures (regenerable from the summary workbook)
 overview_figures/
 
+# Protection-gap investigation: interactive map (FLOPROS tiles, ~15k files),
+# figures and the gap-asset table. Local only and regenerable from its scripts/.
+protection_gaps/
+
+# Sobol convergence outputs (src.convergence_tests, src.plan_convergence_reruns).
+# The bootstrap CSVs (~9 MB, rewritten on every retest) and the dated rerun
+# plans are regenerable; the two workbooks are tracked, like the summary one.
+convergence/*
+!convergence/sobol_convergence.xlsx
+!convergence/screening_factors.xlsx
+
+# SLURM job logs written to the repo root (e.g. conv_retry_<jobid>.out/.err)
+/*.out
+/*.err
+
 # Country boundary cache, downloaded on first run of src/plot_maps.py.
 # It lives here rather than under data/ because data/ is read-only.
 geo/
