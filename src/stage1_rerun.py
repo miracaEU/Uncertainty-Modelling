@@ -12,13 +12,21 @@ combination inside its job, and by the gate that holds Stage 2 back:
   check-segments  compare the rebuilt segments with the backup. Every column must
                   be identical except those named with --allow, which may also be
                   new (the river protection prot_rp for the 5 km blocks, and its
-                  provenance columns prot_source, prot_fill_km). Anything else that
+                  provenance columns prot_source, prot_fill_km), and those named
+                  with --allow-unexposed (coast_prot_rp), which may change only on
+                  features no coastal profile reaches (present day or any SLR
+                  state), where the value enters no result. Anything else that
                   moved would invalidate results the rerun does not redo, e.g.
                   coastal ones, so it fails the job.
+  extracted       exit 0 if this combination's listed hazards were already
+                  extracted after its backup, by the DamageScanner its asset type
+                  requires; the rerun job then skips preprocess (resubmitting a
+                  combination that failed only a later check costs minutes).
   gate            for a whole list: backup taken, segments check passed, every
                   rerun hazard extracted by the required DamageScanner, and a
                   validation newer than the extraction. Exit 1 if anything is
                   missing, which blocks the Stage 2 jobs that depend on it.
+                  --write-failed FILE lists the combinations that are not ready.
 
     python -m src.stage1_rerun backup --country DEU --asset power --hazards river earthquake windstorm \\
         --dest data/intermediate_ds101_backup_20261120
@@ -40,6 +48,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 from . import ds_version
 from .curves import applicable_hazards
@@ -116,13 +125,28 @@ def _same(a: pd.Series, b: pd.Series) -> np.ndarray:
     return ((x == y).fillna(False) | (x.isna() & y.isna())).to_numpy(bool)
 
 
-def check_segments(country: str, asset: str, backup_dir: Path, allow: list[str], status_dir: Path) -> bool:
+def _coastal_exposed(cfg: dict, rows: np.ndarray) -> np.ndarray:
+    """Which of `rows` any coastal profile (present day or an SLR state) reaches."""
+    if len(rows) == 0:
+        return np.zeros(0, bool)
+    hit = set()
+    idir, stem = Path(cfg["intermediate_dir"]), base_stem(cfg)
+    for p in sorted(idir.glob(f"{stem}_coastal*_profiles.parquet")):
+        t = pq.read_table(p, columns=["seg", "intensity"], filters=[("seg", "in", rows.tolist())]).to_pandas()
+        hit |= set(t.seg[t.intensity > 0].tolist())
+    return np.isin(rows, list(hit))
+
+
+def check_segments(country: str, asset: str, backup_dir: Path, allow: list[str], status_dir: Path,
+                   allow_unexposed: list[str] | None = None) -> bool:
+    allow_unexposed = allow_unexposed or []
     cfg = _cfg(country, asset)
     name = f"{base_stem(cfg)}_segments.parquet"
     new = pd.read_parquet(Path(cfg["intermediate_dir"]) / name)
     old = pd.read_parquet(backup_dir / name)
     report = {"country": country, "asset": asset, "rows_old": len(old), "rows_new": len(new),
-              "checked": datetime.now(timezone.utc).isoformat(), "problems": [], "allowed_changes": {}}
+              "checked": datetime.now(timezone.utc).isoformat(), "problems": [], "allowed_changes": {},
+              "allowed_unexposed_changes": {}}
     if len(old) != len(new):
         report["problems"].append(f"row count {len(old)} -> {len(new)}")
     gone = sorted(set(old.columns) - set(new.columns))
@@ -136,14 +160,51 @@ def check_segments(country: str, asset: str, backup_dir: Path, allow: list[str],
             n = int((~same).sum())
             if col in allow:
                 report["allowed_changes"][col] = n
+            elif n and col in allow_unexposed:
+                rows = np.flatnonzero(~same)
+                exposed = rows[_coastal_exposed(cfg, rows)]
+                report["allowed_unexposed_changes"][col] = int(len(rows) - len(exposed))
+                if len(exposed):
+                    report["problems"].append(f"{col}: {len(exposed)} coastally exposed row(s) changed, "
+                                              f"e.g. {exposed[:5].tolist()}")
             elif n:
                 report["problems"].append(f"{col}: {n} of {len(old)} rows changed")
     report["ok"] = not report["problems"]
     status_dir.mkdir(parents=True, exist_ok=True)
     (status_dir / f"{base_stem(cfg)}.segments.json").write_text(json.dumps(report, indent=2))
     verdict = "OK" if report["ok"] else "FAILED: " + "; ".join(report["problems"])
-    print(f"{country} {asset}: segments vs backup {verdict}; allowed changes {report['allowed_changes']}")
+    print(f"{country} {asset}: segments vs backup {verdict}; allowed changes {report['allowed_changes']}"
+          + (f"; on rows without coastal exposure {report['allowed_unexposed_changes']}" if report["allowed_unexposed_changes"] else ""))
     return report["ok"]
+
+
+def _here(cfg: dict, asset: str, country: str, hazards: list[str]) -> list[str]:
+    return [h for h in hazards if h in applicable_hazards(asset, country) and h in cfg["hazards"]]
+
+
+def extracted(country: str, asset: str, hazards: list[str], backup_dir: Path) -> bool:
+    """True if every listed hazard was extracted after the backup, by an acceptable DamageScanner."""
+    cfg = _cfg(country, asset)
+    stem, idir = base_stem(cfg), Path(cfg["intermediate_dir"])
+    flag, meta_p = _done_flag(backup_dir, cfg), idir / f"{stem}_meta.json"
+    why = []
+    if not flag.exists():
+        why.append("no backup yet")
+    elif not meta_p.exists() or meta_p.stat().st_mtime <= flag.stat().st_mtime:
+        why.append("not extracted since the backup")
+    else:
+        meta = json.loads(meta_p.read_text())
+        for h in _here(cfg, asset, country, hazards):
+            ds = (meta.get("hazards", {}).get(h) or {}).get("damagescanner")
+            if not (idir / f"{hazard_stem(cfg, h)}_profiles.parquet").exists():
+                why.append(f"{h}: no profiles")
+            elif not ds:
+                why.append(f"{h}: not re-extracted")
+            elif ds_version.problem(asset, ds):
+                why.append(f"{h}: extracted with the wrong DamageScanner")
+    print(f"{country} {asset}: " + ("extraction done, preprocess not needed" if not why
+                                    else "preprocess needed (" + "; ".join(why) + ")"))
+    return not why
 
 
 def read_list(path: Path) -> list[tuple[str, str]]:
@@ -156,7 +217,8 @@ def read_list(path: Path) -> list[tuple[str, str]]:
     return out
 
 
-def gate(combos, hazards, backup_dir: Path, status_dir: Path, require_fix: bool) -> bool:
+def gate(combos, hazards, backup_dir: Path, status_dir: Path, require_fix: bool,
+         write_failed: Path | None = None) -> bool:
     rows = []
     for country, asset in combos:
         cfg = _cfg(country, asset)
@@ -171,8 +233,7 @@ def gate(combos, hazards, backup_dir: Path, status_dir: Path, require_fix: bool)
             problems.append("segments differ from backup")
         meta_p = idir / f"{stem}_meta.json"
         meta = json.loads(meta_p.read_text()) if meta_p.exists() else {}
-        here = [h for h in hazards if h in applicable_hazards(asset, country) and h in cfg["hazards"]]
-        for h in here:
+        for h in _here(cfg, asset, country, hazards):
             ds = (meta.get("hazards", {}).get(h) or {}).get("damagescanner")
             if not ds:
                 problems.append(f"{h}: not re-extracted")
@@ -193,6 +254,10 @@ def gate(combos, hazards, backup_dir: Path, status_dir: Path, require_fix: bool)
     status_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
     print(f"wrote {out}")
+    if write_failed is not None:
+        write_failed.write_text("".join(f"{c} {a}\n" for c, a in bad[["country", "asset"]].itertuples(index=False)),
+                                newline="\n")
+        print(f"wrote {len(bad)} combination(s) not ready to {write_failed}")
     return bad.empty
 
 
@@ -209,7 +274,13 @@ def main() -> None:
     c.add_argument("--asset", required=True)
     c.add_argument("--backup", required=True)
     c.add_argument("--allow", nargs="*", default=[])
+    c.add_argument("--allow-unexposed", nargs="*", default=[])
     c.add_argument("--status", required=True)
+    e = sub.add_parser("extracted")
+    e.add_argument("--country", required=True)
+    e.add_argument("--asset", required=True)
+    e.add_argument("--hazards", nargs="+", required=True)
+    e.add_argument("--backup", required=True)
     m = sub.add_parser("mark-validated")
     m.add_argument("--country", required=True)
     m.add_argument("--asset", required=True)
@@ -219,6 +290,7 @@ def main() -> None:
     g.add_argument("--backup", required=True)
     g.add_argument("--status", required=True)
     g.add_argument("--require-polygon-fix", action="store_true")
+    g.add_argument("--write-failed", default=None)
     args = ap.parse_args()
 
     if args.cmd == "backup":
@@ -226,11 +298,14 @@ def main() -> None:
     elif args.cmd == "mark-validated":
         mark_validated(args.country, args.asset)
     elif args.cmd == "check-segments":
-        ok = check_segments(args.country, args.asset, _resolve(args.backup), args.allow, _resolve(args.status))
+        ok = check_segments(args.country, args.asset, _resolve(args.backup), args.allow, _resolve(args.status),
+                            args.allow_unexposed)
         sys.exit(0 if ok else 1)
+    elif args.cmd == "extracted":
+        sys.exit(0 if extracted(args.country, args.asset, args.hazards, _resolve(args.backup)) else 1)
     else:
         ok = gate(read_list(_resolve(args.list)), args.hazards, _resolve(args.backup), _resolve(args.status),
-                  args.require_polygon_fix)
+                  args.require_polygon_fix, _resolve(args.write_failed) if args.write_failed else None)
         sys.exit(0 if ok else 1)
 
 

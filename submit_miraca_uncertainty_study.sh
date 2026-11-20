@@ -727,6 +727,8 @@ restage1)
     : "${RESTAGE_LIST:?set RESTAGE_LIST}" "${RESTAGE_HAZARDS:?set RESTAGE_HAZARDS}"
     : "${RESTAGE_BACKUP:?set RESTAGE_BACKUP}" "${RESTAGE_STATUS:?set RESTAGE_STATUS}"
     RESTAGE_ALLOW=${RESTAGE_ALLOW:-"prot_rp prot_source prot_fill_km"}
+    # may change only on features no coastal profile reaches (stage1_rerun check-segments)
+    RESTAGE_ALLOW_UNEXPOSED=${RESTAGE_ALLOW_UNEXPOSED:-"coast_prot_rp"}
     S1_TIME=${S1_TIME:-120:00:00}
     [[ -f "$RESTAGE_LIST" ]] || { echo "No combo list at '$RESTAGE_LIST'." >&2; exit 1; }
     [[ -x "$PYTHON" ]] || { echo "No venv python at $PYTHON." >&2; exit 1; }
@@ -763,8 +765,12 @@ export MKL_NUM_THREADS=1
 module load ${MODULES}
 cd ${REPO}
 ${PYTHON} -m src.stage1_rerun backup --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS} --dest ${RESTAGE_BACKUP}
-${PYTHON} -m src.preprocess --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS}
-${PYTHON} -m src.stage1_rerun check-segments --country ${C} --asset ${A} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} --allow ${RESTAGE_ALLOW}
+if ${PYTHON} -m src.stage1_rerun extracted --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS} --backup ${RESTAGE_BACKUP}; then
+    echo "skipping preprocess: already extracted after the backup, with the required DamageScanner"
+else
+    ${PYTHON} -m src.preprocess --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS}
+fi
+${PYTHON} -m src.stage1_rerun check-segments --country ${C} --asset ${A} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} --allow ${RESTAGE_ALLOW} --allow-unexposed ${RESTAGE_ALLOW_UNEXPOSED}
 ${PYTHON} -m src.validate --country ${C} --asset ${A}
 ${PYTHON} -m src.stage1_rerun mark-validated --country ${C} --asset ${A}
 SLURM
@@ -790,7 +796,7 @@ set -euo pipefail
 export MIRACA_CONFIG=${MIRACA_CONFIG}
 module load ${MODULES}
 cd ${REPO}
-${PYTHON} -m src.stage1_rerun gate --list ${RESTAGE_LIST} --hazards ${RESTAGE_HAZARDS} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} ${RESTAGE_GATE_ARGS:-}
+${PYTHON} -m src.stage1_rerun gate --list ${RESTAGE_GATE_LIST:-$RESTAGE_LIST} --hazards ${RESTAGE_HAZARDS} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} ${RESTAGE_GATE_ARGS:-}
 SLURM
 )
     [[ -n "${RESTAGE_GATE_FILE:-}" ]] && echo "$gate" > "$RESTAGE_GATE_FILE"

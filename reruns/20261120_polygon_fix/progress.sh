@@ -16,7 +16,7 @@ ids() { sed -nE 's/^submitted .* (s1|run)=([0-9]+).*/\2/p' "$@" 2>/dev/null; }
 DEFAULT_LOGS=()
 for f in "$HERE"/jobs_*.log; do
     case $(basename "$f") in
-        jobs_stage1.log | jobs_n32768.log | jobs_earthquake.log) ;;
+        jobs_stage1*.log | jobs_n32768.log | jobs_earthquake.log) ;;
         *) DEFAULT_LOGS+=("$f") ;;
     esac
 done
@@ -43,14 +43,19 @@ summary() {   # $1 = step name, job ids on stdin
 
 echo "== polygon-fix batch, $(date '+%Y-%m-%d %H:%M') =="
 ids "$HERE/jobs_stage1.log"     | summary "Stage 1"
-cat "$HERE/gate_job.txt"        | summary "Gate"
+for f in "$HERE"/jobs_stage1_r*.log; do
+    [[ -e "$f" ]] || continue
+    r=$(basename "$f" .log); r=${r#jobs_stage1_r}
+    ids "$f" | summary "Stage 1, retry round $r"
+done
+cat "$HERE/gate_job.txt"        | summary "Gate (current)"
 ids "${DEFAULT_LOGS[@]}"        | summary "Stage 2, default scenarios"
 ids "$HERE/jobs_earthquake.log" | summary "Stage 2, extra (wide PGA)"
 ids "$HERE/jobs_n32768.log"     | summary "N = 32768"
 summary "All" < "$ALL_IDS"
 
 echo
-GATE_LOG="$LOG_DIR/out_s1_gate_dsfix"
+GATE_LOG=$(ls -t "$LOG_DIR"/out_s1_gate_dsfix* 2>/dev/null | head -1)
 if [[ -f "$GATE_LOG" ]]; then
     echo "Gate verdict: $(grep -m1 'ready for Stage 2' "$GATE_LOG" || echo 'see '"$GATE_LOG")"
 else

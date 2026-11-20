@@ -309,6 +309,16 @@ is visible.
 - **EAD integration bounds** follow AssetRisk_PanEU: trapezoid over p = 1/RP
   between the smallest and largest mapped RP only - no tail beyond, no damage
   for more frequent events.
+- **Protection at or above the largest RP gives zero damage** (river: 500 yr,
+  including a recorded standard scaled up by `protection_scale`). Here this model
+  departs from AssetRisk_PanEU: their `integrate_ead` keeps the single point left
+  and returns (1/protection) x damage at the largest RP, a tail it adds for no
+  lower standard, so their EAD jumps at that point (499 yr -> about 0, 500 yr ->
+  damage_500 / 500). Kept deliberately (2026-11-20) for consistency. It matters
+  for well-protected countries: under their rule, Dutch healthcare's river EAD
+  roughly doubles, and Dutch airports go from about 0 to 0.13 MEUR (recorded
+  standards, representative curves). `src/validate.py` Check B follows the
+  model's rule and reports how many sampled features it applied to.
 - **Earthquake damage** uses the reference's damage-state model: exceedance
   probabilities per state are collapsed into an expected damage ratio (loss
   weights 0.05 / 0.20 / 0.70 / 0.85 / 1.00) and applied like a vulnerability
