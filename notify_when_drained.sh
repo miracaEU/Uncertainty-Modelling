@@ -2,22 +2,29 @@
 # ---------------------------------------------------------------------------
 # Attach an email notification to work that is ALREADY submitted.
 #
-# Reads every job currently queued or running for this user, chains a no-op
-# barrier behind each chunk of them, and puts one notify job behind the
-# barriers. That job builds a short report (how many jobs ended in which state,
-# which ones did not COMPLETE, the SLR gate verdict, which cascade outputs
-# landed) and mails it.
+# Reads every job currently queued or running for this user and submits one
+# small notify job that waits for all of them to leave the queue. It then builds
+# a short report (how many jobs ended in which state, which ones did not
+# COMPLETE, the newest gate verdicts, which cascade outputs landed) and mails it.
 #
-# Why barriers rather than one dependency: a Stage-2 back-fill is ~257 separate
-# jobs, and a single afterany: list of that many IDs runs into SLURM's
-# dependency-string limit. submit_miraca_uncertainty_study.sh already solves
-# this with chunked barriers; same idea here, standalone so it can be run after
-# the fact.
+# Two ways to wait (MODE):
+#   poll     (default) the notify job has no dependency and checks squeue every
+#            POLL_EVERY seconds. Works for chained batches. If everything left
+#            can never start (DependencyNeverSatisfied, e.g. a failed gate), it
+#            mails at once with a "stuck" subject instead of waiting forever.
+#            Holds one CPU for up to POLL_TIME; past that SLURM mails TIME_LIMIT,
+#            and running this script again attaches a fresh watcher.
+#   barrier  no-op barriers with afterany on chunks of BARRIER_CHUNK jobs, the
+#            notify job behind them. Fails on chained batches (Stage 1 -> gate
+#            -> Stage 2 -> N = 32768): SLURM's dependency scan gives up after
+#            max_depend_depth jobs and reports "Circular job dependency" (seen
+#            2026-11-20 with the polygon-fix batch).
 #
 # Usage:
 #   ./notify_when_drained.sh                      # mail the default address
 #   MAIL_TO=you@vu.nl ./notify_when_drained.sh    # override
 #   DRY=1 ./notify_when_drained.sh                # show what it would submit
+#   MODE=barrier ./notify_when_drained.sh         # the old dependency chain
 #
 # Run it again at any time to attach a fresh notification to whatever is then
 # in the queue; the jobs it watches are fixed at submission.
@@ -39,8 +46,12 @@ export MIRACA_CONFIG=${MIRACA_CONFIG:-${REPO}/config.cluster.yml}
 # likelier to arrive - outbound relay to external providers is blocked at many
 # sites even when internal delivery works, and no bounce comes back to say so.
 MAIL_TO=${MAIL_TO:-v.k.c.weiwad@vu.nl}
+MODE=${MODE:-poll}
+POLL_EVERY=${POLL_EVERY:-600}
+POLL_TIME=${POLL_TIME:-120:00:00}
 BARRIER_CHUNK=${BARRIER_CHUNK:-50}
 PARTITION=${PARTITION:-}
+[[ "$MODE" == poll || "$MODE" == barrier ]] || { echo "MODE must be poll or barrier, not '$MODE'." >&2; exit 1; }
 
 SB_PARTITION="# (no --partition set; using the cluster default)"
 [[ -n "$PARTITION" ]] && SB_PARTITION="#SBATCH --partition=${PARTITION}"
@@ -63,9 +74,9 @@ if [[ ${#IDS[@]} -eq 0 ]]; then
     exit 1
 fi
 
-echo "== attaching notification to ${#IDS[@]} queued job(s) =="
+echo "== attaching notification to ${#IDS[@]} queued job(s), mode ${MODE} =="
 echo "   mail to: ${MAIL_TO}"
-echo "   job ids: ${IDS[*]}"
+echo "   job ids: ${IDS[0]} ... ${IDS[-1]}"
 
 JOBLIST=${LOG_DIR}/notify_watched_jobs.txt
 if [[ -n "${DRY:-}" ]]; then
@@ -74,9 +85,34 @@ if [[ -n "${DRY:-}" ]]; then
 fi
 printf '%s\n' "${IDS[@]}" > "${JOBLIST}"
 
-# ── Barriers ─────────────────────────────────────────────────────────────────
+# ── How the notify job waits ─────────────────────────────────────────────────
+# poll: no dependency, a loop at the top of the job body. The watched list is
+# matched against the user's own squeue, so finished ids simply drop out.
 BARRIERS=()
+SB_DEPEND="# (no dependency: the job polls squeue)"
+SB_TIME="#SBATCH --time=00:30:00"
+WAIT_BLOCK=""
+if [[ "$MODE" == poll ]]; then
+    SB_TIME="#SBATCH --time=${POLL_TIME}"
+    WAIT_BLOCK=$(cat <<POLL
+STUCK=""
+while :; do
+    LEFT=\$(squeue -h -u "\${USER:-\$(id -un)}" -o "%F %T %r" | awk 'NR==FNR {w[\$1]; next} (\$1 in w)' ${JOBLIST} -)
+    [[ -z "\${LEFT}" ]] && break
+    # Only jobs that can never start are left (a failed gate): report now.
+    if ! grep -qv DependencyNeverSatisfied <<<"\${LEFT}"; then
+        STUCK=\$(wc -l <<<"\${LEFT}")
+        break
+    fi
+    sleep ${POLL_EVERY}
+done
+POLL
+)
+fi
+
+# ── Barriers (MODE=barrier only) ─────────────────────────────────────────────
 for ((i = 0; i < ${#IDS[@]}; i += BARRIER_CHUNK)); do
+    [[ "$MODE" == barrier ]] || break
     chunk=$(IFS=:; echo "${IDS[*]:i:BARRIER_CHUNK}")
     bid=$(sbatch --parsable --dependency="afterany:${chunk}" <<SLURM
 #!/bin/bash
@@ -93,8 +129,11 @@ SLURM
 )
     BARRIERS+=("$bid")
 done
-BARRIER_IDS=$(IFS=:; echo "${BARRIERS[*]}")
-echo "   barriers: ${BARRIERS[*]}"
+if [[ "$MODE" == barrier ]]; then
+    BARRIER_IDS=$(IFS=:; echo "${BARRIERS[*]}")
+    SB_DEPEND="#SBATCH --dependency=afterany:${BARRIER_IDS}"
+    echo "   barriers: ${BARRIERS[*]}"
+fi
 
 # ── The notify job ───────────────────────────────────────────────────────────
 # afterany on the barriers, which are themselves afterany: the mail must arrive
@@ -105,26 +144,34 @@ echo "   barriers: ${BARRIERS[*]}"
 # is terse but needs no MTA on the compute node; the body's report is useful but
 # only arrives if a mail command exists. Belt and braces, because which of the
 # two works is a property of the cluster, not of this script.
-jid=$(sbatch --parsable --dependency="afterany:${BARRIER_IDS}" <<SLURM
+jid=$(sbatch --parsable <<SLURM
 #!/bin/bash -l
 #SBATCH --job-name=notify_drained
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 ${SB_PARTITION}
+${SB_DEPEND}
 #SBATCH --mem=2G
-#SBATCH --time=00:30:00
+${SB_TIME}
 #SBATCH --output=${LOG_DIR}/out_notify_drained
 #SBATCH --error=${LOG_DIR}/err_notify_drained
-#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=${MAIL_TO}
 set -uo pipefail
 cd ${REPO}
+STUCK=""
+${WAIT_BLOCK}
 
 REPORT=${LOG_DIR}/drained_report.txt
 WATCHED=\$(paste -sd, ${JOBLIST})
 
 {
-    echo "MIRACA cluster queue drained"
+    if [[ -n "\${STUCK}" ]]; then
+        echo "MIRACA: \${STUCK} job(s) can never start (DependencyNeverSatisfied) - check the gate"
+        squeue -h -u "\${USER:-\$(id -un)}" -o "%F %j %r" | awk 'NR==FNR {w[\$1]; next} (\$1 in w)' ${JOBLIST} - | head -n 5
+    else
+        echo "MIRACA cluster queue drained"
+    fi
     echo "\$(date '+%Y-%m-%d %H:%M:%S')  on \$(hostname)"
     echo
     echo "Watched \$(wc -l < ${JOBLIST}) submitted job(s)/array(s)."
@@ -136,13 +183,18 @@ WATCHED=\$(paste -sd, ${JOBLIST})
     sacct -j "\${WATCHED}" -X -n -o JobID,JobName%28,State,Elapsed,MaxRSS,ExitCode | grep -v COMPLETED || echo "  (nothing - every job completed)"
 } > "\${REPORT}" 2>&1
 
-# The SLR gate decides whether Stage 2 was allowed to run at all, so its verdict
-# is the single most informative line in the whole chain.
+# A batch's gate decides whether its Stage 2 was allowed to run at all, so its
+# verdict is the single most informative line in the whole chain. Every batch
+# names its gate log out_*gate* (out_slr_gate, out_s1_gate_<tag>); show the newest.
 {
     echo
-    echo "--- SLR state completeness ---"
-    if [[ -f ${LOG_DIR}/out_slr_gate ]]; then
-        tail -n 20 ${LOG_DIR}/out_slr_gate
+    echo "--- newest gate verdicts ---"
+    GATES=\$(ls -t ${LOG_DIR}/out_*gate* 2>/dev/null | head -3)
+    if [[ -n "\${GATES}" ]]; then
+        for g in \${GATES}; do
+            echo "  \${g}  (\$(date -r "\${g}" '+%Y-%m-%d %H:%M'))"
+            grep -E 'ready for Stage 2|FAIL|missing' "\${g}" | head -n 5 | sed 's/^/    /'
+        done
     else
         echo "  (no gate log yet)"
     fi
@@ -172,6 +224,7 @@ cat "\${REPORT}"
 # Try to mail the report itself. Which of these exists is cluster-specific, so
 # fall through rather than assuming any one of them.
 SUBJ="MIRACA: cluster queue drained"
+[[ -n "\${STUCK}" ]] && SUBJ="MIRACA: jobs stuck behind a failed dependency - check the gate"
 if command -v mail >/dev/null 2>&1; then
     mail -s "\${SUBJ}" "${MAIL_TO}" < "\${REPORT}" && echo "[sent via mail]"
 elif command -v mailx >/dev/null 2>&1; then
