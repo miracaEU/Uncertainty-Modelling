@@ -52,7 +52,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 from .ead_ranges import HAZARD_COLORS, hazard_of
-from .ema_model import protection_range
+from .ema_model import REPORT_SCENARIOS, is_slr, protection_range
 from .plot_pyramid import (
     INK,
     INK_2,
@@ -89,15 +89,10 @@ ALL_ASSETS = "all"
 # Present-day coastal is kept but demoted to a reference case: the deterministic
 # benchmark is a current-climate estimate, so it is the only like-for-like
 # coastal comparison against it.
-HEADLINE_SCENARIOS = [
-    "flood_absprot_ds",
-    "flood_noprot_ds",
-    "coastal_absprot_ds_slr",
-    "coastal_noprot_ds_slr",
-    "earthquake",
-    "windstorm",
-    "windstorm_absprot",
-]
+#
+# Since November 2026 only the SLR coastal runs are reported, so the present-day
+# reference is no longer drawn by default either; --all-comparable still adds it.
+HEADLINE_SCENARIOS = list(REPORT_SCENARIOS)
 REFERENCE_SCENARIOS = ["coastal_absprot_ds", "coastal_noprot_ds"]
 
 
@@ -301,15 +296,18 @@ def headline_labels(scenarios) -> dict[str, str]:
     plotted = set(scenarios)
     out = {}
     for scen in scenarios:
-        if not scen.endswith("_slr"):
+        if not is_slr(scen):
             continue
-        base = scen[: -len("_slr")]
+        base = "_".join(t for t in scen.split("_") if t != "slr")
         if base in plotted:
             continue
         hazard = "Coastal flood"
         if "absprot" in scen:
             lo, hi = protection_range(base, "abs")
             out[scen] = f"{hazard}\n(protection sampled, RP {lo:.0f}-{hi:.0f})"
+        elif "baseline" in scen:
+            lo, hi = protection_range(base, "scale")
+            out[scen] = f"{hazard}\n(protection scaled x{lo:g}-{hi:g})"
         else:
             out[scen] = f"{hazard}\n(protection as recorded)"
     return out

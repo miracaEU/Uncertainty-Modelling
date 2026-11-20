@@ -1,0 +1,1122 @@
+hazard,country,asset,driver,share
+River flood,PRT,ports,Protection standard,0.9581299969866434
+River flood,ESP,ports,Protection standard,0.9568276271908733
+River flood,BGR,ports,Protection standard,0.9491813034963076
+River flood,ITA,ports,Protection standard,0.9401415422122666
+River flood,CHE,ports,Protection standard,0.939357808044814
+River flood,CHE,airports,Protection standard,0.9367742460293249
+River flood,GRC,ports,Protection standard,0.9325201189533419
+River flood,AUT,airports,Protection standard,0.931348546904045
+River flood,ESP,telecom,Protection standard,0.9310302736740133
+River flood,NOR,airports,Protection standard,0.9299874709488604
+River flood,FIN,ports,Protection standard,0.9297105661152125
+River flood,GRC,telecom,Protection standard,0.9275723250315883
+River flood,LIE,airports,Protection standard,0.9250317966012808
+River flood,NOR,telecom,Protection standard,0.9235859213011915
+River flood,AUT,telecom,Protection standard,0.920873359250295
+River flood,FIN,airports,Protection standard,0.9208385293772475
+River flood,ISL,airports,Protection standard,0.9208101450597572
+River flood,PRT,telecom,Protection standard,0.917152854309546
+River flood,LUX,ports,Protection standard,0.9130603085661505
+River flood,GRC,airports,Protection standard,0.9115900965999848
+River flood,HRV,ports,Protection standard,0.9108535874824704
+River flood,CZE,ports,Protection standard,0.9070105743986159
+River flood,ALB,ports,Protection standard,0.9036205197861168
+River flood,SVK,telecom,Protection standard,0.9034675651246212
+River flood,POL,ports,Protection standard,0.9029465740031781
+River flood,LIE,telecom,Protection standard,0.8988844431998219
+River flood,FIN,telecom,Protection standard,0.8972126017148084
+River flood,AUT,ports,Protection standard,0.8969860881777981
+River flood,ISL,ports,Protection standard,0.8969466657106521
+River flood,CZE,telecom,Protection standard,0.8934316156421693
+River flood,ESP,airports,Protection standard,0.8915427847537535
+River flood,LVA,ports,Protection standard,0.8857885928217845
+River flood,ITA,airports,Protection standard,0.8807296235393003
+River flood,SVN,telecom,Protection standard,0.8735566807223281
+River flood,CHE,telecom,Protection standard,0.8733355836700981
+River flood,CZE,airports,Protection standard,0.8703285395882975
+River flood,NOR,ports,Protection standard,0.866836774099966
+River flood,POL,telecom,Protection standard,0.8666823484606638
+River flood,PRT,airports,Protection standard,0.8634200800308642
+River flood,HRV,telecom,Protection standard,0.8633001811536509
+River flood,FRA,airports,Protection standard,0.8629220917982882
+River flood,LTU,airports,Protection standard,0.8619855539754727
+River flood,BGR,airports,Protection standard,0.8615351609191239
+River flood,ITA,telecom,Protection standard,0.8596092002106577
+River flood,SVN,ports,Protection standard,0.8580840359369367
+River flood,ROU,airports,Protection standard,0.8577866116964197
+River flood,HUN,airports,Protection standard,0.8560885132142331
+River flood,DNK,ports,Protection standard,0.8548503302250565
+River flood,LVA,airports,Protection standard,0.8545629104195892
+River flood,ROU,ports,Protection standard,0.8527737565749396
+River flood,SRB,airports,Protection standard,0.8473152508313375
+River flood,SVK,ports,Protection standard,0.8472037937526871
+River flood,FRA,telecom,Protection standard,0.8468650434261366
+River flood,FRA,ports,Protection standard,0.8453436848238342
+River flood,HUN,ports,Protection standard,0.8441043042286193
+River flood,SVK,airports,Protection standard,0.8362110860312553
+River flood,EST,ports,Protection standard,0.833769338221008
+River flood,POL,airports,Protection standard,0.8313207166565807
+River flood,BGR,telecom,Protection standard,0.8311190593219877
+River flood,DEU,telecom,Protection standard,0.8280388823888679
+River flood,HUN,telecom,Protection standard,0.8278814766291168
+River flood,HRV,airports,Protection standard,0.8272498273307588
+River flood,ROU,telecom,Protection standard,0.8187271441783535
+River flood,BEL,ports,Protection standard,0.8146223970968693
+River flood,DEU,ports,Protection standard,0.8003476492528101
+River flood,LUX,telecom,Protection standard,0.7999441409795739
+River flood,DEU,airports,Protection standard,0.7998104860183709
+River flood,SRB,ports,Protection standard,0.7963595979747381
+River flood,SRB,telecom,Protection standard,0.7904631674393438
+River flood,BEL,telecom,Protection standard,0.7878574526296627
+River flood,MKD,healthcare,Protection standard,0.7792244945094169
+River flood,NLD,ports,Protection standard,0.7788041772670501
+River flood,IRL,airports,Protection standard,0.7783030403275362
+River flood,GBR,ports,Protection standard,0.7777016058562496
+River flood,FIN,healthcare,Protection standard,0.7753230240639547
+River flood,LTU,telecom,Protection standard,0.7704011581915626
+River flood,ROU,healthcare,Protection standard,0.7627539142581151
+River flood,ALB,telecom,Protection standard,0.759931739108859
+River flood,SWE,ports,Protection standard,0.7586781154404905
+River flood,SVN,airports,Protection standard,0.7526985354181135
+River flood,EST,telecom,Protection standard,0.7520243668889589
+River flood,DNK,telecom,Protection standard,0.7516761899652155
+River flood,AND,healthcare,Protection standard,0.7510944437394192
+River flood,SWE,airports,Protection standard,0.7437284576024112
+River flood,LTU,healthcare,Protection standard,0.7426226923974775
+River flood,PRT,healthcare,Protection standard,0.7395590232410026
+River flood,NOR,healthcare,Protection standard,0.7382476576787401
+River flood,GRC,healthcare,Protection standard,0.7377815785827286
+River flood,ESP,healthcare,Protection standard,0.7365243396593575
+River flood,DNK,airports,Protection standard,0.73384633684704
+River flood,GBR,airports,Protection standard,0.7309249978221332
+River flood,MKD,airports,Protection standard,0.7306661605551368
+River flood,LTU,ports,Protection standard,0.7272748443102133
+River flood,CZE,healthcare,Protection standard,0.7253422060312226
+River flood,SVN,healthcare,Protection standard,0.722729842669308
+River flood,AUT,healthcare,Protection standard,0.7186054834336287
+River flood,IRL,telecom,Protection standard,0.7118560644088848
+River flood,CHE,healthcare,Protection standard,0.7084576277586497
+River flood,GBR,telecom,Protection standard,0.7070751649980425
+River flood,EST,airports,Protection standard,0.7063039014912145
+River flood,ISL,healthcare,Protection standard,0.7028083509692818
+River flood,SRB,gas,Cost / max-damage,0.7003340766624926
+River flood,FIN,oil,Protection standard,0.7001896883667265
+River flood,NLD,telecom,Protection standard,0.6982984096973716
+River flood,ALB,healthcare,Protection standard,0.6973614806555319
+River flood,LVA,telecom,Protection standard,0.6960473975897535
+River flood,NOR,education,Protection standard,0.6957256561867
+River flood,FRA,healthcare,Protection standard,0.691368102360541
+River flood,LUX,healthcare,Protection standard,0.6902088179573156
+River flood,BGR,healthcare,Protection standard,0.6886048191527785
+River flood,NOR,roads,Protection standard,0.68576054730917
+River flood,HRV,healthcare,Protection standard,0.6857183816982811
+River flood,PRT,education,Protection standard,0.6851297902053433
+River flood,SVK,healthcare,Protection standard,0.681952595461626
+River flood,ITA,healthcare,Protection standard,0.6814100683871737
+River flood,LUX,oil,Protection standard,0.6781784181728334
+River flood,IRL,ports,Protection standard,0.6769471092322764
+River flood,GRC,oil,Protection standard,0.6765362386123559
+River flood,EST,healthcare,Protection standard,0.6759246888839407
+River flood,ROU,oil,Protection standard,0.6716774800998572
+River flood,POL,oil,Protection standard,0.6692890650208078
+River flood,SVN,education,Protection standard,0.6620550361514548
+River flood,POL,healthcare,Protection standard,0.6619187554603233
+River flood,DEU,healthcare,Protection standard,0.6593844484586969
+River flood,BEL,healthcare,Protection standard,0.6588182469084863
+River flood,SRB,healthcare,Protection standard,0.6577467239265035
+River flood,ESP,education,Protection standard,0.6556898865311064
+River flood,LUX,roads,Protection standard,0.6532449167871919
+River flood,ALB,airports,Protection standard,0.6530838792825691
+River flood,BEL,airports,Protection standard,0.6524344501749196
+River flood,AUT,oil,Protection standard,0.6522823284273301
+River flood,ISL,roads,Protection standard,0.6434853434307549
+River flood,DNK,healthcare,Protection standard,0.6431520459778511
+River flood,PRT,oil,Cost / max-damage,0.6429513102225577
+River flood,HRV,oil,Protection standard,0.642285780626757
+River flood,CHE,education,Protection standard,0.6421978900012114
+River flood,SWE,healthcare,Protection standard,0.6354287931703532
+River flood,HRV,gas,Protection standard,0.6352664200259454
+River flood,NLD,airports,Protection standard,0.6343799463119166
+River flood,AUT,roads,Protection standard,0.6343504477668159
+River flood,ESP,roads,Protection standard,0.6339658442549577
+River flood,SWE,telecom,Protection standard,0.6332542027150594
+River flood,CHE,roads,Protection standard,0.631789624220966
+River flood,ESP,oil,Protection standard,0.6300471454222785
+River flood,LVA,healthcare,Protection standard,0.6293563908950631
+River flood,NOR,oil,Protection standard,0.6274859823959633
+River flood,HUN,healthcare,Protection standard,0.6267648566985634
+River flood,CZE,education,Protection standard,0.6247351521373495
+River flood,FIN,education,Protection standard,0.6242291530945934
+River flood,GBR,healthcare,Protection standard,0.6208873874686831
+River flood,LIE,education,Protection standard,0.6202449757228063
+River flood,GRC,gas,Protection standard,0.6199784586666266
+River flood,MKD,education,Protection standard,0.6177269499303055
+River flood,BEL,oil,Protection standard,0.61736962684334
+River flood,LVA,gas,Protection standard,0.6157831369844737
+River flood,PRT,roads,Protection standard,0.6126456693034578
+River flood,MKD,roads,Protection standard,0.6117836695694054
+River flood,LTU,education,Protection standard,0.6115907773545733
+River flood,LUX,education,Protection standard,0.6105438781058934
+River flood,ITA,oil,Protection standard,0.6078150085367277
+River flood,SVN,gas,Protection standard,0.604912988410366
+River flood,AUT,education,Protection standard,0.6043742458902726
+River flood,ROU,education,Protection standard,0.6039600814859644
+River flood,DNK,education,Protection standard,0.6005407480373087
+River flood,SVN,roads,Protection standard,0.5994065076109119
+River flood,FRA,education,Protection standard,0.5952113810269534
+River flood,CHE,oil,Protection standard,0.5948504928232639
+River flood,BEL,education,Protection standard,0.5942527390559162
+River flood,SRB,oil,Protection standard,0.5927757395435439
+River flood,CZE,roads,Protection standard,0.5881239026085706
+River flood,LVA,education,Protection standard,0.5865482694052467
+River flood,GRC,education,Protection standard,0.5864105049123007
+River flood,ITA,roads,Protection standard,0.5835301892358397
+River flood,NLD,oil,Protection standard,0.583052877805567
+River flood,LTU,gas,Protection standard,0.5810811751897509
+River flood,FIN,roads,Protection standard,0.5810269050191685
+River flood,NLD,healthcare,Protection standard,0.5806949152266032
+River flood,ISL,education,Protection standard,0.579349246229255
+River flood,ALB,education,Protection standard,0.5791547982022808
+River flood,IRL,healthcare,Protection standard,0.5779915253963798
+River flood,ITA,education,Protection standard,0.5723057285761304
+River flood,LVA,roads,Protection standard,0.5722957998714944
+River flood,SVK,roads,Protection standard,0.5704336784674311
+River flood,LIE,rail,Protection standard,0.567937260208718
+River flood,BGR,roads,Protection standard,0.567144453622273
+River flood,ALB,roads,Protection standard,0.5669824321227399
+River flood,FRA,roads,Protection standard,0.5643888443570555
+River flood,POL,education,Protection standard,0.5630626439061939
+River flood,NOR,rail,Protection standard,0.5610702063052804
+River flood,HUN,oil,Protection standard,0.5606735486321036
+River flood,DEU,oil,Protection standard,0.5605372502101792
+River flood,HRV,roads,Protection standard,0.5605118876741926
+River flood,ESP,rail,Protection standard,0.5602696988448844
+River flood,AUT,rail,Protection standard,0.5602256980158739
+River flood,MKD,oil,Protection standard,0.5602110286734213
+River flood,BEL,roads,Protection standard,0.5598694765793696
+River flood,GBR,oil,Protection standard,0.5578652530972785
+River flood,GRC,rail,Protection standard,0.5556307255844111
+River flood,ROU,roads,Protection standard,0.550402396212916
+River flood,BGR,education,Protection standard,0.5499948908728282
+River flood,GRC,roads,Protection standard,0.5482010987410655
+River flood,MKD,rail,Protection standard,0.5481965143902726
+River flood,BGR,rail,Protection standard,0.5475997955993748
+River flood,NLD,gas,Protection standard,0.5471780518900049
+River flood,CHE,rail,Protection standard,0.5451058340216332
+River flood,SVK,education,Protection standard,0.5440408867669081
+River flood,HRV,education,Protection standard,0.5434805893278335
+River flood,CZE,rail,Protection standard,0.543133979690328
+River flood,POL,roads,Protection standard,0.542916163924293
+River flood,SVN,oil,Protection standard,0.5427533051642891
+River flood,LIE,roads,Protection standard,0.5417527168825483
+River flood,DEU,education,Protection standard,0.5413193543912134
+River flood,PRT,gas,Vulnerability curve,0.5411773354652551
+River flood,ROU,rail,Protection standard,0.5337030503924655
+River flood,IRL,education,Protection standard,0.5328537781276115
+River flood,GBR,roads,Protection standard,0.5328285974554806
+River flood,PRT,rail,Protection standard,0.5324560078826219
+River flood,ROU,gas,Vulnerability curve,0.5322982195872837
+River flood,DEU,roads,Protection standard,0.5281715238948071
+River flood,NOR,gas,Protection standard,0.5265672261107897
+River flood,SVK,rail,Protection standard,0.5258865146072611
+River flood,LUX,rail,Protection standard,0.5256675765487776
+River flood,IRL,gas,Protection standard,0.5249683105627294
+River flood,SVN,rail,Protection standard,0.5246244853697055
+River flood,ITA,rail,Protection standard,0.5213488074622021
+River flood,SRB,roads,Protection standard,0.520950440108969
+River flood,ALB,rail,Protection standard,0.5208083301561681
+River flood,FIN,rail,Protection standard,0.5205007923883564
+River flood,LTU,roads,Protection standard,0.520079387937254
+River flood,POL,rail,Protection standard,0.5169281915188604
+River flood,HUN,roads,Protection standard,0.5163146511824821
+River flood,SRB,education,Protection standard,0.5158798559201774
+River flood,SWE,roads,Protection standard,0.5124510046094117
+River flood,GBR,education,Protection standard,0.5121004838147488
+River flood,LVA,rail,Protection standard,0.5115644064926046
+River flood,SWE,education,Protection standard,0.5067994122792545
+River flood,FRA,oil,Protection standard,0.5041001513047444
+River flood,SVK,oil,Cost / max-damage,0.501485642859138
+River flood,SRB,rail,Protection standard,0.5010286122288086
+River flood,HRV,rail,Protection standard,0.4992261453235682
+River flood,EST,education,Protection standard,0.4981152605603699
+River flood,DNK,roads,Protection standard,0.497543249714348
+River flood,EST,roads,Protection standard,0.4966336473401976
+River flood,BEL,rail,Protection standard,0.49628243116176496
+River flood,IRL,oil,Protection standard,0.4962592795637961
+River flood,BGR,gas,Protection standard,0.49562787125034496
+River flood,GBR,gas,Protection standard,0.49502896036465627
+River flood,HUN,rail,Protection standard,0.4942112375517436
+River flood,NOR,power,Protection standard,0.493859811917303
+River flood,FRA,rail,Protection standard,0.4934022622079161
+River flood,DNK,rail,Protection standard,0.49214272631666023
+River flood,FRA,gas,Protection standard,0.49068057861038655
+River flood,HUN,education,Protection standard,0.48947979521212986
+River flood,DEU,rail,Protection standard,0.48820188385189056
+River flood,FIN,gas,Vulnerability curve,0.48150749160614714
+River flood,NLD,roads,Protection standard,0.4803003525670638
+River flood,LUX,gas,Vulnerability curve,0.47919801601241563
+River flood,IRL,roads,Protection standard,0.476823287223868
+River flood,EST,rail,Protection standard,0.47547033089921104
+River flood,ITA,gas,Vulnerability curve,0.47446303425881814
+River flood,LTU,rail,Protection standard,0.4677239371571952
+River flood,ALB,oil,Protection standard,0.4658861203336769
+River flood,LIE,power,Protection standard,0.4634990137441235
+River flood,SWE,oil,Protection standard,0.4595755225231125
+River flood,GBR,rail,Protection standard,0.4584050594880855
+River flood,ESP,gas,Protection standard,0.43477694971661374
+River flood,AUT,gas,Vulnerability curve,0.43239294836266434
+River flood,NLD,education,Protection standard,0.4286464690496949
+River flood,LVA,oil,Protection standard,0.42755797814110946
+River flood,DEU,gas,Protection standard,0.4274987581127634
+River flood,SWE,rail,Protection standard,0.42567801590546994
+River flood,IRL,rail,Protection standard,0.4188017603743299
+River flood,NLD,rail,Protection standard,0.41409944271570215
+River flood,BGR,oil,Protection standard,0.40991883126141093
+River flood,CHE,power,Protection standard,0.4081516243776969
+River flood,BEL,gas,Cost / max-damage,0.40474205637530764
+River flood,CHE,gas,Vulnerability curve,0.4043875097273098
+River flood,POL,gas,Protection standard,0.403186048180999
+River flood,SWE,gas,Protection standard,0.4019797092955439
+River flood,SVK,power,Protection standard,0.4009610440382027
+River flood,BEL,power,Protection standard,0.3996216361236669
+River flood,DNK,gas,Vulnerability curve,0.39869834927763687
+River flood,ISL,power,Protection standard,0.3957247696651377
+River flood,HUN,gas,Vulnerability curve,0.3935751907673004
+River flood,LTU,power,Protection standard,0.38473653986086714
+River flood,ROU,power,Vulnerability curve,0.379472551835672
+River flood,ALB,power,Vulnerability curve,0.3793904010150005
+River flood,MKD,power,Vulnerability curve,0.3777013833987994
+River flood,ESP,power,Vulnerability curve,0.3726368711153444
+River flood,BGR,power,Vulnerability curve,0.3725292799346101
+River flood,SWE,power,Protection standard,0.37204398931887983
+River flood,CZE,power,Protection standard,0.3718743249715902
+River flood,SVK,gas,Vulnerability curve,0.3693544996321009
+River flood,DNK,power,Protection standard,0.3686198655046207
+River flood,GRC,power,Vulnerability curve,0.3683397704869714
+River flood,SRB,power,Vulnerability curve,0.3652049887869173
+River flood,ITA,power,Protection standard,0.3639475232820455
+River flood,EST,power,Vulnerability curve,0.3621920792090891
+River flood,LUX,power,Protection standard,0.36038317369657785
+River flood,HUN,power,Protection standard,0.36013530324751486
+River flood,POL,power,Protection standard,0.35965611232103156
+River flood,HRV,power,Vulnerability curve,0.35833346994311577
+River flood,FIN,power,Protection standard,0.3575092505455681
+River flood,PRT,power,Protection standard,0.3550802476402806
+River flood,AUT,power,Protection standard,0.3515725832061621
+River flood,FRA,power,Protection standard,0.3510607836565679
+River flood,LVA,power,Protection standard,0.3443485613307126
+River flood,DEU,power,Protection standard,0.3414017933286659
+River flood,IRL,power,Vulnerability curve,0.33798135952030484
+River flood,GBR,power,Vulnerability curve,0.33445290998614785
+River flood,SVN,power,Protection standard,0.3343911194673239
+River flood,NLD,power,Vulnerability curve,0.3319647628280262
+Coastal flood,NOR,ports,Protection standard,0.9803068490662338
+Coastal flood,DEU,ports,Protection standard,0.9757141281353289
+Coastal flood,EST,ports,Protection standard,0.9694641600561379
+Coastal flood,LVA,ports,Protection standard,0.969235643936171
+Coastal flood,SVN,ports,Protection standard,0.9674817477089636
+Coastal flood,SWE,ports,Protection standard,0.9663840922210468
+Coastal flood,DNK,ports,Protection standard,0.9635626976330465
+Coastal flood,MLT,ports,Protection standard,0.9603493124870353
+Coastal flood,HRV,ports,Protection standard,0.9563076684500271
+Coastal flood,NOR,telecom,Protection standard,0.9500769193556191
+Coastal flood,GRC,ports,Protection standard,0.949882456627369
+Coastal flood,SVN,airports,Protection standard,0.9463381571646088
+Coastal flood,LTU,telecom,Protection standard,0.9428423980156547
+Coastal flood,CYP,ports,Protection standard,0.9426531496937152
+Coastal flood,DEU,telecom,Protection standard,0.9417061647664189
+Coastal flood,LTU,airports,Protection standard,0.9378213347578116
+Coastal flood,DNK,telecom,Protection standard,0.9336405512029243
+Coastal flood,LTU,ports,Protection standard,0.932952992373484
+Coastal flood,ALB,ports,Protection standard,0.9299162127319434
+Coastal flood,DEU,airports,Protection standard,0.9274846476549431
+Coastal flood,NOR,airports,Protection standard,0.9213482613072193
+Coastal flood,LVA,telecom,Protection standard,0.9206637211956035
+Coastal flood,SWE,telecom,Protection standard,0.9191041899871337
+Coastal flood,LVA,airports,Protection standard,0.9083554959370373
+Coastal flood,FIN,ports,Protection standard,0.8976190138414031
+Coastal flood,GRC,telecom,Protection standard,0.8720806618026383
+Coastal flood,GRC,airports,Protection standard,0.8438087971274685
+Coastal flood,HRV,telecom,Protection standard,0.8167074815051532
+Coastal flood,FIN,telecom,Protection standard,0.8051641031195841
+Coastal flood,POL,telecom,Protection standard,0.7807434378252901
+Coastal flood,NOR,healthcare,Protection standard,0.7723678879533207
+Coastal flood,DNK,airports,Protection standard,0.7641400232533668
+Coastal flood,DEU,healthcare,Protection standard,0.7639117681487902
+Coastal flood,LVA,gas,Climate warming,0.7604449012462123
+Coastal flood,GBR,gas,Climate warming,0.7588420111272031
+Coastal flood,GRC,healthcare,Protection standard,0.7565208306731517
+Coastal flood,NLD,oil,Climate warming,0.7539368349779064
+Coastal flood,MLT,healthcare,Protection standard,0.7516075064329004
+Coastal flood,HRV,healthcare,Protection standard,0.7447024918077215
+Coastal flood,LVA,healthcare,Protection standard,0.7443375981470408
+Coastal flood,EST,airports,Protection standard,0.7356791137861239
+Coastal flood,EST,oil,Protection standard,0.7255036816944453
+Coastal flood,FRA,ports,Protection standard,0.7235192470903501
+Coastal flood,MLT,power,Protection standard,0.7158960877444515
+Coastal flood,DNK,healthcare,Protection standard,0.7154390421622225
+Coastal flood,LTU,gas,Protection standard,0.7153629937195437
+Coastal flood,NOR,oil,Protection standard,0.7140762971085589
+Coastal flood,NLD,gas,Climate warming,0.7140024923530078
+Coastal flood,MLT,oil,Protection standard,0.7121068392453428
+Coastal flood,DNK,gas,Climate warming,0.7110572188379158
+Coastal flood,NOR,roads,Protection standard,0.6989428161459353
+Coastal flood,SWE,healthcare,Protection standard,0.6937273379949441
+Coastal flood,POL,ports,Protection standard,0.6915975760745647
+Coastal flood,HRV,oil,Protection standard,0.6812410695736708
+Coastal flood,ALB,oil,Protection standard,0.6809168634553502
+Coastal flood,DEU,oil,Protection standard,0.680023775037365
+Coastal flood,CYP,airports,Protection standard,0.6797044880324948
+Coastal flood,NLD,ports,Climate warming,0.6776711463999945
+Coastal flood,DEU,education,Protection standard,0.6765554331382094
+Coastal flood,GRC,oil,Protection standard,0.6748982918749376
+Coastal flood,SVN,roads,Protection standard,0.6743618697003054
+Coastal flood,SWE,oil,Protection standard,0.6742929548586548
+Coastal flood,FIN,healthcare,Protection standard,0.6651987423927106
+Coastal flood,SVN,power,Protection standard,0.6410284979782712
+Coastal flood,NOR,power,Protection standard,0.630451598087975
+Coastal flood,NLD,airports,Climate warming,0.6301583269091504
+Coastal flood,IRL,telecom,Climate warming,0.6289617799280627
+Coastal flood,SWE,airports,Protection standard,0.6283355830554784
+Coastal flood,NOR,education,Protection standard,0.6265155472515499
+Coastal flood,GBR,telecom,Climate warming,0.617668388357913
+Coastal flood,DEU,roads,Protection standard,0.6149715942935148
+Coastal flood,GRC,education,Protection standard,0.6108954782489414
+Coastal flood,FRA,telecom,Protection standard,0.6078449330929402
+Coastal flood,PRT,ports,Protection standard,0.6074570121435615
+Coastal flood,SWE,roads,Protection standard,0.6022895163936739
+Coastal flood,BEL,ports,Climate warming,0.6014401327808448
+Coastal flood,ITA,ports,Protection standard,0.6004149513763041
+Coastal flood,MLT,education,Protection standard,0.5991276274059022
+Coastal flood,BGR,roads,Protection standard,0.5973127626965061
+Coastal flood,LTU,education,Protection standard,0.5947356332683478
+Coastal flood,DEU,rail,Protection standard,0.5935255463685181
+Coastal flood,DNK,roads,Protection standard,0.5914612349609573
+Coastal flood,MLT,roads,Protection standard,0.5877809172341215
+Coastal flood,HRV,education,Protection standard,0.5864079450483131
+Coastal flood,DNK,education,Protection standard,0.5859424644536135
+Coastal flood,HRV,airports,Protection standard,0.5841141058561385
+Coastal flood,NOR,rail,Protection standard,0.5837851090054407
+Coastal flood,GBR,ports,Protection standard,0.5827184799130403
+Coastal flood,POL,airports,Protection standard,0.5825655594184326
+Coastal flood,PRT,healthcare,Protection standard,0.5767643868685833
+Coastal flood,SWE,education,Protection standard,0.5760587739505018
+Coastal flood,EST,rail,Protection standard,0.571389892918545
+Coastal flood,LTU,roads,Protection standard,0.5705158361295003
+Coastal flood,LTU,power,Protection standard,0.5694401389484329
+Coastal flood,GBR,healthcare,Climate warming,0.5690801101805844
+Coastal flood,HRV,roads,Protection standard,0.5627836852393562
+Coastal flood,GRC,gas,Protection standard,0.5617449814960189
+Coastal flood,DNK,rail,Protection standard,0.5602828074746847
+Coastal flood,ALB,roads,Protection standard,0.5570666379708343
+Coastal flood,DEU,gas,Protection standard,0.5555589340179063
+Coastal flood,SVN,rail,Protection standard,0.5555563117817931
+Coastal flood,ESP,ports,Protection standard,0.5542223396519761
+Coastal flood,NLD,telecom,Climate warming,0.5504290461975485
+Coastal flood,LVA,rail,Protection standard,0.5500870300251774
+Coastal flood,ALB,education,Protection standard,0.5426130928540264
+Coastal flood,LVA,roads,Protection standard,0.5406001941351791
+Coastal flood,ITA,telecom,Protection standard,0.5393483620105637
+Coastal flood,GRC,roads,Protection standard,0.5389880934219903
+Coastal flood,LTU,rail,Protection standard,0.5369420826501323
+Coastal flood,HRV,rail,Protection standard,0.5361314904619058
+Coastal flood,SVN,healthcare,Protection standard,0.5294602941087481
+Coastal flood,GBR,oil,Climate warming,0.528547289441456
+Coastal flood,ITA,oil,Climate warming,0.5270775396947741
+Coastal flood,POL,oil,Climate warming,0.523397779348396
+Coastal flood,DNK,oil,Climate warming,0.5231523385843958
+Coastal flood,BEL,rail,Climate warming,0.5222220111939153
+Coastal flood,SWE,rail,Protection standard,0.5215921112017575
+Coastal flood,ITA,healthcare,Climate warming,0.5197184639823735
+Coastal flood,IRL,ports,Protection standard,0.5181090048086058
+Coastal flood,IRL,airports,Climate warming,0.5176407294915624
+Coastal flood,IRL,healthcare,Protection standard,0.5160473961933469
+Coastal flood,BEL,roads,Climate warming,0.5068273574419508
+Coastal flood,LTU,healthcare,Protection standard,0.5047126561905256
+Coastal flood,ESP,healthcare,Protection standard,0.5034300365543342
+Coastal flood,EST,telecom,Protection standard,0.5030236502496015
+Coastal flood,ITA,gas,Climate warming,0.5022506238666324
+Coastal flood,EST,roads,Protection standard,0.501383662710522
+Coastal flood,ESP,gas,Protection standard,0.5006733908107703
+Coastal flood,GRC,rail,Protection standard,0.49951209191276386
+Coastal flood,LVA,education,Protection standard,0.49767883918181
+Coastal flood,GBR,airports,Climate warming,0.4973743709193118
+Coastal flood,SVN,education,Protection standard,0.4922790351954922
+Coastal flood,ALB,rail,Protection standard,0.49051270028472066
+Coastal flood,CYP,roads,Protection standard,0.4790387454028672
+Coastal flood,NLD,healthcare,Climate warming,0.47668793635319523
+Coastal flood,POL,healthcare,Climate warming,0.471799610051695
+Coastal flood,PRT,airports,Climate warming,0.46933412864937735
+Coastal flood,FRA,airports,Protection standard,0.46645553401885737
+Coastal flood,CYP,telecom,Climate warming,0.4646278667025597
+Coastal flood,ITA,airports,Protection standard,0.4633328326532429
+Coastal flood,SWE,gas,Climate warming,0.4596142522188795
+Coastal flood,PRT,power,Climate warming,0.45829689883704827
+Coastal flood,IRL,oil,Protection standard,0.45574750118707663
+Coastal flood,FIN,rail,Cost / max-damage,0.45377406560617206
+Coastal flood,NLD,roads,Climate warming,0.4532727320833463
+Coastal flood,FRA,education,Protection standard,0.4521323735145267
+Coastal flood,ESP,airports,Protection standard,0.44975745831884295
+Coastal flood,FIN,education,Protection standard,0.4486124564977441
+Coastal flood,ALB,healthcare,Protection standard,0.44306345952011933
+Coastal flood,NOR,gas,Vulnerability curve,0.43807423804237083
+Coastal flood,DEU,power,Protection standard,0.4346324608797365
+Coastal flood,ESP,telecom,Climate warming,0.43091647377924136
+Coastal flood,FIN,roads,Protection standard,0.43068196454269786
+Coastal flood,DNK,power,Protection standard,0.42903131190870514
+Coastal flood,NLD,education,Climate warming,0.4230461396862581
+Coastal flood,IRL,rail,Climate warming,0.4218320281325949
+Coastal flood,POL,roads,Protection standard,0.4200547176023441
+Coastal flood,FRA,healthcare,Climate warming,0.41692439138858467
+Coastal flood,EST,education,Protection standard,0.4077137103920702
+Coastal flood,POL,rail,Protection standard,0.4073177761092603
+Coastal flood,POL,gas,Climate warming,0.4064664209884468
+Coastal flood,FIN,power,Vulnerability curve,0.40178913982450626
+Coastal flood,LTU,oil,Protection standard,0.3986245101384538
+Coastal flood,POL,education,Protection standard,0.3983595014754836
+Coastal flood,NLD,rail,Climate warming,0.3973799372035022
+Coastal flood,ESP,rail,Protection standard,0.39596438557536434
+Coastal flood,FRA,rail,Protection standard,0.3951283741521945
+Coastal flood,GBR,roads,Protection standard,0.389480319553214
+Coastal flood,FIN,oil,Protection standard,0.3889831479995414
+Coastal flood,IRL,education,Climate warming,0.38661911758794865
+Coastal flood,FRA,roads,Protection standard,0.3855283881872129
+Coastal flood,CYP,power,Vulnerability curve,0.38399916447839577
+Coastal flood,ESP,education,Climate warming,0.38255447388415237
+Coastal flood,FRA,power,Vulnerability curve,0.3823781893373993
+Coastal flood,PRT,rail,Protection standard,0.38101061788703816
+Coastal flood,ALB,gas,Climate warming,0.37789007147109327
+Coastal flood,SWE,power,Vulnerability curve,0.3747065787961863
+Coastal flood,ITA,education,Climate warming,0.3743089595695279
+Coastal flood,ALB,airports,Cost / max-damage,0.3736555178146664
+Coastal flood,ITA,power,Climate warming,0.373312721692679
+Coastal flood,PRT,education,Climate warming,0.3721476360509441
+Coastal flood,NLD,power,Climate warming,0.37115161194836743
+Coastal flood,ESP,roads,Protection standard,0.3701380907396842
+Coastal flood,HRV,power,Vulnerability curve,0.370083407673896
+Coastal flood,GRC,power,Protection standard,0.36772592049250674
+Coastal flood,PRT,roads,Protection standard,0.3634722346698686
+Coastal flood,ITA,rail,Climate warming,0.36290237904129025
+Coastal flood,LVA,power,Vulnerability curve,0.35908926552563075
+Coastal flood,IRL,roads,Protection standard,0.3538210357364645
+Coastal flood,ALB,power,Vulnerability curve,0.3512023512086446
+Coastal flood,GBR,education,Protection standard,0.34785812837184704
+Coastal flood,POL,power,Vulnerability curve,0.3426270713726737
+Coastal flood,ITA,roads,Protection standard,0.3401248583149391
+Coastal flood,GBR,power,Climate warming,0.3394288901314724
+Coastal flood,GBR,rail,Protection standard,0.3301474957529014
+Coastal flood,IRL,power,Vulnerability curve,0.312902377316956
+Coastal flood,ESP,power,Vulnerability curve,0.2859224077469208
+Coastal flood,EST,power,Climate warming,0.28446642557340324
+Coastal flood,FIN,gas,Vulnerability curve,0.27383981899838955
+Earthquake,LIE,gas,Vulnerability curve,0.9160366908107098
+Earthquake,LTU,gas,Vulnerability curve,0.9074282582177126
+Earthquake,AND,roads,Vulnerability curve,0.8979026174150541
+Earthquake,NOR,roads,Vulnerability curve,0.894478794675796
+Earthquake,GBR,roads,Vulnerability curve,0.8849617805547597
+Earthquake,MKD,gas,Vulnerability curve,0.8836266509010674
+Earthquake,BGR,gas,Vulnerability curve,0.8795288872418802
+Earthquake,DNK,roads,Vulnerability curve,0.8741622755410037
+Earthquake,IRL,roads,Vulnerability curve,0.8714763606575662
+Earthquake,LVA,roads,Vulnerability curve,0.8630378445778986
+Earthquake,LTU,roads,Vulnerability curve,0.8620226731665136
+Earthquake,LUX,roads,Vulnerability curve,0.8618480354504106
+Earthquake,FIN,roads,Vulnerability curve,0.8576420165625454
+Earthquake,EST,gas,Vulnerability curve,0.8561366310434099
+Earthquake,EST,roads,Vulnerability curve,0.8545126791590568
+Earthquake,SWE,roads,Vulnerability curve,0.8527525370578177
+Earthquake,SVK,oil,Vulnerability curve,0.8513602722053311
+Earthquake,CZE,roads,Vulnerability curve,0.8459711230854547
+Earthquake,POL,roads,Vulnerability curve,0.8431727556848798
+Earthquake,NLD,roads,Vulnerability curve,0.8396926771402423
+Earthquake,BEL,roads,Vulnerability curve,0.8272287639486129
+Earthquake,HRV,gas,Vulnerability curve,0.8267553567630032
+Earthquake,FRA,roads,Vulnerability curve,0.8214101383149164
+Earthquake,MLT,roads,Vulnerability curve,0.818244061443619
+Earthquake,ALB,gas,Vulnerability curve,0.8159602786792486
+Earthquake,ISL,power,Cost / max-damage,0.8126134259472506
+Earthquake,AND,telecom,Hazard intensity,0.812134908949488
+Earthquake,ALB,power,Cost / max-damage,0.8105547812778416
+Earthquake,MLT,telecom,Hazard intensity,0.8088686243658899
+Earthquake,ISL,roads,Vulnerability curve,0.8040483545703895
+Earthquake,HUN,roads,Vulnerability curve,0.8030958047814355
+Earthquake,DEU,roads,Vulnerability curve,0.799910861966559
+Earthquake,PRT,roads,Vulnerability curve,0.7993953902563012
+Earthquake,SVK,roads,Vulnerability curve,0.7974418290842673
+Earthquake,CHE,roads,Vulnerability curve,0.7959811998169894
+Earthquake,CHE,telecom,Hazard intensity,0.7913965111720893
+Earthquake,SVK,telecom,Hazard intensity,0.7901211218470102
+Earthquake,HUN,telecom,Hazard intensity,0.7896605626417997
+Earthquake,ESP,roads,Vulnerability curve,0.7887624778159743
+Earthquake,LIE,telecom,Hazard intensity,0.788612300542276
+Earthquake,HRV,roads,Vulnerability curve,0.7876185978620186
+Earthquake,LVA,gas,Vulnerability curve,0.7858295721776727
+Earthquake,LIE,roads,Vulnerability curve,0.781881721281338
+Earthquake,BEL,telecom,Hazard intensity,0.7795836106615589
+Earthquake,AUT,roads,Vulnerability curve,0.7774646177250176
+Earthquake,DNK,healthcare,Vulnerability curve,0.7722182087449656
+Earthquake,IRL,healthcare,Vulnerability curve,0.7721766371642912
+Earthquake,FIN,healthcare,Vulnerability curve,0.7720115922325534
+Earthquake,PRT,telecom,Hazard intensity,0.7710264934749169
+Earthquake,GBR,healthcare,Vulnerability curve,0.7708889595444642
+Earthquake,ITA,roads,Vulnerability curve,0.7707241342488184
+Earthquake,SRB,telecom,Hazard intensity,0.7706574942737913
+Earthquake,POL,healthcare,Vulnerability curve,0.770332930626321
+Earthquake,LUX,healthcare,Vulnerability curve,0.7698392881770578
+Earthquake,DEU,telecom,Hazard intensity,0.7686407562304188
+Earthquake,CZE,healthcare,Vulnerability curve,0.768180847449838
+Earthquake,GRC,power,Cost / max-damage,0.767996670175863
+Earthquake,EST,healthcare,Vulnerability curve,0.7677187798229519
+Earthquake,LTU,healthcare,Vulnerability curve,0.7674739777170211
+Earthquake,SWE,healthcare,Vulnerability curve,0.766787621878275
+Earthquake,NOR,healthcare,Vulnerability curve,0.766309059629399
+Earthquake,LVA,healthcare,Vulnerability curve,0.7642329549295394
+Earthquake,IRL,ports,Vulnerability curve,0.7629734276065644
+Earthquake,DNK,ports,Vulnerability curve,0.7629628322851338
+Earthquake,SRB,roads,Vulnerability curve,0.7624063864524177
+Earthquake,AUT,telecom,Hazard intensity,0.7621738934295201
+Earthquake,ESP,telecom,Hazard intensity,0.7615020868309981
+Earthquake,SRB,gas,Vulnerability curve,0.7605384950834893
+Earthquake,ROU,power,Cost / max-damage,0.7588362422470525
+Earthquake,HRV,telecom,Hazard intensity,0.7526411443407549
+Earthquake,CYP,power,Cost / max-damage,0.7522756716898328
+Earthquake,NLD,healthcare,Vulnerability curve,0.7521170423607659
+Earthquake,FRA,telecom,Hazard intensity,0.7510082870353565
+Earthquake,MKD,telecom,Hazard intensity,0.7507886342990789
+Earthquake,BGR,roads,Vulnerability curve,0.750458574813715
+Earthquake,ROU,roads,Vulnerability curve,0.7495268715898852
+Earthquake,MKD,power,Cost / max-damage,0.7494283778444795
+Earthquake,BEL,healthcare,Vulnerability curve,0.747680198352436
+Earthquake,FRA,healthcare,Vulnerability curve,0.7463632473335606
+Earthquake,BGR,telecom,Hazard intensity,0.74550281049828
+Earthquake,MKD,roads,Vulnerability curve,0.7452181842946275
+Earthquake,HUN,healthcare,Vulnerability curve,0.7437943326382023
+Earthquake,CYP,telecom,Hazard intensity,0.7434428925053687
+Earthquake,MLT,healthcare,Vulnerability curve,0.7434124868808766
+Earthquake,LVA,telecom,Hazard intensity,0.7421354091039312
+Earthquake,HRV,power,Cost / max-damage,0.7402055912808101
+Earthquake,DEU,healthcare,Vulnerability curve,0.7401395589964613
+Earthquake,ITA,telecom,Hazard intensity,0.7399292219017912
+Earthquake,AND,healthcare,Vulnerability curve,0.7397775281425638
+Earthquake,ISL,telecom,Hazard intensity,0.7396567571350683
+Earthquake,GRC,telecom,Hazard intensity,0.7376323226330253
+Earthquake,SVN,roads,Vulnerability curve,0.7368516560467785
+Earthquake,SVK,healthcare,Vulnerability curve,0.7366943397048491
+Earthquake,CYP,roads,Vulnerability curve,0.7365935351163415
+Earthquake,CHE,healthcare,Vulnerability curve,0.7365297253076191
+Earthquake,NLD,telecom,Hazard intensity,0.7361363011816432
+Earthquake,FIN,ports,Vulnerability curve,0.735764522163863
+Earthquake,ALB,roads,Vulnerability curve,0.7335971826813896
+Earthquake,ROU,telecom,Hazard intensity,0.7289469708711579
+Earthquake,LIE,healthcare,Vulnerability curve,0.7283579505023093
+Earthquake,GRC,roads,Vulnerability curve,0.7281769003422265
+Earthquake,CZE,ports,Vulnerability curve,0.7248152399560386
+Earthquake,SVN,telecom,Hazard intensity,0.7231215070156649
+Earthquake,AUT,healthcare,Vulnerability curve,0.7174779130157257
+Earthquake,SVN,power,Cost / max-damage,0.7158171280590065
+Earthquake,ALB,telecom,Hazard intensity,0.7150941593291443
+Earthquake,DNK,airports,Vulnerability curve,0.7140288541000733
+Earthquake,LVA,oil,Vulnerability curve,0.7132153660386432
+Earthquake,ESP,healthcare,Vulnerability curve,0.7120596888648022
+Earthquake,HUN,gas,Vulnerability curve,0.7110943057600944
+Earthquake,POL,airports,Vulnerability curve,0.7110410230045294
+Earthquake,SRB,healthcare,Vulnerability curve,0.7094445534873581
+Earthquake,POL,ports,Vulnerability curve,0.7086870949331958
+Earthquake,ITA,power,Cost / max-damage,0.7083457926892923
+Earthquake,PRT,healthcare,Vulnerability curve,0.706557105679496
+Earthquake,IRL,education,Vulnerability curve,0.7061752449470393
+Earthquake,DNK,education,Vulnerability curve,0.7061330448118809
+Earthquake,FIN,education,Vulnerability curve,0.703233046085012
+Earthquake,GBR,education,Vulnerability curve,0.7024172636226398
+Earthquake,ALB,rail,Cost / max-damage,0.7009000488615437
+Earthquake,GBR,ports,Vulnerability curve,0.6975174809132735
+Earthquake,POL,education,Vulnerability curve,0.6969393090703322
+Earthquake,EST,education,Vulnerability curve,0.6965994516671089
+Earthquake,EST,ports,Vulnerability curve,0.6938717157010083
+Earthquake,CZE,education,Vulnerability curve,0.6932623845310021
+Earthquake,BGR,power,Cost / max-damage,0.6931753170701974
+Earthquake,LTU,education,Vulnerability curve,0.6927974919838158
+Earthquake,NOR,education,Vulnerability curve,0.6923831340762231
+Earthquake,LUX,education,Vulnerability curve,0.6896286353954818
+Earthquake,ALB,oil,Cost / max-damage,0.6895931728366685
+Earthquake,SWE,education,Vulnerability curve,0.6891751784890726
+Earthquake,NOR,ports,Vulnerability curve,0.6883823660023678
+Earthquake,LUX,ports,Vulnerability curve,0.6817063654630227
+Earthquake,LVA,education,Vulnerability curve,0.6811508623504856
+Earthquake,CZE,telecom,Hazard intensity,0.6802107934336391
+Earthquake,ROU,oil,Cost / max-damage,0.6794026344801859
+Earthquake,ROU,rail,Cost / max-damage,0.6786201126898155
+Earthquake,CZE,airports,Vulnerability curve,0.6776858778149107
+Earthquake,GRC,rail,Cost / max-damage,0.676258137004714
+Earthquake,EST,telecom,Hazard intensity,0.6757694814226498
+Earthquake,FIN,airports,Vulnerability curve,0.6745754255451326
+Earthquake,GBR,airports,Vulnerability curve,0.6740851786505414
+Earthquake,LTU,airports,Vulnerability curve,0.6725202522884356
+Earthquake,NLD,education,Vulnerability curve,0.6700961019059307
+Earthquake,SWE,ports,Vulnerability curve,0.6664331536453886
+Earthquake,SWE,telecom,Hazard intensity,0.6622094263798222
+Earthquake,LUX,airports,Vulnerability curve,0.6586458093257053
+Earthquake,NOR,power,Vulnerability curve,0.6576724737747979
+Earthquake,DNK,telecom,Cost / max-damage,0.6574583061123939
+Earthquake,IRL,telecom,Cost / max-damage,0.6574565808113904
+Earthquake,IRL,gas,Vulnerability curve,0.6504924380119876
+Earthquake,FRA,gas,Vulnerability curve,0.6496724333399684
+Earthquake,DNK,oil,Vulnerability curve,0.6494670618033339
+Earthquake,IRL,oil,Vulnerability curve,0.6493645066174787
+Earthquake,DNK,gas,Vulnerability curve,0.6488078144514128
+Earthquake,CYP,rail,Cost / max-damage,0.6471266784722345
+Earthquake,FIN,oil,Vulnerability curve,0.6469863146247985
+Earthquake,POL,gas,Vulnerability curve,0.6462409174206656
+Earthquake,GBR,gas,Vulnerability curve,0.6454149793740301
+Earthquake,FRA,education,Vulnerability curve,0.645395751643409
+Earthquake,ITA,healthcare,Vulnerability curve,0.6453935052155807
+Earthquake,POL,oil,Vulnerability curve,0.6453514971893008
+Earthquake,NOR,gas,Vulnerability curve,0.6453410415529638
+Earthquake,GBR,oil,Vulnerability curve,0.6447596993866991
+Earthquake,BEL,education,Vulnerability curve,0.6440292172859932
+Earthquake,BGR,healthcare,Vulnerability curve,0.6424878330204922
+Earthquake,SVN,rail,Cost / max-damage,0.6419605187324813
+Earthquake,LUX,telecom,Hazard intensity,0.6416940321853917
+Earthquake,SWE,gas,Vulnerability curve,0.6402502659453791
+Earthquake,LUX,oil,Vulnerability curve,0.6393446753190037
+Earthquake,HRV,healthcare,Vulnerability curve,0.6391789002330464
+Earthquake,SWE,oil,Vulnerability curve,0.6386594040844891
+Earthquake,EST,oil,Vulnerability curve,0.6384672012597886
+Earthquake,GRC,gas,Cost / max-damage,0.6380575314890066
+Earthquake,ISL,healthcare,Vulnerability curve,0.637883697572634
+Earthquake,IRL,airports,Vulnerability curve,0.6361962154949028
+Earthquake,FIN,gas,Vulnerability curve,0.6345326638225041
+Earthquake,HUN,education,Vulnerability curve,0.6335296665609831
+Earthquake,LTU,telecom,Hazard intensity,0.6330920526960061
+Earthquake,MKD,rail,Cost / max-damage,0.6328219722484172
+Earthquake,NOR,telecom,Hazard intensity,0.632475671930983
+Earthquake,NLD,oil,Vulnerability curve,0.6320532282277229
+Earthquake,EST,airports,Vulnerability curve,0.6314085471948557
+Earthquake,NOR,oil,Vulnerability curve,0.6313568451599436
+Earthquake,DEU,education,Vulnerability curve,0.6312890749321668
+Earthquake,SVN,healthcare,Vulnerability curve,0.6311572904391367
+Earthquake,MLT,education,Vulnerability curve,0.6305030971445839
+Earthquake,SWE,airports,Vulnerability curve,0.6304887790145124
+Earthquake,GRC,oil,Cost / max-damage,0.6291807181295518
+Earthquake,CHE,education,Vulnerability curve,0.629035739394835
+Earthquake,AND,education,Vulnerability curve,0.6250460506030973
+Earthquake,LUX,gas,Vulnerability curve,0.6244850533431922
+Earthquake,ITA,rail,Cost / max-damage,0.6242476919665852
+Earthquake,AUT,power,Cost / max-damage,0.6241325405956073
+Earthquake,NOR,airports,Vulnerability curve,0.623284071803802
+Earthquake,SVK,education,Vulnerability curve,0.6200178598271999
+Earthquake,LTU,oil,Vulnerability curve,0.6168990549997361
+Earthquake,NLD,ports,Vulnerability curve,0.6140637544918115
+Earthquake,ISL,rail,Cost / max-damage,0.6107678676704773
+Earthquake,CYP,healthcare,Vulnerability curve,0.6103660327483662
+Earthquake,BGR,rail,Cost / max-damage,0.6088391796810687
+Earthquake,LVA,ports,Vulnerability curve,0.608818069607643
+Earthquake,HRV,rail,Cost / max-damage,0.607758269698959
+Earthquake,CYP,oil,Cost / max-damage,0.6064841102499466
+Earthquake,LIE,education,Vulnerability curve,0.6018568965377963
+Earthquake,MKD,healthcare,Vulnerability curve,0.5998537703402418
+Earthquake,BEL,oil,Vulnerability curve,0.5993821803175717
+Earthquake,SRB,power,Cost / max-damage,0.5983744967978835
+Earthquake,LVA,airports,Vulnerability curve,0.5940972080760344
+Earthquake,AUT,education,Vulnerability curve,0.593933556882191
+Earthquake,NLD,gas,Vulnerability curve,0.592450561733471
+Earthquake,PRT,power,Cost / max-damage,0.5915874978219925
+Earthquake,CHE,gas,Vulnerability curve,0.5908839686974914
+Earthquake,ESP,education,Vulnerability curve,0.5900388787606239
+Earthquake,LIE,power,Cost / max-damage,0.589528208403967
+Earthquake,ROU,gas,Cost / max-damage,0.58757623058101
+Earthquake,PRT,education,Vulnerability curve,0.5826822485894902
+Earthquake,AUT,gas,Vulnerability curve,0.5809300726547638
+Earthquake,SRB,education,Vulnerability curve,0.5779667878098104
+Earthquake,LTU,ports,Vulnerability curve,0.572960564168753
+Earthquake,MLT,oil,Vulnerability curve,0.5706175488873341
+Earthquake,DNK,rail,Vulnerability curve,0.5696969141474436
+Earthquake,SVK,gas,Vulnerability curve,0.5683017065262688
+Earthquake,ESP,power,Cost / max-damage,0.5680922324161028
+Earthquake,NLD,airports,Vulnerability curve,0.5678844419331006
+Earthquake,FRA,oil,Vulnerability curve,0.5659684986737672
+Earthquake,MKD,oil,Cost / max-damage,0.5650558517480919
+Earthquake,AUT,rail,Cost / max-damage,0.564578994175734
+Earthquake,SRB,rail,Cost / max-damage,0.5644478595628233
+Earthquake,AND,gas,Vulnerability curve,0.5637153340529124
+Earthquake,GBR,rail,Vulnerability curve,0.5629689271926243
+Earthquake,FIN,rail,Vulnerability curve,0.5624139019464237
+Earthquake,CHE,oil,Vulnerability curve,0.5604718472290176
+Earthquake,NOR,rail,Vulnerability curve,0.5579169926533727
+Earthquake,POL,rail,Vulnerability curve,0.5573880655368124
+Earthquake,GRC,healthcare,Vulnerability curve,0.5572241835018391
+Earthquake,ROU,healthcare,Vulnerability curve,0.5566823497433973
+Earthquake,LUX,power,Vulnerability curve,0.5555628962401664
+Earthquake,IRL,rail,Vulnerability curve,0.5547838210486585
+Earthquake,LUX,rail,Vulnerability curve,0.5546452449169301
+Earthquake,HUN,oil,Vulnerability curve,0.5533972706916219
+Earthquake,FRA,power,Cost / max-damage,0.5491996028067009
+Earthquake,SWE,rail,Vulnerability curve,0.5474362196222974
+Earthquake,PRT,rail,Cost / max-damage,0.5449186799735315
+Earthquake,POL,telecom,Hazard intensity,0.5427494114293661
+Earthquake,ESP,gas,Vulnerability curve,0.542148740168663
+Earthquake,LTU,rail,Vulnerability curve,0.5420176102938364
+Earthquake,ITA,gas,Cost / max-damage,0.5409677972715096
+Earthquake,BEL,ports,Vulnerability curve,0.5408756299776007
+Earthquake,FIN,telecom,Cost / max-damage,0.5405374150466724
+Earthquake,EST,rail,Vulnerability curve,0.5382141240993072
+Earthquake,SVK,power,Cost / max-damage,0.5333011028044756
+Earthquake,ITA,education,Vulnerability curve,0.5324948718253015
+Earthquake,LVA,rail,Vulnerability curve,0.5321729374096025
+Earthquake,ISL,education,Vulnerability curve,0.5309038945729214
+Earthquake,BEL,gas,Vulnerability curve,0.5294694749601729
+Earthquake,DEU,power,Cost / max-damage,0.5277874998006635
+Earthquake,BGR,education,Vulnerability curve,0.527507823930882
+Earthquake,DEU,oil,Vulnerability curve,0.5270080114073434
+Earthquake,HRV,education,Vulnerability curve,0.5262062082573683
+Earthquake,CZE,rail,Vulnerability curve,0.5251618795195938
+Earthquake,FIN,power,Vulnerability curve,0.5219991365309101
+Earthquake,HRV,oil,Cost / max-damage,0.5217524783572285
+Earthquake,LVA,power,Cost / max-damage,0.5214997764612942
+Earthquake,LIE,rail,Cost / max-damage,0.5203562032566047
+Earthquake,ESP,rail,Cost / max-damage,0.5187863862576741
+Earthquake,DEU,gas,Vulnerability curve,0.5177201563287992
+Earthquake,CHE,rail,Cost / max-damage,0.5158583279385256
+Earthquake,FRA,ports,Vulnerability curve,0.5156288977237293
+Earthquake,DNK,power,Vulnerability curve,0.5140522651805114
+Earthquake,PRT,oil,Vulnerability curve,0.5137758988095747
+Earthquake,CYP,education,Vulnerability curve,0.513523239034745
+Earthquake,CYP,gas,Cost / max-damage,0.5130276460919704
+Earthquake,FRA,airports,Vulnerability curve,0.5125240754353945
+Earthquake,MKD,education,Vulnerability curve,0.5114454179754229
+Earthquake,ISL,oil,Cost / max-damage,0.5078697783789444
+Earthquake,GBR,telecom,Hazard intensity,0.505697299730684
+Earthquake,SVN,education,Vulnerability curve,0.5053688753676842
+Earthquake,CHE,power,Cost / max-damage,0.5042093617446927
+Earthquake,POL,power,Cost / max-damage,0.5040271915325011
+Earthquake,EST,power,Cost / max-damage,0.5037818955880117
+Earthquake,ITA,oil,Cost / max-damage,0.5034024855385568
+Earthquake,SVK,rail,Cost / max-damage,0.5030864951553099
+Earthquake,LTU,power,Cost / max-damage,0.5024901431008061
+Earthquake,GBR,power,Vulnerability curve,0.5018573082604704
+Earthquake,DEU,rail,Cost / max-damage,0.5013707445884604
+Earthquake,BEL,airports,Vulnerability curve,0.5009592330790897
+Earthquake,ROU,education,Vulnerability curve,0.4994180870299492
+Earthquake,NLD,power,Cost / max-damage,0.49920515174927294
+Earthquake,IRL,power,Cost / max-damage,0.4986992370394937
+Earthquake,HUN,power,Cost / max-damage,0.49857268425385914
+Earthquake,ALB,healthcare,Vulnerability curve,0.4968806397699437
+Earthquake,SWE,power,Cost / max-damage,0.49479631788274386
+Earthquake,HUN,rail,Cost / max-damage,0.4946924191394869
+Earthquake,FRA,rail,Cost / max-damage,0.4937637822211246
+Earthquake,NLD,rail,Vulnerability curve,0.49306665710092523
+Earthquake,GRC,education,Vulnerability curve,0.49065828692899566
+Earthquake,SRB,oil,Vulnerability curve,0.4872922243665567
+Earthquake,ESP,oil,Vulnerability curve,0.4872808162686591
+Earthquake,CZE,power,Cost / max-damage,0.4832085447350706
+Earthquake,BEL,rail,Vulnerability curve,0.4796140921883932
+Earthquake,BEL,power,Cost / max-damage,0.47940822022872936
+Earthquake,ALB,education,Vulnerability curve,0.4791697544189763
+Earthquake,ESP,ports,Vulnerability curve,0.4763706299900041
+Earthquake,DEU,ports,Vulnerability curve,0.47615448442772607
+Earthquake,SVN,ports,Vulnerability curve,0.4758747845136318
+Earthquake,AUT,ports,Vulnerability curve,0.47586670302274847
+Earthquake,MLT,power,Cost / max-damage,0.4756161608583111
+Earthquake,PRT,gas,Vulnerability curve,0.47165253086024506
+Earthquake,HUN,airports,Vulnerability curve,0.4714840189960954
+Earthquake,AUT,oil,Cost / max-damage,0.4685285314069859
+Earthquake,HUN,ports,Vulnerability curve,0.4668768827951237
+Earthquake,SVN,oil,Cost / max-damage,0.46662704417675577
+Earthquake,SRB,ports,Vulnerability curve,0.4646050514510472
+Earthquake,MLT,ports,Vulnerability curve,0.46437131956137984
+Earthquake,CHE,ports,Vulnerability curve,0.46302034768116945
+Earthquake,AND,airports,Hazard intensity,0.46204088516022984
+Earthquake,SVK,airports,Vulnerability curve,0.46119556787673976
+Earthquake,BGR,oil,Cost / max-damage,0.4611290807556404
+Earthquake,SVN,gas,Vulnerability curve,0.4555436594997806
+Earthquake,DEU,airports,Vulnerability curve,0.4552106559125191
+Earthquake,SVK,ports,Vulnerability curve,0.45406150787287947
+Earthquake,LIE,airports,Vulnerability curve,0.4533617571260014
+Earthquake,BGR,ports,Hazard intensity,0.44853270936921125
+Earthquake,PRT,ports,Vulnerability curve,0.4467857177670121
+Earthquake,HRV,ports,Vulnerability curve,0.44396636044946636
+Earthquake,ITA,ports,Vulnerability curve,0.43990274067768415
+Earthquake,ROU,ports,Hazard intensity,0.4398558790790321
+Earthquake,AND,power,Hazard intensity,0.43661034054127235
+Earthquake,ISL,airports,Hazard intensity,0.43354089044244903
+Earthquake,ISL,ports,Vulnerability curve,0.43257683986299406
+Earthquake,CHE,airports,Vulnerability curve,0.4319626465750517
+Earthquake,CYP,ports,Vulnerability curve,0.4294425815001273
+Earthquake,GRC,ports,Vulnerability curve,0.42911620640356096
+Earthquake,ALB,ports,Vulnerability curve,0.42718992145076945
+Earthquake,ESP,airports,Vulnerability curve,0.4248568103617845
+Earthquake,SRB,airports,Vulnerability curve,0.4223738587965146
+Earthquake,BGR,airports,Hazard intensity,0.4107068992429564
+Earthquake,AUT,airports,Vulnerability curve,0.40779177086939106
+Earthquake,ITA,airports,Vulnerability curve,0.4047545261943325
+Earthquake,CYP,airports,Vulnerability curve,0.3983521537467953
+Earthquake,MLT,airports,Hazard intensity,0.39430906402135035
+Earthquake,ROU,airports,Vulnerability curve,0.39416401514817656
+Earthquake,SVN,airports,Vulnerability curve,0.3922447175523551
+Earthquake,MKD,airports,Vulnerability curve,0.38896322834214986
+Earthquake,GRC,airports,Vulnerability curve,0.38656483164397587
+Earthquake,PRT,airports,Hazard intensity,0.3841885745011699
+Earthquake,HRV,airports,Vulnerability curve,0.3796580787969598
+Earthquake,ALB,airports,Vulnerability curve,0.3545106699125205
+Windstorm,AND,telecom,Vulnerability curve,0.7229040255255487
+Windstorm,ALB,telecom,Vulnerability curve,0.7072073250490517
+Windstorm,CYP,telecom,Vulnerability curve,0.7062189328483927
+Windstorm,ITA,telecom,Vulnerability curve,0.6994607990087335
+Windstorm,ROU,telecom,Vulnerability curve,0.6974651695164932
+Windstorm,PRT,telecom,Vulnerability curve,0.6887177357292061
+Windstorm,MLT,telecom,Vulnerability curve,0.6879006394498638
+Windstorm,GRC,telecom,Vulnerability curve,0.68733624252179
+Windstorm,SVK,telecom,Vulnerability curve,0.6866660200363036
+Windstorm,EST,telecom,Vulnerability curve,0.6856446235834152
+Windstorm,SVN,telecom,Vulnerability curve,0.6831663161272061
+Windstorm,MKD,telecom,Vulnerability curve,0.6813866544631519
+Windstorm,LVA,telecom,Vulnerability curve,0.6791158613819558
+Windstorm,SRB,telecom,Vulnerability curve,0.6787568429044695
+Windstorm,AUT,telecom,Vulnerability curve,0.6757744634111836
+Windstorm,HRV,telecom,Vulnerability curve,0.6733463156742215
+Windstorm,HUN,telecom,Vulnerability curve,0.6710748646505051
+Windstorm,BGR,telecom,Vulnerability curve,0.6666722926489204
+Windstorm,CHE,telecom,Vulnerability curve,0.6656266293875391
+Windstorm,FIN,telecom,Vulnerability curve,0.6643422343307841
+Windstorm,LTU,telecom,Vulnerability curve,0.6639509355752284
+Windstorm,ESP,telecom,Vulnerability curve,0.662321483228226
+Windstorm,LIE,telecom,Vulnerability curve,0.6588628617735753
+Windstorm,PRT,healthcare,Vulnerability curve,0.6574027930864661
+Windstorm,ITA,healthcare,Vulnerability curve,0.6566440067398758
+Windstorm,AND,education,Vulnerability curve,0.6561329539190417
+Windstorm,MLT,healthcare,Vulnerability curve,0.654699323311382
+Windstorm,ESP,healthcare,Vulnerability curve,0.6546836360582629
+Windstorm,POL,healthcare,Vulnerability curve,0.6538847453831261
+Windstorm,AUT,healthcare,Vulnerability curve,0.6531946714642504
+Windstorm,CZE,telecom,Vulnerability curve,0.6531114311687957
+Windstorm,CHE,healthcare,Vulnerability curve,0.6512949699126077
+Windstorm,FRA,telecom,Vulnerability curve,0.6509470513273344
+Windstorm,HRV,healthcare,Vulnerability curve,0.6508843842008286
+Windstorm,NOR,telecom,Vulnerability curve,0.6489381662159692
+Windstorm,POL,telecom,Vulnerability curve,0.6488286710408406
+Windstorm,NOR,healthcare,Vulnerability curve,0.6469428622285511
+Windstorm,CZE,healthcare,Vulnerability curve,0.6446342900853226
+Windstorm,LTU,healthcare,Vulnerability curve,0.643800904452017
+Windstorm,LUX,telecom,Vulnerability curve,0.6421164078408946
+Windstorm,ESP,education,Vulnerability curve,0.641405946828529
+Windstorm,SVN,healthcare,Vulnerability curve,0.6407713160526002
+Windstorm,ISL,healthcare,Vulnerability curve,0.6406147827782813
+Windstorm,LUX,healthcare,Vulnerability curve,0.6405406917606483
+Windstorm,AUT,education,Vulnerability curve,0.6402878681563844
+Windstorm,FRA,healthcare,Vulnerability curve,0.6402138695143453
+Windstorm,PRT,education,Vulnerability curve,0.6400268978870661
+Windstorm,ITA,education,Vulnerability curve,0.6399656959136514
+Windstorm,ALB,healthcare,Vulnerability curve,0.6387061031753017
+Windstorm,DEU,healthcare,Vulnerability curve,0.6368909376772074
+Windstorm,GBR,healthcare,Vulnerability curve,0.6358152431091694
+Windstorm,ISL,education,Vulnerability curve,0.6353992274160968
+Windstorm,CHE,education,Vulnerability curve,0.6344072785618643
+Windstorm,POL,education,Vulnerability curve,0.634352253884651
+Windstorm,ISL,telecom,Vulnerability curve,0.6343278310404248
+Windstorm,SWE,healthcare,Vulnerability curve,0.632763660162462
+Windstorm,ALB,education,Vulnerability curve,0.6323315084197079
+Windstorm,NLD,healthcare,Vulnerability curve,0.6315728391608795
+Windstorm,BEL,healthcare,Vulnerability curve,0.6314385663927944
+Windstorm,NOR,education,Vulnerability curve,0.6314349479374455
+Windstorm,SVK,healthcare,Vulnerability curve,0.6312011341823545
+Windstorm,HRV,education,Vulnerability curve,0.6311970842577082
+Windstorm,GRC,healthcare,Vulnerability curve,0.6305065557182987
+Windstorm,MLT,education,Vulnerability curve,0.6290665656396764
+Windstorm,SWE,telecom,Vulnerability curve,0.6286223307010187
+Windstorm,CZE,education,Vulnerability curve,0.6277583808454688
+Windstorm,FRA,education,Vulnerability curve,0.6275116606416434
+Windstorm,LUX,education,Vulnerability curve,0.6265706984835508
+Windstorm,DEU,telecom,Vulnerability curve,0.6262435100912634
+Windstorm,GRC,education,Vulnerability curve,0.6261076203152127
+Windstorm,LTU,education,Vulnerability curve,0.6258541635852685
+Windstorm,DEU,education,Vulnerability curve,0.6258367233661335
+Windstorm,LVA,healthcare,Vulnerability curve,0.623877388010776
+Windstorm,IRL,healthcare,Vulnerability curve,0.6236473376787054
+Windstorm,BEL,telecom,Vulnerability curve,0.6230985343192477
+Windstorm,EST,healthcare,Vulnerability curve,0.6224010627884211
+Windstorm,DNK,healthcare,Vulnerability curve,0.6210982051575452
+Windstorm,ROU,education,Vulnerability curve,0.6207967173148884
+Windstorm,CYP,education,Vulnerability curve,0.6181044101814557
+Windstorm,BEL,education,Vulnerability curve,0.6179108667713433
+Windstorm,ROU,healthcare,Vulnerability curve,0.6177556282162365
+Windstorm,SWE,education,Vulnerability curve,0.6158405070130477
+Windstorm,GBR,education,Vulnerability curve,0.6153697140968811
+Windstorm,LVA,education,Vulnerability curve,0.6144563433335929
+Windstorm,EST,education,Vulnerability curve,0.6141281526821614
+Windstorm,FIN,healthcare,Vulnerability curve,0.6123347129415969
+Windstorm,NLD,education,Vulnerability curve,0.610847899735295
+Windstorm,CYP,healthcare,Vulnerability curve,0.6099970944755319
+Windstorm,HUN,healthcare,Vulnerability curve,0.6086274449996395
+Windstorm,IRL,education,Vulnerability curve,0.6084366526666544
+Windstorm,SVK,education,Vulnerability curve,0.6078213928174382
+Windstorm,GBR,telecom,Vulnerability curve,0.6069412114308355
+Windstorm,AND,gas,Vulnerability curve,0.6048950588763379
+Windstorm,DNK,education,Vulnerability curve,0.6032541975938203
+Windstorm,SVN,education,Vulnerability curve,0.6016187762073895
+Windstorm,BGR,healthcare,Vulnerability curve,0.6007503714201601
+Windstorm,IRL,telecom,Vulnerability curve,0.5990024328232186
+Windstorm,ITA,oil,Vulnerability curve,0.5960390537484733
+Windstorm,PRT,gas,Vulnerability curve,0.5955765573224054
+Windstorm,MKD,healthcare,Vulnerability curve,0.5955133678178441
+Windstorm,POL,oil,Vulnerability curve,0.5945968956029695
+Windstorm,AUT,gas,Vulnerability curve,0.5934858742307666
+Windstorm,HUN,education,Vulnerability curve,0.5933861147843587
+Windstorm,NLD,telecom,Vulnerability curve,0.5928896412916462
+Windstorm,AUT,oil,Vulnerability curve,0.5927717278419038
+Windstorm,CHE,oil,Vulnerability curve,0.5912787142893011
+Windstorm,MLT,oil,Vulnerability curve,0.591214115932287
+Windstorm,LUX,oil,Vulnerability curve,0.5891061872685724
+Windstorm,PRT,oil,Vulnerability curve,0.5890015908213122
+Windstorm,ESP,gas,Vulnerability curve,0.5887786324640548
+Windstorm,HRV,oil,Vulnerability curve,0.5873246402251292
+Windstorm,CYP,oil,Vulnerability curve,0.5856296159006572
+Windstorm,LTU,oil,Vulnerability curve,0.5851555445631426
+Windstorm,ESP,oil,Vulnerability curve,0.5849605326293955
+Windstorm,LVA,oil,Vulnerability curve,0.5833164097975544
+Windstorm,LVA,gas,Vulnerability curve,0.5828851014406768
+Windstorm,GRC,gas,Vulnerability curve,0.5821184201204865
+Windstorm,BEL,oil,Vulnerability curve,0.5821103038197667
+Windstorm,CHE,gas,Vulnerability curve,0.5810824448174764
+Windstorm,POL,gas,Vulnerability curve,0.5810221041130263
+Windstorm,FRA,oil,Vulnerability curve,0.5805249694886883
+Windstorm,LTU,gas,Vulnerability curve,0.5802409759834913
+Windstorm,NOR,oil,Vulnerability curve,0.5801122528991788
+Windstorm,IRL,oil,Vulnerability curve,0.579670890620739
+Windstorm,ITA,gas,Vulnerability curve,0.5795423708684232
+Windstorm,FIN,education,Vulnerability curve,0.5787027755278795
+Windstorm,LUX,gas,Vulnerability curve,0.5785800342582895
+Windstorm,ISL,oil,Vulnerability curve,0.5785732948694561
+Windstorm,SWE,oil,Vulnerability curve,0.5769424122741237
+Windstorm,HRV,gas,Vulnerability curve,0.5766522486647994
+Windstorm,FRA,gas,Vulnerability curve,0.5754328162028682
+Windstorm,DEU,gas,Vulnerability curve,0.5748930866859492
+Windstorm,IRL,gas,Vulnerability curve,0.5748269980261858
+Windstorm,GBR,gas,Vulnerability curve,0.5741705183312951
+Windstorm,BEL,gas,Vulnerability curve,0.5728967250439209
+Windstorm,DNK,gas,Vulnerability curve,0.5720733985734229
+Windstorm,FIN,oil,Vulnerability curve,0.5713136075596011
+Windstorm,AND,healthcare,Vulnerability curve,0.5703860825353512
+Windstorm,DEU,oil,Vulnerability curve,0.5683361974992868
+Windstorm,ALB,gas,Vulnerability curve,0.5681153210664172
+Windstorm,SVK,gas,Vulnerability curve,0.5674787548025573
+Windstorm,NOR,gas,Vulnerability curve,0.5664289885174986
+Windstorm,SRB,education,Vulnerability curve,0.5659629919894854
+Windstorm,BGR,education,Vulnerability curve,0.5650916335138523
+Windstorm,HUN,gas,Vulnerability curve,0.5649627545000213
+Windstorm,SWE,gas,Vulnerability curve,0.563674470093467
+Windstorm,GRC,oil,Vulnerability curve,0.5632414185882046
+Windstorm,GBR,oil,Vulnerability curve,0.5629262130581392
+Windstorm,LIE,education,Vulnerability curve,0.5626567353382335
+Windstorm,EST,oil,Vulnerability curve,0.562441022011611
+Windstorm,SRB,healthcare,Vulnerability curve,0.5580800809652043
+Windstorm,BGR,gas,Vulnerability curve,0.5525385296355927
+Windstorm,MKD,education,Vulnerability curve,0.5518487923794236
+Windstorm,EST,gas,Vulnerability curve,0.5512814184548105
+Windstorm,FIN,gas,Vulnerability curve,0.5501496361056701
+Windstorm,NLD,oil,Vulnerability curve,0.5480276970888776
+Windstorm,DNK,oil,Vulnerability curve,0.5461843265476014
+Windstorm,NLD,gas,Vulnerability curve,0.5456478930834769
+Windstorm,ALB,oil,Vulnerability curve,0.5429108350750099
+Windstorm,HUN,oil,Vulnerability curve,0.5415976896214219
+Windstorm,AND,power,Vulnerability curve,0.5410578577765426
+Windstorm,DNK,telecom,Vulnerability curve,0.5322236901288382
+Windstorm,CYP,gas,Vulnerability curve,0.5304178285184942
+Windstorm,SRB,oil,Vulnerability curve,0.4844240700444384
+Windstorm,SVK,oil,Vulnerability curve,0.48224058852213564
+Windstorm,SVN,gas,Vulnerability curve,0.47959902121809844
+Windstorm,HUN,power,Vulnerability curve,0.4747980655908695
+Windstorm,MKD,oil,Vulnerability curve,0.47111436847880667
+Windstorm,SRB,gas,Vulnerability curve,0.4701408369073838
+Windstorm,ROU,oil,Vulnerability curve,0.46820217081913923
+Windstorm,SVN,rail,Vulnerability curve,0.4607753159312995
+Windstorm,ALB,rail,Vulnerability curve,0.4601905443338249
+Windstorm,SVK,power,Vulnerability curve,0.4580197068417637
+Windstorm,PRT,rail,Vulnerability curve,0.45756917173489864
+Windstorm,CHE,rail,Vulnerability curve,0.45584459567398317
+Windstorm,ITA,rail,Vulnerability curve,0.4553865058906021
+Windstorm,SVK,rail,Vulnerability curve,0.45493983434139557
+Windstorm,ROU,rail,Vulnerability curve,0.4542413022510099
+Windstorm,HRV,power,Cost / max-damage,0.45332331284638155
+Windstorm,ISL,rail,Vulnerability curve,0.45306906225157934
+Windstorm,GRC,rail,Vulnerability curve,0.45076365350595593
+Windstorm,MKD,rail,Vulnerability curve,0.4505528574756724
+Windstorm,EST,rail,Vulnerability curve,0.45049691699271227
+Windstorm,SRB,rail,Vulnerability curve,0.4495307395307396
+Windstorm,LTU,rail,Vulnerability curve,0.44929049609877914
+Windstorm,FIN,rail,Vulnerability curve,0.4476962854203934
+Windstorm,BGR,rail,Vulnerability curve,0.4451119636624455
+Windstorm,CZE,rail,Vulnerability curve,0.4449206405000271
+Windstorm,SVN,power,Vulnerability curve,0.44338720291661227
+Windstorm,HRV,rail,Vulnerability curve,0.4431206002460866
+Windstorm,SVN,oil,Hazard intensity,0.44266424949240424
+Windstorm,AUT,rail,Vulnerability curve,0.4426414076457274
+Windstorm,HUN,rail,Vulnerability curve,0.4421560259114825
+Windstorm,CHE,airports,Hazard intensity,0.4416976766152744
+Windstorm,ESP,rail,Vulnerability curve,0.4398534510958456
+Windstorm,NOR,rail,Vulnerability curve,0.43832496767691825
+Windstorm,CYP,rail,Vulnerability curve,0.43818085382877553
+Windstorm,ROU,gas,Vulnerability curve,0.43705994786371916
+Windstorm,BGR,oil,Hazard intensity,0.43383351509012874
+Windstorm,FRA,airports,Cost / max-damage,0.4310246132668093
+Windstorm,PRT,power,Vulnerability curve,0.43067317929924154
+Windstorm,FRA,rail,Vulnerability curve,0.4279223269380498
+Windstorm,LUX,rail,Vulnerability curve,0.426705716455147
+Windstorm,DNK,power,Cost / max-damage,0.4253742610859977
+Windstorm,DEU,airports,Cost / max-damage,0.42308757481278003
+Windstorm,DNK,airports,Cost / max-damage,0.4207721256139598
+Windstorm,BEL,rail,Vulnerability curve,0.41841771214319284
+Windstorm,LVA,rail,Vulnerability curve,0.4181583635518606
+Windstorm,POL,rail,Vulnerability curve,0.4164771187569279
+Windstorm,NLD,power,Cost / max-damage,0.4163083433049057
+Windstorm,EST,airports,Hazard intensity,0.4145408542549723
+Windstorm,IRL,rail,Vulnerability curve,0.41389500611149216
+Windstorm,ISL,airports,Cost / max-damage,0.4133731872699972
+Windstorm,CZE,power,Vulnerability curve,0.4112827782942871
+Windstorm,LIE,rail,Vulnerability curve,0.40971732347367285
+Windstorm,ITA,airports,Hazard intensity,0.40823687797495367
+Windstorm,HRV,airports,Cost / max-damage,0.4075156438221555
+Windstorm,SWE,power,Cost / max-damage,0.4072738617807939
+Windstorm,AUT,power,Vulnerability curve,0.40688034443494564
+Windstorm,GBR,airports,Cost / max-damage,0.4063041462712529
+Windstorm,GRC,power,Cost / max-damage,0.40016954555993506
+Windstorm,NOR,airports,Cost / max-damage,0.3998159620598708
+Windstorm,DEU,rail,Vulnerability curve,0.3976892567233297
+Windstorm,GBR,rail,Vulnerability curve,0.3959596067017302
+Windstorm,AUT,airports,Hazard intensity,0.3955491283125424
+Windstorm,EST,power,Vulnerability curve,0.3954232498273871
+Windstorm,LUX,airports,Hazard intensity,0.3946063325143882
+Windstorm,ALB,power,Cost / max-damage,0.39310137739979467
+Windstorm,SWE,rail,Vulnerability curve,0.39227820950103726
+Windstorm,IRL,airports,Cost / max-damage,0.3905454881346254
+Windstorm,BGR,power,Vulnerability curve,0.388211044179275
+Windstorm,FIN,power,Vulnerability curve,0.3858659835227752
+Windstorm,NLD,rail,Vulnerability curve,0.38430216213120644
+Windstorm,CYP,power,Cost / max-damage,0.37906338633097436
+Windstorm,LTU,airports,Cost / max-damage,0.3776194861027208
+Windstorm,DNK,rail,Cost / max-damage,0.37658640601516036
+Windstorm,LVA,airports,Cost / max-damage,0.37594036266866815
+Windstorm,NOR,power,Cost / max-damage,0.37562621138142493
+Windstorm,CHE,power,Vulnerability curve,0.3723762935116636
+Windstorm,FRA,power,Vulnerability curve,0.36852967245772256
+Windstorm,ESP,power,Cost / max-damage,0.3676625548724985
+Windstorm,LVA,power,Cost / max-damage,0.3657334300712731
+Windstorm,POL,airports,Hazard intensity,0.3656713064788923
+Windstorm,BEL,airports,Cost / max-damage,0.3626892371649835
+Windstorm,NLD,airports,Hazard intensity,0.36047732311241565
+Windstorm,ESP,airports,Cost / max-damage,0.359975520125104
+Windstorm,SWE,airports,Cost / max-damage,0.3598741346616988
+Windstorm,BEL,power,Cost / max-damage,0.35669737849707767
+Windstorm,GBR,power,Vulnerability curve,0.35621135880692784
+Windstorm,ISL,power,Cost / max-damage,0.35518028981732924
+Windstorm,LTU,power,Cost / max-damage,0.35229149357751016
+Windstorm,SRB,power,Cost / max-damage,0.35054469614608064
+Windstorm,MKD,power,Cost / max-damage,0.3504372779923721
+Windstorm,ROU,power,Cost / max-damage,0.3503612850415904
+Windstorm,POL,power,Vulnerability curve,0.3473893381950078
+Windstorm,IRL,power,Vulnerability curve,0.3472052069647148
+Windstorm,ITA,power,Cost / max-damage,0.34522098394095363
+Windstorm,MLT,power,Vulnerability curve,0.34276575536749393
+Windstorm,LIE,power,Vulnerability curve,0.33795124786208797
+Windstorm,DEU,power,Cost / max-damage,0.332916252925871
+Windstorm,LUX,power,Cost / max-damage,0.3153565778187485

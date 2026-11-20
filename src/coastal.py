@@ -289,6 +289,19 @@ POLICY_OVERRIDES = {
     "FI20": 20.0,   # Aland
 }
 
+# Regions COASTPROS gives no value at all: no modelled or single policy RP, and no
+# country mean, because the country has no other region in the table. Malta
+# (MT00) has a row without values; Cyprus (CY00) has no row. Left at 0, the coastal
+# maps' 1-year return period floods them every year, which made them two of
+# Europe's largest coastal EADs. 25 years (decided 2026-11-17): below every modelled
+# value in COASTPROS (lowest 26.6, Albania's Jug) and above the lowest recorded
+# policy standard for populated land (20: Finland, Portugal, France). Applied only
+# where the region would otherwise be 0.
+MINIMUM_STANDARD = {
+    "MT00": 25.0,   # Malta
+    "CY00": 25.0,   # Cyprus
+}
+
 # The nearest-region fallback exists for centroids a few metres offshore - a
 # quay or a jetty whose midpoint lands in the water. Uncapped it will happily
 # snap a centroid across an entire sea, which is how 5.9 M British centroids
@@ -351,6 +364,10 @@ def sample_coastal_protection(features: gpd.GeoDataFrame, coastal_cfg: dict) -> 
     for new_code, old_code in NUTS_SUCCESSORS.items():
         if new_code not in nuts2_rp and old_code in nuts2_rp:
             nuts2_rp[new_code] = nuts2_rp[old_code]
+    for nuts_id, value in MINIMUM_STANDARD.items():
+        if nuts2_rp.get(nuts_id, 0.0) <= 0:
+            nuts2_rp[nuts_id] = value
+            print(f"  [coastal] {nuts_id}: no COASTPROS value, minimum standard {value:g} yr")
 
     nuts2 = _read_nuts(nuts2_path)
     if uk_path is not None and not (nuts2["CNTR_CODE"] == "UK").any():

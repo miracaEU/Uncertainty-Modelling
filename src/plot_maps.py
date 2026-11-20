@@ -199,6 +199,14 @@ RELWIDTH_SUBTITLE = ("colour = (p95 - p5) / median of total EAD, the band as a "
                      "multiple of the central estimate")
 RELWIDTH_DEGENERATE_LABEL = "median = 0 (no central estimate)"
 
+# --measure relwidth_mean. The same 5-95 band against the MEAN instead of the
+# median, on the relwidth edges so the two grids read against each other. The
+# mean is above zero wherever any draw has damage, so this measure has no
+# undefined case: max == 0 is "no damage in any draw" and everything else gets
+# a value - including the zero-inflated combinations whose median is 0.
+RELWIDTH_MEAN_SUBTITLE = ("colour = (p95 - p5) / mean of total EAD, the band as a "
+                          "multiple of the mean")
+
 # --measure iqr. The same relative-width idea on the INTERQUARTILE band rather
 # than the 5-95 one: it answers "how uncertain is the bulk of the distribution"
 # instead of "how far do the tails reach". Much less tail-sensitive, which
@@ -298,7 +306,12 @@ def use_measure(name: str) -> None:
     global MEASURE, SPREAD_EDGES, SPREAD_LABELS, SPREAD_SUBTITLE
     global SPREAD_DEGENERATE_LABEL
     MEASURE = name
-    if name == "relwidth":
+    if name == "relwidth_mean":
+        SPREAD_EDGES = RELWIDTH_EDGES
+        SPREAD_LABELS = RELWIDTH_LABELS
+        SPREAD_SUBTITLE = RELWIDTH_MEAN_SUBTITLE
+        SPREAD_DEGENERATE_LABEL = "mean = 0"
+    elif name == "relwidth":
         SPREAD_EDGES = RELWIDTH_EDGES
         SPREAD_LABELS = RELWIDTH_LABELS
         SPREAD_SUBTITLE = RELWIDTH_SUBTITLE
@@ -331,6 +344,8 @@ def spread_value(st) -> float:
     need different subsets of six statistics.
     """
     median = st["median"]
+    if MEASURE == "relwidth_mean":
+        return (st["p95"] - st["p5"]) / st["mean"] if st["mean"] > 0 else float("nan")
     if MEASURE == "relwidth":
         return (st["p95"] - st["p5"]) / median if median > 0 else float("nan")
     if MEASURE == "iqr":
@@ -371,9 +386,10 @@ def spread_color(cls: int) -> str:
 def spread_legend_handles(include_missing: bool = True) -> list:
     handles = [Patch(facecolor=c, edgecolor=BORDER, linewidth=0.4, label=lab)
                for c, lab in zip(SPREAD_RAMP, SPREAD_LABELS)]
-    handles.append(Patch(facecolor=P5_ZERO_FILL, edgecolor=P5_ZERO_HATCH_COLOR,
-                         linewidth=0.4, hatch=P5_ZERO_HATCH,
-                         label=SPREAD_DEGENERATE_LABEL))
+    if MEASURE != "relwidth_mean":          # the mean is never 0 where any draw has damage
+        handles.append(Patch(facecolor=P5_ZERO_FILL, edgecolor=P5_ZERO_HATCH_COLOR,
+                             linewidth=0.4, hatch=P5_ZERO_HATCH,
+                             label=SPREAD_DEGENERATE_LABEL))
     handles.append(Patch(facecolor=EMPTY_FILL, edgecolor=BORDER, linewidth=0.4,
                          label="no damage in any draw"))
     if include_missing:
@@ -806,11 +822,17 @@ def main() -> None:
     else:
         odir = OUT_DIR.with_name(OUT_DIR.name + suffix)
 
+    from .ema_model import is_reported
+
     ranges = pd.read_csv(ranges_csv)
     if args.assets:
         ranges = ranges[ranges["asset"].isin(args.assets)]
     if args.scenarios:
         ranges = ranges[ranges["scenario"].isin(args.scenarios)]
+    else:
+        # Coastal is reported with sea-level rise only; name a present-day coastal
+        # scenario in --scenarios to map it anyway.
+        ranges = ranges[ranges["scenario"].map(is_reported)]
     if ranges.empty:
         raise SystemExit("No rows left after filtering.")
 
@@ -841,6 +863,8 @@ def main() -> None:
             top = top[top["asset"].isin(args.assets)]
         if args.scenarios:
             top = top[top["scenario"].isin(args.scenarios)]
+        else:
+            top = top[top["scenario"].map(is_reported)]
         m = 0
         for asset in sorted(top["asset"].unique()):
             plot_driver_map(top, geo, "scenario", "asset", asset,

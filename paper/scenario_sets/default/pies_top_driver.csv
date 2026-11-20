@@ -1,0 +1,21 @@
+scenario,state,pairs
+coastal_baseline_ds_slr_sc0p5to2p0,Climate warming,70
+coastal_baseline_ds_slr_sc0p5to2p0,Cost / max-damage,37
+coastal_baseline_ds_slr_sc0p5to2p0,"Exposed, never damaged",10
+coastal_baseline_ds_slr_sc0p5to2p0,No exposure,48
+coastal_baseline_ds_slr_sc0p5to2p0,Protection standard,46
+coastal_baseline_ds_slr_sc0p5to2p0,Vulnerability curve,46
+earthquake,Cost / max-damage,71
+earthquake,Hazard intensity,42
+earthquake,Vulnerability curve,236
+flood_baseline_ds_sc0p5to2p0,Climate warming,9
+flood_baseline_ds_sc0p5to2p0,Cost / max-damage,32
+flood_baseline_ds_sc0p5to2p0,"Exposed, never damaged",1
+flood_baseline_ds_sc0p5to2p0,No exposure,9
+flood_baseline_ds_sc0p5to2p0,"Planned, not run yet",243
+flood_baseline_ds_sc0p5to2p0,Protection standard,30
+flood_baseline_ds_sc0p5to2p0,Vulnerability curve,25
+windstorm,Cost / max-damage,34
+windstorm,"Exposed, never damaged",19
+windstorm,Hazard intensity,10
+windstorm,Vulnerability curve,217

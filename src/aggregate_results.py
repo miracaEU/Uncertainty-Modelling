@@ -214,8 +214,21 @@ SCENARIO_DESCRIPTIONS = [
                      "coastal scenario's curve factors still read 'Flood: ...'). Differences: the "
                      "coastal hazard maps (streamed from the CoCLiCo STAC catalogue), the COASTPROS "
                      "coastal protection standard instead of FLOPROS, and NO warming factor "
-                     "(coastal sea-level rise is not modelled here). Coastal (non-landlocked) "
-                     "countries only - absent for e.g. LUX."),
+                     "(the present-day scenarios; see the _slr scenarios for sea-level rise). "
+                     "Coastal (non-landlocked) countries only - absent for e.g. LUX."),
+    ("coastal_absprot_ds_slr / coastal_noprot_ds_slr", "The REPORTED coastal scenarios: as "
+                     "coastal_absprot_ds / coastal_noprot_ds plus an 'slr' factor sampling one of "
+                     "ten CoCLiCo sea-level states (2010 present day; 2030, 2050, 2100 under "
+                     "SSP1-2.6, SSP2-4.5, SSP5-8.5), each a separate set of coastal hazard maps."),
+    ("Range tests (<base>_<bracket>)", "Same model, another bracket for the protection factor. "
+                     "rp25to200: absolute RP 25-200 instead of 5-200 (a 25-year minimum standard). "
+                     "sc0p5to2p0: recorded standard x 0.5-2, sampled LOG-uniformly so halving and "
+                     "doubling are equally likely (median x1). sc0p75to1p33: recorded standard x "
+                     "0.75-1.33, also LOG-uniform (median x1), for a recorded value that is only "
+                     "slightly off. rp10to100 and sc0p5to1p5 (uniform) "
+                     "are the earlier subset tests, superseded. Coastal range tests are run with "
+                     "sea-level rise: coastal_absprot_ds_slr_rp25to200, "
+                     "coastal_baseline_ds_slr_sc0p5to2p0, coastal_baseline_ds_slr_sc0p75to1p33."),
     ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
                     "curve choice(s), cost_level, pga_scale (x0.8-1.2), aggregation."),
     ("earthquake_pga0p9to1p1", "Range test: as earthquake, but pga_scale is sampled from "
@@ -225,6 +238,9 @@ SCENARIO_DESCRIPTIONS = [
                    "Factors: wind curve choice(s), cost_level, gust_scale, aggregation. Only defined "
                    "for wind-damaging assets - roads/ports carry no windstorm damage (their only wind "
                    "curve is identically zero) so the scenario is skipped for them."),
+    ("windstorm_unprotected", "As windstorm, but with no design standard (protection 0): every wind "
+                               "map counts, from the shortest return period (5 years) on. Added "
+                               "November 2026."),
     ("windstorm_absprot", "As windstorm, but the design standard is sampled as an ABSOLUTE return "
                            "period (protection_abs_rp, 25-200 years) applied uniformly to every "
                            "feature, replacing the fixed RP50 - isolates the sensitivity to the "

@@ -1,0 +1,173 @@
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_airports_exposure.parquet
+  128 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP airports: applied 5/5 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_education_exposure.parquet
+  1028 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP education: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_gas_exposure.parquet
+  1 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP gas: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_healthcare_exposure.parquet
+  255 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP healthcare: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_oil_exposure.parquet
+  64 features, CRS EPSG:3035
+  NOTE: dropping 1/64 feature(s) with no vulnerability curve for asset 'oil'; unmapped object_type(s): {'petroleum_well': 1}. Continuing with the mapped types only.
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP oil: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_ports_exposure.parquet
+  49 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 4 centroid(s) outside every region; 4 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP ports: applied 14/14 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_power_exposure.parquet
+  8750 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 5 centroid(s) outside every region; 5 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP power: applied 4/4 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_rail_exposure.parquet
+  2 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP rail: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_roads_exposure.parquet
+  140102 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 67 centroid(s) outside every region; 67 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP roads: applied 272/272 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/CYP_telecom_exposure.parquet
+  339 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+CYP telecom: applied 5/5 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_airports_exposure.parquet
+  39 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT airports: applied 0/0 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_education_exposure.parquet
+  195 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 1 centroid(s) outside every region; 1 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT education: applied 1/1 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_healthcare_exposure.parquet
+  45 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT healthcare: applied 1/1 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_oil_exposure.parquet
+  61 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 1 centroid(s) outside every region; 1 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT oil: applied 1/1 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_ports_exposure.parquet
+  17 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 2 centroid(s) outside every region; 2 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT ports: applied 13/13 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_power_exposure.parquet
+  7952 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 34 centroid(s) outside every region; 34 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT power: applied 20/20 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_roads_exposure.parquet
+  24205 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] 103 centroid(s) outside every region; 103 matched within 5 km, 0 left unprotected
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT roads: applied 209/209 exposed changed -> 25 
+Loading exposure: /scistor/ivm/eks510/MIRACA_EXPOSURE/MLT_telecom_exposure.parquet
+  9 features, CRS EPSG:3035
+  [coastal] assigning coastal protection standards (COASTPROS-EU x NUTS2)...
+  [coastal] 4 region(s) took a recorded policy standard
+  [coastal] MT00: no COASTPROS value, minimum standard 25 yr
+  [coastal] CY00: no COASTPROS value, minimum standard 25 yr
+  [coastal] spliced 41 UK regions in from NUTS_RG_01M_2016_3035.geojson
+  [coastal] protection RP: mean 25 yr, max 25 yr, 0.0% unprotected
+MLT telecom: applied 0/0 exposed changed -> 25 
+wrote /net/sys/pscst201/BETA-IVM-HPC@ada-nodes/yma794/Uncertainty-Modelling/reruns/20261117_coastal_mt_cy/coastal_protection_applied.csv
+Done: see reruns/20261117_coastal_mt_cy/coastal_protection_applied.csv

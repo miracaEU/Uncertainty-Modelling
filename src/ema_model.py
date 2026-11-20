@@ -47,8 +47,11 @@ The fifteen scenarios:
                           [25, 200] years) applied uniformly to every feature,
                           replacing the fixed RP50 - isolating the sensitivity
                           to the assumed wind design standard.
-                          Both only defined for assets that support windstorm
-                          (not roads/ports).
+    windstorm_unprotected Same as windstorm, but with no design standard at all
+                          (protection 0): every wind map counts, from the
+                          shortest return period on. Added November 2026.
+                          All three only defined for assets that support
+                          windstorm (not roads/ports).
 
 Each scenario maps to exactly one hazard (SCENARIO_HAZARD); a scenario only
 applies to an asset when that hazard applies to the asset
@@ -68,10 +71,11 @@ groups with >1 curve become a CategoricalParameter.
 
 import os
 
+from scipy import stats
 from ema_workbench import CategoricalParameter, Constant, Model, RealParameter, ScalarOutcome
 
 from .curves import AssetConfig, applicable_hazards, get_asset_config
-from .risk_model import WARMING_LEVELS, ModelData, compute_risk, load_model_data
+from .risk_model import WARMING_LEVELS, ModelData, compute_risk, is_slr, load_model_data  # noqa: F401
 from .paths import load_config
 
 # Ordered so each hazard's protection treatments and their depth-scale twins
@@ -85,7 +89,7 @@ SCENARIOS = [
     "coastal_absprot", "coastal_absprot_ds",
     "coastal_noprot", "coastal_noprot_ds",
     "earthquake",
-    "windstorm", "windstorm_absprot",
+    "windstorm", "windstorm_absprot", "windstorm_unprotected",
 ]
 
 # The subset the study orchestrator runs by default. All 15 scenarios above
@@ -103,6 +107,29 @@ DEFAULT_SCENARIOS = [
     "windstorm_absprot",
 ]
 
+# What the report shows. Coastal flood is reported ONLY with sea-level rise
+# (decided November 2026): river flood samples `warming`, so a present-day-only
+# coastal result beside it would compare a warmed river world with an unwarmed
+# coast. The SLR factor's 2010_None state is the present day, so nothing is lost.
+# The pan-European figures (eu_totals, cascade, plot_pyramid, plot_maps,
+# plot_heatmap, plot_drivers) take this list as their default and drop any other
+# coastal scenario unless asked for it explicitly.
+REPORT_SCENARIOS = [
+    "flood_absprot_ds",
+    "flood_noprot_ds",
+    "coastal_absprot_ds_slr",
+    "coastal_noprot_ds_slr",
+    "earthquake",
+    "windstorm",
+    "windstorm_absprot",
+]
+
+
+def is_reported(scenario: str) -> bool:
+    """False for a present-day coastal scenario, which the report does not show."""
+    return SCENARIO_HAZARD.get(scenario) != "coastal" or is_slr(scenario)
+
+
 # Which single hazard each scenario computes. Used to decide applicability
 # (a scenario applies to an asset/country iff its hazard does) and to pick the
 # include_* flag in build_model.
@@ -114,7 +141,7 @@ SCENARIO_HAZARD = {
     "coastal_absprot": "coastal", "coastal_absprot_ds": "coastal",
     "coastal_noprot": "coastal", "coastal_noprot_ds": "coastal",
     "earthquake": "earthquake",
-    "windstorm": "windstorm", "windstorm_absprot": "windstorm",
+    "windstorm": "windstorm", "windstorm_absprot": "windstorm", "windstorm_unprotected": "windstorm",
 }
 
 # The protection treatment (scale/abs/fixed) and depth-error treatment
@@ -154,18 +181,45 @@ _COASTAL_SCENARIOS = {
 #           (1.0 = exactly the recorded value), so the standard is perturbed
 #           rather than replaced.
 #   abs   - one return period replacing the standard outright, everywhere.
+#
+#   sc0p5to2p0 replaces sc0p5to1p5 (November 2026): half to double the recorded
+#   standard, sampled LOG-uniformly, so halving and doubling are equally likely
+#   and the median multiplier is 1, i.e. the recorded standard itself. Uniform
+#   on [0.5, 2] would put the median at 1.25 and two draws in three above the
+#   recorded value. sc0p5to1p5 stays registered (uniform, as it was run) so its
+#   archives keep their name and label; it is no longer submitted.
+#
+#   sc0p75to1p33 (November 2026): the recorded standard is off, but only a bit.
+#   0.75 and 1.33 (exactly 4/3) are reciprocals, so sampled log-uniformly an increase is as
+#   likely as a decrease of the same factor and the median multiplier is 1. It
+#   is the narrow companion to sc0p5to2p0.
 PROTECTION_RANGES = {
-    "scale": {"": (0.0, 2.0), "sc0p5to1p5": (0.5, 1.5)},
-    "abs": {"": (5.0, 200.0), "rp10to100": (10.0, 100.0)},
+    "scale": {"": (0.0, 2.0), "sc0p5to1p5": (0.5, 1.5), "sc0p5to2p0": (0.5, 2.0),
+              "sc0p75to1p33": (0.75, 4.0 / 3.0)},
+    "abs": {"": (5.0, 200.0), "rp10to100": (10.0, 100.0), "rp25to200": (25.0, 200.0)},
 }
+# rp25to200 (November 2026) keeps the default's upper bound and raises only the
+# floor, so against RP 5-200 it isolates what a 25-year minimum standard removes.
+# It replaces rp10to100 as the submitted absolute-range test; rp10to100 stays
+# registered for its existing archives.
+# Brackets sampled log-uniformly. The factor keeps its name and still holds the
+# multiplier itself: ema_workbench maps each (0, 1) draw through the parameter's
+# dist.ppf, for the Sobol and LHS samplers alike, so experiments.csv and every
+# downstream reader see a protection_scale within the bracket as before.
+LOG_UNIFORM_BRACKETS = {"sc0p5to2p0", "sc0p75to1p33"}
 
 # Which base scenarios get range twins, and which factor each varies. Only the
 # _ds (multiplicative depth error) forms, since those are the study defaults.
+# The coastal SLR scenarios get twins too, named <base>_slr_<suffix>: the range
+# suffix has to come last for _bracket(), so SLR is detected with is_slr(), not
+# by the name's ending.
 _RANGE_BASES = {
     "flood_baseline_ds": "scale",
     "coastal_baseline_ds": "scale",
     "flood_absprot_ds": "abs",
     "coastal_absprot_ds": "abs",
+    "coastal_baseline_ds_slr": "scale",
+    "coastal_absprot_ds_slr": "abs",
 }
 
 # Hazard-intensity brackets, on the same "<base>_<suffix>" scheme. The +/-20% on
@@ -194,8 +248,10 @@ _INTENSITY_RANGE_BASES = {
 #                    more than the protection standard?
 #   _noprot_ds_slr   protection held at the recorded COASTPROS value - does it
 #                    matter more than the curves and the cost table?
+#   _baseline_ds_slr recorded value times a multiplier; registered as the base of
+#                    the x0.5-2.0 range twin, not run with the 0-2 default.
 SLR_SUFFIX = "slr"
-SLR_BASES = ["coastal_absprot_ds", "coastal_noprot_ds"]
+SLR_BASES = ["coastal_absprot_ds", "coastal_noprot_ds", "coastal_baseline_ds"]
 
 
 def _register_slr_variants() -> None:
@@ -236,8 +292,9 @@ def _register_range_variants() -> None:
             SCENARIO_HAZARD[name] = SCENARIO_HAZARD[base]
 
 
-_register_range_variants()
+# SLR first: the SLR scenarios are themselves range bases.
 _register_slr_variants()
+_register_range_variants()
 
 
 def protection_range(scenario: str, kind: str) -> tuple[float, float]:
@@ -247,6 +304,11 @@ def protection_range(scenario: str, kind: str) -> tuple[float, float]:
     everything else takes the study default.
     """
     return _bracket(scenario, PROTECTION_RANGES[kind])
+
+
+def protection_log_uniform(scenario: str) -> bool:
+    """True if this scenario's protection bracket is sampled log-uniformly."""
+    return any(scenario.endswith(f"_{s}") for s in LOG_UNIFORM_BRACKETS)
 
 
 def intensity_range(scenario: str, kind: str) -> tuple[float, float]:
@@ -361,7 +423,11 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
     # protection treatment (against FLOPROS for river, COASTPROS for coastal -
     # same parameter names, the baseline differs inside compute_risk)
     if prot_kind == "scale":
-        uncertainties.append(RealParameter("protection_scale", *protection_range(scenario, "scale")))
+        lo, hi = protection_range(scenario, "scale")
+        if protection_log_uniform(scenario):
+            uncertainties.append(RealParameter.from_dist("protection_scale", stats.loguniform(lo, hi)))
+        else:
+            uncertainties.append(RealParameter("protection_scale", lo, hi))
     elif prot_kind == "abs":
         uncertainties.append(RealParameter("protection_abs_rp", *protection_range(scenario, "abs")))
     elif prot_kind == "fixed":
@@ -371,7 +437,7 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
     # levels come from the config so the factor can never offer a state Stage 1
     # did not extract; a scenario asking for it with none configured is an error
     # rather than a silently single-valued factor.
-    if hazard == "coastal" and scenario.endswith(f"_{SLR_SUFFIX}"):
+    if hazard == "coastal" and is_slr(scenario):
         states = list((cfg["hazards"].get("coastal") or {}).get("slr_states") or {})
         if len(states) < 2:
             raise ValueError(
@@ -471,9 +537,12 @@ def _build_windstorm_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) -> 
     ]
     # 'windstorm' holds the design standard fixed at RP50 (WIND_DESIGN_RP inside
     # compute_risk); 'windstorm_absprot' samples it as an absolute return period
-    # applied uniformly to every feature (analogous to flood/coastal absprot).
+    # applied uniformly to every feature (analogous to flood/coastal absprot);
+    # 'windstorm_unprotected' fixes it at 0, so no wind map is cut off.
     if scenario == "windstorm_absprot":
         uncertainties.append(RealParameter("protection_abs_rp", 25.0, 200.0))
+    elif scenario == "windstorm_unprotected":
+        constants.append(Constant("protection_abs_rp", 0.0))
     constants += [
         Constant("include_river", False),
         Constant("include_earthquake", False),
@@ -504,6 +573,6 @@ def build_model(cfg: dict | None = None) -> Model:
         return _build_water_model(cfg, asset_cfg, scenario, hazard="coastal")
     if SCENARIO_HAZARD.get(scenario) == "earthquake":
         return _build_earthquake_model(cfg, asset_cfg, scenario)
-    if scenario in ("windstorm", "windstorm_absprot"):
+    if SCENARIO_HAZARD.get(scenario) == "windstorm":
         return _build_windstorm_model(cfg, asset_cfg, scenario)
     raise ValueError(f"Unknown scenario '{scenario}'; choose from {SCENARIOS}")

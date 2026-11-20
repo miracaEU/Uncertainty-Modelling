@@ -1,0 +1,82 @@
+hazard,asset,scenario,treatment,n_countries,median,min,max,off_scale
+River flood,roads,flood_noprot_ds,As recorded (floods),33,2.397692027550913,1.894059189452933,2.830764503837563,0
+River flood,roads,flood_baseline_ds_sc0p5to2p0,Recorded × 0.5–2 (floods),33,2.808669263646903,2.424966224380699,3.355184662435696,0
+River flood,roads,flood_absprot_ds,"Sampled, RP 5–200 (floods)",33,3.6398989898589527,3.4842589066003655,4.000794549973956,0
+River flood,rail,flood_noprot_ds,As recorded (floods),32,2.751036309214496,2.4912521936808454,3.417839911169611,0
+River flood,rail,flood_baseline_ds_sc0p5to2p0,Recorded × 0.5–2 (floods),32,3.1759734300660774,3.0020486827011226,3.8625052295295665,0
+River flood,rail,flood_absprot_ds,"Sampled, RP 5–200 (floods)",32,3.8661234139394978,3.7423342486253457,3.9894563252545696,0
+River flood,airports,flood_noprot_ds,As recorded (floods),31,1.015273074436617,0.6304544567044857,1.8863526323995445,0
+River flood,airports,flood_absprot_ds,"Sampled, RP 5–200 (floods)",32,3.3189542447875082,2.5515366709064553,3.8510761228295047,0
+River flood,ports,flood_noprot_ds,As recorded (floods),31,0.9845922173698151,0.4482145900669079,1.6175714270313621,0
+River flood,ports,flood_absprot_ds,"Sampled, RP 5–200 (floods)",31,3.4100064143117184,2.974226780313488,3.773455891323514,0
+River flood,power,flood_noprot_ds,As recorded (floods),33,3.4700124644884354,2.2151624088270805,4.367032373361046,0
+River flood,power,flood_absprot_ds,"Sampled, RP 5–200 (floods)",33,3.978442909548313,3.5126264757491326,4.226771078680929,0
+River flood,gas,flood_noprot_ds,As recorded (floods),27,3.1236151600854596,1.7571983159831877,7.101349564444974,0
+River flood,gas,flood_absprot_ds,"Sampled, RP 5–200 (floods)",27,3.741021436141185,2.1824550177054776,5.847733759546911,0
+River flood,oil,flood_noprot_ds,As recorded (floods),27,2.084053711293807,1.700549499324332,3.096455860683774,0
+River flood,oil,flood_absprot_ds,"Sampled, RP 5–200 (floods)",27,3.5271544470488605,2.2221496160362344,3.8539721578992894,0
+River flood,telecom,flood_noprot_ds,As recorded (floods),31,1.1934436470993177,0.7221057338293325,2.1251691886385027,0
+River flood,telecom,flood_baseline_ds_sc0p5to2p0,Recorded × 0.5–2 (floods),31,1.8326270715227313,1.3861162924260149,2.6824361353478476,0
+River flood,telecom,flood_absprot_ds,"Sampled, RP 5–200 (floods)",31,3.307435458392844,2.9367910233105308,3.66523432364245,0
+River flood,education,flood_noprot_ds,As recorded (floods),33,2.1707759271996148,1.6543037209935874,2.6800047129864817,0
+River flood,education,flood_absprot_ds,"Sampled, RP 5–200 (floods)",33,3.4621318649338524,3.255172893240937,3.7640901908425675,0
+River flood,healthcare,flood_noprot_ds,As recorded (floods),33,1.6923492051914237,1.2477048698103888,2.1698021152268407,0
+River flood,healthcare,flood_absprot_ds,"Sampled, RP 5–200 (floods)",33,3.3331288053992463,2.8872152645392575,3.6918550393952283,0
+Coastal flood,roads,coastal_noprot_ds_slr,As recorded (floods),24,2.610560469766723,1.8780236194050404,4.623554736793885,0
+Coastal flood,roads,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),24,2.945851174395594,2.2623813115247526,4.8596213306786185,0
+Coastal flood,roads,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",24,3.598019745064989,3.1232769854101394,4.113465888920807,0
+Coastal flood,rail,coastal_noprot_ds_slr,As recorded (floods),20,2.8234355292237057,2.465829237930054,5.065107983446432,0
+Coastal flood,rail,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),21,3.1304450286354237,2.865116429438691,5.601699474844266,0
+Coastal flood,rail,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",21,3.6282523383173495,3.096799533016315,4.535812619127483,0
+Coastal flood,airports,coastal_noprot_ds_slr,As recorded (floods),19,1.8454016927581993,0.5684343837273618,4.922228710875897,0
+Coastal flood,airports,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),20,2.232184072190157,1.3282328339240392,4.723247699453205,0
+Coastal flood,airports,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",20,3.2197318325555755,2.610156213219505,4.14734987214494,0
+Coastal flood,ports,coastal_noprot_ds_slr,As recorded (floods),22,0.6570281961893759,0.35932498218017594,2.616359952811828,0
+Coastal flood,ports,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),23,1.3822874500432365,1.1137325255253654,4.962905854554799,0
+Coastal flood,ports,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",23,3.1778877303835698,2.373457192919508,3.397957383745964,0
+Coastal flood,power,coastal_noprot_ds_slr,As recorded (floods),21,4.083682616457398,1.7204957518341226,4.996015030646386,0
+Coastal flood,power,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),22,4.021052634077629,2.2809322822739593,4.896398607550623,0
+Coastal flood,power,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",22,3.827320280518938,3.148453734515164,4.16028207710241,0
+Coastal flood,gas,coastal_noprot_ds_slr,As recorded (floods),13,3.41338875411427,0.0,9.688154501840964,0
+Coastal flood,gas,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),14,4.25660272004832,0.0,9.613510979152917,0
+Coastal flood,gas,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",14,3.995162072432038,0.0,9.100943281992665,0
+Coastal flood,oil,coastal_noprot_ds_slr,As recorded (floods),15,1.9609867235448937,1.7069394146233385,10.096072469841179,1
+Coastal flood,oil,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),16,2.4369851697862517,2.217303832191701,9.104302782562792,0
+Coastal flood,oil,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",16,3.5171255333401277,2.652182040989083,6.55836899476235,0
+Coastal flood,telecom,coastal_noprot_ds_slr,As recorded (floods),17,1.0878545998815443,0.5519211001552317,8.94556215689583,0
+Coastal flood,telecom,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),18,1.6149094408743037,1.2475586344738154,7.749938995814963,0
+Coastal flood,telecom,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",18,3.105826072350017,2.2290376432636734,5.8157876477795245,0
+Coastal flood,education,coastal_noprot_ds_slr,As recorded (floods),20,2.4561162873385456,1.6969675583699724,4.123676914743742,0
+Coastal flood,education,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),21,2.7692382021333564,2.2046410157070055,5.029789819684349,0
+Coastal flood,education,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",21,3.493125128755642,3.1107641618976705,3.8604450278895346,0
+Coastal flood,healthcare,coastal_noprot_ds_slr,As recorded (floods),19,2.0592127847378463,1.3398682201741277,4.172110631847691,0
+Coastal flood,healthcare,coastal_baseline_ds_slr_sc0p5to2p0,Recorded × 0.5–2 (floods),20,2.356873740960051,1.8029950571062396,4.5543150548048255,0
+Coastal flood,healthcare,coastal_absprot_ds_slr,"Sampled, RP 5–200 (floods)",20,3.2745162094902778,2.7156675500700294,4.078778555121967,0
+Earthquake,roads,earthquake,Earthquake,36,3.983842212614814,2.4335149751816476,4.909868949884149,0
+Earthquake,rail,earthquake,Earthquake,34,3.09965570659942,2.925544698650261,3.2896157804845925,0
+Earthquake,airports,earthquake,Earthquake,36,1.1212534889832289,0.9181897504917201,1.3212616514337423,0
+Earthquake,ports,earthquake,Earthquake,33,1.0820679956263255,0.8592281051622452,1.2163961597129949,0
+Earthquake,power,earthquake,Earthquake,36,3.184202515923981,2.416521433207294,6.7562381279262125,0
+Earthquake,gas,earthquake,Earthquake,33,2.8145028340227403,1.8693198911856461,4.030369465093436,0
+Earthquake,oil,earthquake,Earthquake,33,2.8462795511613472,2.107296121493627,3.2782356571029028,0
+Earthquake,telecom,earthquake,Earthquake,36,1.0883509615772082,0.661026918508347,1.558704867039337,0
+Earthquake,education,earthquake,Earthquake,36,2.52309632812249,1.8446492867286015,2.8225231961251636,0
+Earthquake,healthcare,earthquake,Earthquake,36,2.712145444150032,1.8203881773323543,2.86891172719061,0
+Windstorm,rail,windstorm,"Fixed, RP 50 (wind)",34,5.455643371460103,4.122404008824219,5.998212906018374,0
+Windstorm,rail,windstorm_absprot,"Sampled, RP 25–200 (wind)",34,5.012043736607459,3.899826222461321,5.929738084919102,0
+Windstorm,rail,windstorm_unprotected,No design standard (wind),34,5.643522648485376,4.910802604652762,6.025774705220311,0
+Windstorm,airports,windstorm,"Fixed, RP 50 (wind)",20,6.002004726633114,2.4737028038903865,7.195624134150299,0
+Windstorm,airports,windstorm_absprot,"Sampled, RP 25–200 (wind)",20,6.108370614097368,2.453082117744943,7.217142239333593,0
+Windstorm,power,windstorm,"Fixed, RP 50 (wind)",36,3.2115903430064714,2.8071959571984784,5.484292485883053,0
+Windstorm,power,windstorm_absprot,"Sampled, RP 25–200 (wind)",36,3.34426147679864,3.079551816053322,4.998721183490996,0
+Windstorm,gas,windstorm,"Fixed, RP 50 (wind)",31,6.315649301264833,5.235336956923485,7.78417437791637,0
+Windstorm,gas,windstorm_absprot,"Sampled, RP 25–200 (wind)",31,5.989498182490611,5.071595587303349,7.664531535029913,0
+Windstorm,oil,windstorm,"Fixed, RP 50 (wind)",33,6.24881451375524,4.357632735466219,7.75476895702426,0
+Windstorm,oil,windstorm_absprot,"Sampled, RP 25–200 (wind)",33,5.963070273128319,4.447417875432824,7.5991058168093994,0
+Windstorm,telecom,windstorm,"Fixed, RP 50 (wind)",36,4.770531355419547,2.569178709495173,6.132388577522166,0
+Windstorm,telecom,windstorm_absprot,"Sampled, RP 25–200 (wind)",36,4.5265325013111894,3.297195632729546,6.067921220340038,0
+Windstorm,telecom,windstorm_unprotected,No design standard (wind),36,5.089259334242521,3.8986940266123016,6.060395619019961,0
+Windstorm,education,windstorm,"Fixed, RP 50 (wind)",36,5.826486906334596,4.798871094222541,6.784383637648041,0
+Windstorm,education,windstorm_absprot,"Sampled, RP 25–200 (wind)",36,5.667460981634646,4.786004796843316,6.74164447729251,0
+Windstorm,healthcare,windstorm,"Fixed, RP 50 (wind)",35,5.692991669590383,4.706096924196112,7.658263471740224,0
+Windstorm,healthcare,windstorm_absprot,"Sampled, RP 25–200 (wind)",35,5.616708831821082,4.769274229641833,7.476315251990792,0

@@ -64,3 +64,9 @@ Thumbs.db
 # lists generated from the convergence log. Both are reproducible.
 results_snapshot_*/
 sobol_retry/
+
+# Stage 1 backups taken before in-place updates
+data/intermediate_*backup*/
+
+# Regenerable quantile cache (src.paper_ead_samples)
+paper/data/*.parquet

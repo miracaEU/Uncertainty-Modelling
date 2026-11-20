@@ -4,6 +4,7 @@ Two figures, both written next to the range-test pies:
 
     range_test_coverage.png    which countries the range tests cover, and which
                                of them carry the coastal twin as well
+                               (coastal: the sea-level-rise runs, as reported)
     range_test_stability.png   per country, the share of asset types whose
                                dominant parameter is UNCHANGED across the four
                                protection treatments
@@ -69,8 +70,14 @@ TEST_COUNTRIES = ["ITA", "NLD", "ROU", "AUT", "HUN", "EST", "ALB"]
 
 RIVER_SET = ["flood_absprot_ds", "flood_absprot_ds_rp10to100",
              "flood_baseline_ds_sc0p5to1p5", "flood_noprot_ds"]
-COASTAL_SET = ["coastal_absprot_ds", "coastal_absprot_ds_rp10to100",
-               "coastal_baseline_ds_sc0p5to1p5", "coastal_noprot_ds"]
+# Coastal is reported with sea-level rise only, and its range tests were rerun
+# that way in November 2026 with the new brackets: RP 25-200 for RP 10-100 and
+# x0.5-2 (log-uniform) for x0.5-1.5. The river set keeps the old brackets until
+# its reruns are in, so the two panels' treatments are captioned separately.
+COASTAL_SET = ["coastal_absprot_ds_slr", "coastal_absprot_ds_slr_rp25to200",
+               "coastal_baseline_ds_slr_sc0p5to2p0", "coastal_noprot_ds_slr"]
+RIVER_TREATMENTS = "River: RP 5-200, RP 10-100, x0.5-1.5"
+COASTAL_TREATMENTS = "coastal (with sea-level rise): RP 5-200, RP 25-200, x0.5-2"
 
 # The same sets without the "as recorded" treatment. Dropping it isolates
 # bracket sensitivity: where protection is not sampled at all it cannot be a
@@ -292,11 +299,11 @@ def main() -> None:
     variants = [
         ("all four treatments", RIVER_SET, COASTAL_SET,
          "Does the dominant parameter survive a change of protection bracket?",
-         "RP 5-200, RP 10-100, x0.5-1.5, as recorded",
+         f"{RIVER_TREATMENTS}, as recorded; {COASTAL_TREATMENTS}, as recorded",
          "range_test_stability.png"),
         ("the three sampled treatments", RIVER_SAMPLED, COASTAL_SAMPLED,
          "Bracket sensitivity alone: protection sampled, only the range differs",
-         "RP 5-200, RP 10-100, x0.5-1.5",
+         f"{RIVER_TREATMENTS}; {COASTAL_TREATMENTS}",
          "range_test_stability_sampled.png"),
     ]
     for head, river, coastal, suptitle, treatments, name in variants:

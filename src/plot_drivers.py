@@ -84,7 +84,7 @@ from .curves import (
     get_asset_config,
     mapped_object_types,
 )
-from .ema_model import INTENSITY_RANGES, PROTECTION_RANGES, SCENARIO_HAZARD
+from .ema_model import INTENSITY_RANGES, PROTECTION_RANGES, REPORT_SCENARIOS, SCENARIO_HAZARD, is_slr
 from .paths import load_config
 from .plot_pyramid import (
     INK,
@@ -112,15 +112,7 @@ OUTCOME = "total_EAD_MEUR"
 # interchangeable here, and the report treats the SLR runs as the coastal
 # result. Pass --scenarios with coastal_absprot_ds / coastal_noprot_ds to draw
 # the present-day pair instead.
-DEFAULT_OVERVIEW_SCENARIOS = [
-    "flood_absprot_ds",
-    "flood_noprot_ds",
-    "coastal_absprot_ds_slr",
-    "coastal_noprot_ds_slr",
-    "earthquake",
-    "windstorm",
-    "windstorm_absprot",
-]
+DEFAULT_OVERVIEW_SCENARIOS = list(REPORT_SCENARIOS)
 
 # Scenario display names live in src/plot_pyramid.py (SCENARIO_LABEL).
 RANK_WORD = {1: "Most", 2: "Second most", 3: "Third most"}
@@ -686,7 +678,7 @@ def scenario_figure(merged: pd.DataFrame, scen: str, rank: int, out_dir: Path) -
                  f"{NL}Neutral slices are not drivers: pale grey = not finished, and the "
                  f"two darker greys are combinations whose Sobol indices are ALL zero.",
                  ha="center", fontsize=12, color=INK_2)
-    handles = legend_handles(present, slr=scen.endswith("_slr"))
+    handles = legend_handles(present, slr=is_slr(scen))
     # The report anchor is derived from the figure height computed above, so it
     # holds at any asset count; the monitoring layout keeps its fixed fraction.
     leg = fig.legend(handles=handles, loc="lower center", frameon=False,
@@ -782,7 +774,7 @@ def overview_figure(merged: pd.DataFrame, scenarios: list[str], rank: int,
     if subtitle:
         fig.text(0.5, 1 - 0.82 / h, subtitle, ha="center", va="top",
                  fontsize=11.5, color=INK_2)
-    handles = legend_handles(present, slr=any(s.endswith("_slr") for s in scenarios))
+    handles = legend_handles(present, slr=any(is_slr(s) for s in scenarios))
     leg = fig.legend(handles=handles, loc="lower center", frameon=False,
                      bbox_to_anchor=(0.5, 0.14 / h), **legend_layout(handles))
     if REPORT:

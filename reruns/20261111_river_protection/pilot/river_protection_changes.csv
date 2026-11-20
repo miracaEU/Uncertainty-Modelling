@@ -1,0 +1,7 @@
+country,asset,method_before,n_features,n_exposed,n_exposed_changed,n_exposed_zero_before,n_exposed_zero_after,n_exposed_filled,median_rel_change,max_abs_change,n_features_changed,old_vs_pixel_mismatch,status
+AUT,rail,pixel,57631,18836,1306,0,0,0,0.063,339.5,4615,0,ok
+LUX,rail,pixel,2366,446,85,0,0,0,0.026733296712239583,5.9600067138671875,788,0,ok
+NOR,rail,pixel,13309,3665,206,155,0,0,0.025735321044921874,200.0,1122,0,ok
+AUT,telecom,pixel,3666,366,39,0,0,0,0.063,339.5,290,0,ok
+LUX,telecom,pixel,298,6,0,0,0,0,,0.0,49,0,ok
+NOR,telecom,pixel,7113,135,13,13,0,0,,200.0,1205,0,ok

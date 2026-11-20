@@ -13,6 +13,17 @@ fragility_path: "S:/eks510/projects/AssetRisk_PanEU/data/EQ_fragility.xlsx"
 protection_standard_path: "S:/eks510/projects/AssetRisk_PanEU/data/floodProtection_v2019_paper3.tif"
 basin_data_path: "S:/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_return_periods.parquet"
 
+# River flood protection per asset (src/river_protection.py), read by Stage 1 only:
+#   block5km_fill - the 5 km FLOPROS block mean under the centroid, exactly as MIRACA's
+#                   AssetRisk_PanEU reads it; an asset whose block has no data takes the
+#                   nearest protected block whose edge is within fill_km (from 2026-11-11)
+#   pixel         - the 500 m FLOPROS pixel under the centroid (used until 2026-11-11)
+# Existing segments keep the method they were built with (river_protection in each
+# _meta.json; absent = pixel). Rebuild them with: python -m src.preprocess --segments-only
+river_protection:
+  method: block5km_fill
+  fill_km: 5
+
 # --- hazards -----------------------------------------------------------------
 # Every hazard the pipeline can model (local damage-curve + return-period
 # rasters). Which of these actually apply to a given asset is decided per

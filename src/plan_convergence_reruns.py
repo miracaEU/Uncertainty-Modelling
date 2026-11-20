@@ -2,10 +2,15 @@
 
 Reads convergence/convergence_stats.csv - the table sobol_convergence.xlsx is
 built from - and takes every combination at the largest N it has been run at.
-Those that fail the chosen criterion (default: ranking on ST, the 95th
-percentile of the weighted rank distance below 1, Sarrazin et al. 2016 Eq. 3)
-are rerun at max(--min-n, 2 x their current N). A combination that already
-failed at 32768 therefore goes to 65536, never to the same N again.
+Those that fail ANY of the chosen criteria (default: ST ranking, the 95th
+percentile of the weighted rank distance below 1, Sarrazin et al. 2016 Eq. 3,
+AND ST values, every factor's 95% CI half width below 0.10) are rerun at
+max(--min-n, 2 x their current N). A combination that already failed at 32768
+therefore goes to 65536, never to the same N again - unless --max-n caps it, in
+which case it is listed in beyond_max_n.csv instead of being planned.
+
+--scenarios limits the plan to those scenarios; --exclude drops asset/scenario
+pairs by pattern, e.g. 'power/flood_*' (fnmatch on "<asset>/<scenario>").
 
 Writes a dated folder convergence/reruns/<YYYYmmdd_HHMM>/, nothing if every
 combination passes:
@@ -23,8 +28,8 @@ combination passes:
                         whatever is left
   check_archives.sh     the archive check, also runnable by hand
 
-    python -m src.plan_convergence_reruns                       # ST ranking (rho)
-    python -m src.plan_convergence_reruns --index ST --criterion value
+    python -m src.plan_convergence_reruns                       # ST ranking + half width
+    python -m src.plan_convergence_reruns --criteria rank-rho --max-n 32768
 and then, on the cluster:
     DRY=1 bash convergence/reruns/<stamp>/submit.sh             # preview
     bash convergence/reruns/<stamp>/submit.sh                   # submit
@@ -32,12 +37,14 @@ and then, on the cluster:
 from __future__ import annotations
 
 import argparse
+import shlex
 from datetime import datetime
+from fnmatch import fnmatch
 from pathlib import Path
 
 import pandas as pd
 
-from .convergence_tests import CRITERIA, INDICES, OUT_DIR, highest_n
+from .convergence_tests import CRITERIA, INDICES, OUT_DIR, add_halfwidth, highest_n
 from .paths import load_config
 from .sobol_design import runs_per_base, second_order_enabled
 
@@ -73,7 +80,7 @@ PYTHON=${{PYTHON:-/scistor/ivm/${{USER:-$(id -un)}}/.venvs/miraca_uq/bin/python}
 MODULES=${{MODULES:-"gdal/3.6.2"}}
 export MIRACA_CONFIG=${{MIRACA_CONFIG:-${{REPO}}/config.cluster.yml}}
 export PYTHON MODULES
-export EXCLUDE=${{EXCLUDE:-node009}}
+export EXCLUDE=${{EXCLUDE:-node002,node009}}
 export SCEN_TIME=${{SCEN_TIME:-120:00:00}}
 export SCEN_TIME_LIGHT=${{SCEN_TIME_LIGHT:-120:00:00}}
 export FORCE_SOBOL=1
@@ -172,36 +179,70 @@ echo "Results: ${{REPO}}/convergence/sobol_convergence.xlsx; log: ${{HERE}}/rete
 """
 
 
-def plan(stats: pd.DataFrame, index: str, crit: str, min_n: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """(combinations to rerun, combinations whose highest-N run errored)."""
-    conv_col, stat_col = CRIT[crit][5], CRIT[crit][4]
+def plan(stats: pd.DataFrame, index: str, criteria: list[str], min_n: int,
+         only_current_n: int | None = None, scenarios: list[str] | None = None,
+         exclude: list[str] | None = None, max_n: int | None = None
+         ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """(combinations to rerun, combinations whose highest-N run errored,
+    combinations that fail but would need an N above max_n)."""
     top = highest_n(stats)
     top = top[top["index"] == index]
+    if scenarios:
+        top = top[top["scenario"].isin(scenarios)]
+    if exclude:
+        drop = [any(fnmatch(f"{a}/{s}", p) for p in exclude) for a, s in zip(top["asset"], top["scenario"])]
+        top = top[~pd.Series(drop, index=top.index)]
     errored = top[top["status"] == "error"]
     ok = top[top["status"] == "ok"]
-    todo = ok[~ok[conv_col].fillna(False).astype(bool)].copy()
-    todo["statistic"] = todo[stat_col]
+    if only_current_n is not None:
+        ok = ok[ok["n"].astype(int) == only_current_n]
+    conv = pd.DataFrame({c: ok[CRIT[c][5]].fillna(False).astype(bool) for c in criteria})
+    todo = ok[~conv.all(axis=1)].copy()
+    todo["fails"] = [",".join(c for c in criteria if not conv.at[i, c]) for i in todo.index]
+    for c in criteria:
+        todo[c] = todo[CRIT[c][4]]
     todo["current_n"] = todo["n"].astype(int)
     todo["new_n"] = todo["current_n"].map(lambda n: max(min_n, 2 * n))
     k = todo["n_factors"].astype(int)
     # The reruns sample with whatever the config says now (sobol.second_order).
     todo["model_runs"] = todo["new_n"] * runs_per_base(k, second_order_enabled(load_config()))
-    cols = ["country", "asset", "scenario", "n_factors", "current_n", "statistic",
-            "top_factor", "new_n", "model_runs"]
-    return (todo[cols].sort_values(["scenario", "new_n", "country", "asset"])
-            .reset_index(drop=True), errored)
+    cols = (["country", "asset", "scenario", "n_factors", "current_n", "fails"] + list(criteria)
+            + ["top_factor", "new_n", "model_runs"])
+    todo = todo[cols].sort_values(["scenario", "new_n", "country", "asset"]).reset_index(drop=True)
+    beyond = todo[todo["new_n"] > max_n] if max_n else todo.iloc[0:0]
+    if max_n:
+        todo = todo[todo["new_n"] <= max_n].reset_index(drop=True)
+    return todo, errored, beyond.reset_index(drop=True)
 
 
-def write_plan(todo: pd.DataFrame, out_root: Path, args, when: datetime) -> Path:
+def replan_args(args) -> str:
+    """The planner's own arguments, for the retest job that runs it again."""
+    parts = ["--index", args.index, "--criteria", *args.criteria, "--min-n", str(args.min_n)]
+    if args.only_current_n is not None:
+        parts += ["--only-current-n", str(args.only_current_n)]
+    if args.max_n is not None:
+        parts += ["--max-n", str(args.max_n)]
+    if args.scenarios:
+        parts += ["--scenarios", *args.scenarios]
+    if args.exclude:
+        parts += ["--exclude", *args.exclude]
+    return " ".join(shlex.quote(p) for p in parts)
+
+
+def write_plan(todo: pd.DataFrame, out_root: Path, args, when: datetime,
+               beyond: pd.DataFrame | None = None) -> Path:
     folder = out_root / when.strftime("%Y%m%d_%H%M")
     folder.mkdir(parents=True, exist_ok=False)
     todo.to_csv(folder / "plan.csv", index=False)
+    if beyond is not None and len(beyond):
+        beyond.to_csv(folder / "beyond_max_n.csv", index=False)
+    crit_txt = " + ".join(args.criteria)
     calls = []
     for (scen, n), grp in todo.groupby(["scenario", "new_n"], sort=True):
         name = f"{scen}_n{n}.txt"
         with open(folder / name, "w", newline="\n") as fh:
             was = ", ".join(str(int(x)) for x in sorted(set(grp["current_n"])))
-            fh.write(f"# {args.index} {args.criterion} not converged at N = {was}"
+            fh.write(f"# {args.index} {crit_txt} not all converged at N = {was}"
                      f" -> rerun {scen} at N = {n}\n")
             for c, a in zip(grp["country"], grp["asset"]):
                 fh.write(f"{c} {a}\n")
@@ -219,11 +260,12 @@ def write_plan(todo: pd.DataFrame, out_root: Path, args, when: datetime) -> Path
         snapshots.append(f'"${{PYTHON}}" -m src.snapshot_results --list "${{HERE}}/snapshot_n{n}.csv" '
                          f'--tag {tag} ${{DRY:+--dry-run}}')
         snapshot_dirs.append(f"results_snapshot_{tag}/")
-    _, title, _, conv_if, *_ = CRIT[args.criterion]
+    title = " and ".join(CRIT[c][1] for c in args.criteria)
+    conv_if = "; ".join(f"{c} {CRIT[c][3]}" for c in args.criteria)
     rel = folder.relative_to(out_root.parent.parent).as_posix()
-    replan = f"--index {args.index} --criterion {args.criterion} --min-n {args.min_n}"
+    replan = replan_args(args)
     script = (SUBMIT_HEAD.format(when=when.strftime("%Y-%m-%d %H:%M"), index=args.index,
-                                 crit=args.criterion, title=title, conv_if=conv_if,
+                                 crit=crit_txt, title=title, conv_if=conv_if,
                                  n_combos=len(todo), n_lists=len(calls), rel=rel,
                                  snapshot_dirs=", ".join(snapshot_dirs), manifest=manifest,
                                  snapshots="\n".join(snapshots))
@@ -240,25 +282,44 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--index", choices=INDICES, default="ST")
-    ap.add_argument("--criterion", choices=list(CRIT), default="rank-rho")
+    ap.add_argument("--criteria", nargs="+", choices=list(CRIT), default=["rank-rho", "halfwidth"],
+                    help="a combination is rerun unless it passes ALL of these")
+    ap.add_argument("--criterion", choices=list(CRIT), default=None,
+                    help="one criterion only (older plans call the planner this way)")
     ap.add_argument("--min-n", type=int, default=32768,
                     help="smallest N to rerun at; never less than twice the current N")
+    ap.add_argument("--max-n", type=int, default=None,
+                    help="largest N to rerun at; failing combinations that would need more are "
+                         "listed in beyond_max_n.csv instead")
+    ap.add_argument("--only-current-n", type=int, default=None,
+                    help="plan only combinations whose highest N is this value, e.g. 8192 "
+                         "leaves out those that already failed at 32768")
+    ap.add_argument("--scenarios", nargs="+", default=None, help="only these scenarios")
+    ap.add_argument("--exclude", nargs="+", default=None,
+                    help="asset/scenario patterns to leave out, e.g. 'power/flood_*'")
     ap.add_argument("--out-dir", default=None,
                     help=f"folder with convergence_stats.csv (default {OUT_DIR})")
     args = ap.parse_args()
+    if args.criterion:
+        args.criteria = [args.criterion]
 
     out_dir = Path(args.out_dir) if args.out_dir else OUT_DIR
-    stats = pd.read_csv(out_dir / "convergence_stats.csv")
-    todo, errored = plan(stats, args.index, args.criterion, args.min_n)
+    stats = add_halfwidth(pd.read_csv(out_dir / "convergence_stats.csv"))
+    todo, errored, beyond = plan(stats, args.index, args.criteria, args.min_n, args.only_current_n,
+                                 args.scenarios, args.exclude, args.max_n)
     if len(errored):
         print(f"!! {len(errored)} combination(s) errored at their highest N and cannot be "
               "judged - rerun python -m src.convergence_tests --resume first:")
         print(errored[["country", "asset", "scenario", "n", "error"]].to_string(index=False))
+    if len(beyond):
+        print(f"{len(beyond)} combination(s) still fail but would need N > {args.max_n}; not planned:")
+        print(beyond.to_string(index=False))
     if todo.empty:
-        print(f"All tested combinations pass {args.index} {args.criterion} at their highest N; "
-              "nothing to rerun.")
+        scope = "" if args.only_current_n is None else f" with highest N = {args.only_current_n}"
+        print(f"Nothing to rerun: every tested combination{scope} passes {args.index} "
+              f"{' + '.join(args.criteria)} at its highest N, or would need N > {args.max_n}.")
         return
-    folder = write_plan(todo, out_dir / "reruns", args, datetime.now())
+    folder = write_plan(todo, out_dir / "reruns", args, datetime.now(), beyond)
     print(todo.to_string(index=False))
     print(f"\n{len(todo)} combination(s) to rerun, {todo['model_runs'].sum():,} model runs in all.")
     print(f"Wrote {folder}. On the cluster:  DRY=1 bash {folder.relative_to(out_dir.parent).as_posix()}"

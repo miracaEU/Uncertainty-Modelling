@@ -41,6 +41,17 @@ PROT_NOMINAL=${PROT_NOMINAL:-recorded}
 # Protection LAST so every step before it is free of the protection treatment,
 # and warming after the curves so the curve/cost steps are readable without it.
 FACTOR_ORDER=${FACTOR_ORDER:-"depth_scale aggregation curve_ cost_level warming protection_scale protection_abs_rp"}
+# ORDER=workflow (or sobol) uses that built-in ordering instead of FACTOR_ORDER,
+# e.g. to add scenarios to the existing workflow folder. That folder was built
+# with n=2000 and the midpoint protection nominal, so pass those too:
+#   ORDER=workflow N_DRAWS=2000 PROT_NOMINAL=midpoint NO_PLOT=1 ASSET=power \
+#   SCENARIOS="coastal_absprot_ds_slr coastal_noprot_ds_slr" ./submit_cascade.sh
+ORDER=${ORDER:-custom}
+if [[ "${ORDER}" == custom ]]; then
+    ORDER_ARGS="--factor-order ${FACTOR_ORDER}"
+else
+    ORDER_ARGS="--order ${ORDER}"
+fi
 
 # ── Resources ────────────────────────────────────────────────────────────────
 # Walltime is deliberately far beyond the ~16 h a scenario needs: a job killed
@@ -114,7 +125,7 @@ CASCADE_ARGS=(
     --n ${N_DRAWS}
     --workers ${C_CPUS}
     --protection-nominal ${PROT_NOMINAL}
-    --factor-order ${FACTOR_ORDER}
+    ${ORDER_ARGS}
     --scope-label ${SCOPE_LABEL}
 )
 echo "argv: \${CASCADE_ARGS[@]}"
@@ -147,7 +158,7 @@ cd ${REPO}
 # above: no continuation characters to pick up stray whitespace.
 PROBE_ARGS=(
     --protection-nominal ${PROT_NOMINAL}
-    --factor-order ${FACTOR_ORDER}
+    ${ORDER_ARGS}
     --print-out-dir
 )
 CDIR=\$(${PYTHON} -m src.cascade "\${PROBE_ARGS[@]}" 2>/dev/null | tail -1)

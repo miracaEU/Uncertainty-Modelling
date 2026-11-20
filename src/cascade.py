@@ -96,7 +96,7 @@ import numpy as np
 import pandas as pd
 
 from .curves import ASSET_CONFIGS
-from .ema_model import DEFAULT_SCENARIOS, SCENARIOS, build_model, scenario_applies
+from .ema_model import REPORT_SCENARIOS, SCENARIOS, build_model, scenario_applies
 from .paths import (
     base_stem,
     load_config,
@@ -126,8 +126,15 @@ CONTINUOUS_NOMINAL = {
 }
 CATEGORICAL_NOMINAL = {
     "warming": "current",     # present-day climate
+    "slr": "2010_None",       # present-day sea level (CoCLiCo baseline)
     "aggregation": "per_cell",  # the reference pipeline's method
 }
+# Factors placed in the workflow order at another factor's position. Kept out of
+# WORKFLOW_ORDER itself because that list is hashed into the output folder name:
+# editing it would move every existing workflow cascade to a new folder. slr is
+# the coastal climate future, the counterpart of river flood's warming, and the
+# two never occur in the same scenario.
+ORDER_ALIASES = {"slr": "warming"}
 # protection_abs_rp replaces the design standard outright, so it has no no-op
 # among its own values. Two frozen states are available, set by
 # --protection-nominal:
@@ -188,14 +195,18 @@ COUNTRY_SCOPE = "country"
 class FactorSpec:
     """One sampled uncertainty factor, independent of ema_workbench types."""
 
-    __slots__ = ("name", "kind", "lo", "hi", "categories")
+    __slots__ = ("name", "kind", "lo", "hi", "categories", "dist")
 
-    def __init__(self, name, kind, lo=None, hi=None, categories=None):
+    def __init__(self, name, kind, lo=None, hi=None, categories=None, dist=None):
         self.name = name
         self.kind = kind          # "real" | "categorical"
         self.lo = lo
         self.hi = hi
         self.categories = categories
+        # A frozen scipy distribution for a non-uniform real factor (the log-uniform
+        # x0.5-2 protection multiplier), None for the uniform ones. Uniform factors
+        # keep the explicit lo + u * (hi - lo), so existing cascades stay bit-identical.
+        self.dist = dist
 
     def nominal(self):
         if self.name == "protection_abs_rp" and PROTECTION_NOMINAL == "recorded":
@@ -214,16 +225,21 @@ class FactorSpec:
     def value(self, u: float):
         """Map a uniform draw in [0, 1) to this factor's domain."""
         if self.kind == "real":
+            if self.dist is not None:
+                return float(self.dist.ppf(u))
             return self.lo + u * (self.hi - self.lo)
         idx = min(int(u * len(self.categories)), len(self.categories) - 1)
         return self.categories[idx]
 
     def as_dict(self) -> dict:
-        return {
+        d = {
             "name": self.name, "kind": self.kind, "lo": self.lo, "hi": self.hi,
             "categories": list(self.categories) if self.categories else None,
             "nominal": self.nominal(),
         }
+        if self.dist is not None:
+            d["dist"] = self.dist.dist.name
+        return d
 
 
 def _categories_of(param) -> list:
@@ -255,8 +271,11 @@ def scenario_factors(asset: str, scenario: str) -> tuple[list[FactorSpec], dict]
         if cats:
             specs.append(FactorSpec(p.name, "categorical", categories=_categories_of(p)))
         else:
+            dist = getattr(p, "dist", None)
+            uniform = dist is None or dist.dist.name == "uniform"
             specs.append(
-                FactorSpec(p.name, "real", lo=float(p.lower_bound), hi=float(p.upper_bound))
+                FactorSpec(p.name, "real", lo=float(p.lower_bound), hi=float(p.upper_bound),
+                           dist=None if uniform else dist)
             )
     constants = {c.name: c.value for c in model.constants}
     return specs, constants
@@ -318,12 +337,13 @@ def cascade_order(specs: list[FactorSpec], mode: str, st: dict[str, float],
     rank: dict[str, int] = {}
     for n in names:
         pos = len(ordering)
+        target = n if order_list is not None else ORDER_ALIASES.get(n, n)
         for i, key in enumerate(ordering):
             if key == CURVE_PREFIX:
-                if n.startswith(CURVE_PREFIX):
+                if target.startswith(CURVE_PREFIX):
                     pos = i
                     break
-            elif n == key:
+            elif target == key:
                 pos = i
                 break
         rank[n] = pos
@@ -768,7 +788,8 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--assets", nargs="+", default=list(ASSET_CONFIGS), choices=list(ASSET_CONFIGS))
-    parser.add_argument("--scenarios", nargs="+", default=DEFAULT_SCENARIOS, choices=SCENARIOS)
+    # Default: the reported set, i.e. coastal WITH sea-level rise only.
+    parser.add_argument("--scenarios", nargs="+", default=REPORT_SCENARIOS, choices=SCENARIOS)
     parser.add_argument("--countries", nargs="+", default=None,
                         help="default: every country with Stage-1 output for that asset")
     parser.add_argument("--n", type=int, default=2000, help="draws per cascade step")

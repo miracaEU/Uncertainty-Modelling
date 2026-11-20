@@ -15,6 +15,13 @@ restated here. Two rules produce every blank and every low number:
     identically zero, so there is nothing to vary;
   * coastal flood is skipped for the ten landlocked study countries.
 
+Iceland and Romania are coastal, so coastal flood is run for them, but the
+CoCLiCo depth maps hold no data there: the RP100 baseline map is no-data over
+all of Iceland (621 M cells) and has 3 wet cells along the Romanian coast.
+No asset in either country is ever inside the coastal footprint, so the
+country matrix does not count coastal flood for them and marks them with a
+dagger (NO_COASTAL_HAZARD).
+
 A blank cell in the country matrix means the country has no exposure file for
 that asset at all, which is a data gap rather than a modelling choice.
 
@@ -59,6 +66,20 @@ NO = "#ebeae4"
 # Number of hazards in a country x asset cell.
 COUNT_FILL = {2: "#cde2fb", 3: "#86b6ef", 4: "#1c5cab"}
 ABSENT = "#f6f5f1"
+
+# Coastal countries the CoCLiCo depth maps do not cover (checked 2026-11-06 on
+# the RP100 baseline map at 25 m): coastal flood is run, but nothing is ever
+# exposed, so it is not counted as analysed. exposure_flags() in plot_drivers
+# confirms 0 exposed assets for every asset type in both.
+NO_COASTAL_HAZARD = frozenset({"ISL", "ROU"})
+
+
+def hazards_analysed(asset: str, country: str) -> list[str]:
+    """applicable_hazards, less coastal flood where there is no coastal hazard data."""
+    hz = applicable_hazards(asset, country)
+    if country in NO_COASTAL_HAZARD:
+        hz = [h for h in hz if h != "coastal"]
+    return hz
 
 
 def asset_rows() -> list[dict]:
@@ -190,7 +211,7 @@ def country_matrix_figure(out_dir: Path) -> Path:
         tot = 0
         for ai, a in enumerate(assets):
             if a in present[c]:
-                k = len(applicable_hazards(a, c))
+                k = len(hazards_analysed(a, c))
                 tot += k
                 ax.add_patch(plt.Rectangle((ai, y), 1, 1, facecolor=COUNT_FILL[k],
                                            edgecolor=SURFACE, linewidth=1.2))
@@ -210,9 +231,10 @@ def country_matrix_figure(out_dir: Path) -> Path:
     ax.set_xticklabels(assets + ["total"], rotation=45, ha="left", fontsize=8.5)
     ax.xaxis.set_ticks_position("top")
     ax.set_yticks([len(countries) - 0.5 - i for i in range(len(countries))])
-    ax.set_yticklabels(
-        [f"{names.get(c, c)}*" if c in LANDLOCKED else names.get(c, c)
-         for c in countries], fontsize=8)
+    def mark(c):
+        return "*" if c in LANDLOCKED else "†" if c in NO_COASTAL_HAZARD else ""
+
+    ax.set_yticklabels([names.get(c, c) + mark(c) for c in countries], fontsize=8)
     for s in ax.spines.values():
         s.set_visible(False)
     ax.tick_params(length=0)
@@ -223,7 +245,8 @@ def country_matrix_figure(out_dir: Path) -> Path:
     ax.legend(handles=handles, frameon=False, fontsize=8.5, ncol=4,
               loc="upper center", bbox_to_anchor=(0.5, -0.015))
     ax.set_title("Hazards analysed per country and asset type\n"
-                 "* landlocked: no coastal flood",
+                 "* landlocked: no coastal flood    "
+                 "† no coastal flood data (not covered by CoCLiCo)",
                  fontsize=12, fontweight="bold", color=INK, pad=28)
     out = out_dir / "scope_country_matrix.png"
     fig.savefig(out, dpi=200)
@@ -252,10 +275,13 @@ def main() -> None:
     pairs = sum(len(present[c] & set(assets)) for c in countries)
     triples = sum(totals)
     dist = collections.Counter(
-        len(applicable_hazards(a, c)) for c in countries for a in assets if a in present[c])
+        len(hazards_analysed(a, c)) for c in countries for a in assets if a in present[c])
+    no_data = sum(1 for c in countries for a in assets if a in present[c]
+                  and len(applicable_hazards(a, c)) > len(hazards_analysed(a, c)))
     print(f"\n{len(countries)} countries x {len(assets)} assets")
     print(f"  country-asset pairs analysed      : {pairs}")
-    print(f"  country-asset-hazard combinations : {triples}")
+    print(f"  country-asset-hazard combinations : {triples}"
+          f" (+{no_data} coastal runs without hazard data, not counted)")
     print(f"  cells by hazard count             : {dict(sorted(dist.items()))}")
     print(f"\nFigures in {out_dir}")
 

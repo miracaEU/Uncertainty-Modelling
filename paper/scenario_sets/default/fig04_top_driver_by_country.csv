@@ -1,0 +1,906 @@
+scenario,country,asset,driver,share
+earthquake,LIE,gas,Vulnerability curve,0.9160360570743261
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,ports,Protection standard,0.9108636962058546
+earthquake,LTU,gas,Vulnerability curve,0.9074283279862925
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,ports,Protection standard,0.9041239551458253
+earthquake,AND,roads,Vulnerability curve,0.8979032560444336
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,telecom,Climate warming,0.8971236962048545
+earthquake,NOR,roads,Vulnerability curve,0.8944790869353672
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,telecom,Climate warming,0.8850631010731727
+earthquake,GBR,roads,Vulnerability curve,0.8849614253817832
+earthquake,MKD,gas,Vulnerability curve,0.8836269802781324
+earthquake,BGR,gas,Vulnerability curve,0.8795298406770917
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,ports,Protection standard,0.876319854478282
+earthquake,DNK,roads,Vulnerability curve,0.8741622224985692
+windstorm,NLD,telecom,Vulnerability curve,0.8734324187704342
+windstorm,DNK,telecom,Vulnerability curve,0.8727488352983266
+earthquake,IRL,roads,Vulnerability curve,0.8714765438307233
+windstorm,GBR,telecom,Vulnerability curve,0.8682671147531577
+windstorm,IRL,telecom,Vulnerability curve,0.8678320632827654
+windstorm,DEU,telecom,Vulnerability curve,0.866425770904636
+earthquake,LVA,roads,Vulnerability curve,0.863037386953769
+coastal_baseline_ds_slr_sc0p5to2p0,EST,ports,Protection standard,0.8629404680389973
+windstorm,LUX,telecom,Vulnerability curve,0.8621969826434768
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,ports,Protection standard,0.8620559738733934
+earthquake,LTU,roads,Vulnerability curve,0.8620226458859459
+earthquake,LUX,roads,Vulnerability curve,0.8618479674981432
+windstorm,SWE,telecom,Vulnerability curve,0.8617720421840969
+windstorm,POL,telecom,Vulnerability curve,0.8616924014692862
+windstorm,ISL,telecom,Vulnerability curve,0.8591279581334413
+earthquake,FIN,roads,Vulnerability curve,0.8576413514967597
+earthquake,EST,gas,Vulnerability curve,0.8561367701788085
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,ports,Protection standard,0.8550375243114456
+windstorm,BEL,telecom,Vulnerability curve,0.8546306831556932
+earthquake,EST,roads,Vulnerability curve,0.8545124550399128
+windstorm,NOR,telecom,Vulnerability curve,0.853510493010694
+earthquake,SWE,roads,Vulnerability curve,0.8527521386899385
+earthquake,SVK,oil,Vulnerability curve,0.8513599562534538
+windstorm,FRA,telecom,Vulnerability curve,0.8493879237375379
+earthquake,CZE,roads,Vulnerability curve,0.8459712764682181
+earthquake,POL,roads,Vulnerability curve,0.8431727421326585
+earthquake,NLD,roads,Vulnerability curve,0.8396924880872992
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,ports,Protection standard,0.8391830283126097
+windstorm,AUT,telecom,Vulnerability curve,0.8336393842256092
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,ports,Protection standard,0.8324333530593186
+windstorm,CZE,telecom,Vulnerability curve,0.8301137868079612
+windstorm,ESP,telecom,Vulnerability curve,0.8282313841506859
+windstorm,AND,telecom,Vulnerability curve,0.8278222114401208
+earthquake,BEL,roads,Vulnerability curve,0.8272288884473473
+earthquake,HRV,gas,Vulnerability curve,0.82675590705662
+windstorm,BEL,healthcare,Vulnerability curve,0.8223149894564438
+earthquake,FRA,roads,Vulnerability curve,0.8214101184413645
+windstorm,LUX,healthcare,Vulnerability curve,0.8210365748908687
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,ports,Protection standard,0.8200145650881578
+coastal_baseline_ds_slr_sc0p5to2p0,BGR,roads,Vulnerability curve,0.8197237542854772
+flood_baseline_ds_sc0p5to2p0,AUT,telecom,Protection standard,0.8195457462357264
+windstorm,MLT,telecom,Vulnerability curve,0.8189181873920576
+earthquake,MLT,roads,Vulnerability curve,0.8182444061385598
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,airports,Protection standard,0.8170812727260102
+windstorm,CHE,telecom,Vulnerability curve,0.8170060032967963
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,ports,Climate warming,0.8168060333953306
+windstorm,HRV,telecom,Vulnerability curve,0.8164723062245639
+earthquake,ALB,gas,Vulnerability curve,0.815959855279075
+earthquake,ISL,power,Cost / max-damage,0.8126138008994315
+earthquake,AND,telecom,Hazard intensity,0.812135166625797
+earthquake,ALB,power,Cost / max-damage,0.8105552832275893
+earthquake,MLT,telecom,Hazard intensity,0.8088687752788282
+windstorm,ITA,telecom,Vulnerability curve,0.8064412681629086
+windstorm,GBR,healthcare,Vulnerability curve,0.806212537793069
+windstorm,MLT,healthcare,Vulnerability curve,0.8056236296357405
+windstorm,POL,healthcare,Vulnerability curve,0.8046888976398747
+earthquake,ISL,roads,Vulnerability curve,0.8040482402028595
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,ports,Protection standard,0.80368783709714
+earthquake,HUN,roads,Vulnerability curve,0.8030954548768643
+windstorm,NLD,healthcare,Vulnerability curve,0.8005774207212523
+earthquake,DEU,roads,Vulnerability curve,0.799910614609967
+windstorm,LVA,telecom,Vulnerability curve,0.7996039444109007
+earthquake,PRT,roads,Vulnerability curve,0.7993959202006794
+windstorm,BEL,education,Vulnerability curve,0.7987319328173041
+windstorm,LUX,education,Vulnerability curve,0.7984280750828463
+windstorm,IRL,healthcare,Vulnerability curve,0.7980349553354242
+earthquake,SVK,roads,Vulnerability curve,0.7974419176812787
+windstorm,LTU,telecom,Vulnerability curve,0.7974121059136446
+earthquake,CHE,roads,Vulnerability curve,0.7959812474449589
+windstorm,DEU,healthcare,Vulnerability curve,0.795322521212538
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,gas,Climate warming,0.7923510950728665
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,telecom,Protection standard,0.7919316119236184
+earthquake,CHE,telecom,Hazard intensity,0.7913966082629423
+earthquake,SVK,telecom,Hazard intensity,0.7901216820624213
+earthquake,HUN,telecom,Hazard intensity,0.7896602490715733
+windstorm,FRA,healthcare,Vulnerability curve,0.7895358487470667
+earthquake,ESP,roads,Vulnerability curve,0.7887629134912812
+earthquake,LIE,telecom,Hazard intensity,0.7886122993964305
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,gas,Climate warming,0.7882134101758227
+earthquake,HRV,roads,Vulnerability curve,0.7876188706499753
+windstorm,AND,education,Vulnerability curve,0.7860934409158513
+earthquake,LVA,gas,Vulnerability curve,0.7858297284452394
+coastal_baseline_ds_slr_sc0p5to2p0,EST,telecom,Climate warming,0.7855715354816004
+windstorm,GBR,education,Vulnerability curve,0.7853163021781269
+windstorm,AUT,healthcare,Vulnerability curve,0.7827098930664848
+earthquake,LIE,roads,Vulnerability curve,0.7818812173846005
+windstorm,CZE,healthcare,Vulnerability curve,0.7816377717749226
+flood_baseline_ds_sc0p5to2p0,ESP,telecom,Protection standard,0.7812491991379521
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,telecom,Protection standard,0.780537451260576
+earthquake,BEL,telecom,Hazard intensity,0.7795834665087836
+windstorm,POL,education,Vulnerability curve,0.7787263877546563
+windstorm,PRT,telecom,Vulnerability curve,0.7779678928890154
+earthquake,AUT,roads,Vulnerability curve,0.7774642320573687
+windstorm,NLD,education,Vulnerability curve,0.7773933259642153
+windstorm,EST,telecom,Vulnerability curve,0.7766717996044569
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,telecom,Climate warming,0.776646113169824
+windstorm,GRC,telecom,Vulnerability curve,0.7761347988708636
+windstorm,IRL,education,Vulnerability curve,0.7740208866459273
+windstorm,CHE,healthcare,Vulnerability curve,0.7728882084299475
+windstorm,MLT,education,Vulnerability curve,0.7722615719831766
+earthquake,DNK,healthcare,Vulnerability curve,0.7722180085957313
+earthquake,IRL,healthcare,Vulnerability curve,0.7721763407899505
+earthquake,FIN,healthcare,Vulnerability curve,0.7720119829834161
+windstorm,DEU,education,Vulnerability curve,0.7716663377719589
+coastal_baseline_ds_slr_sc0p5to2p0,CYP,ports,Protection standard,0.7713639017485558
+earthquake,PRT,telecom,Hazard intensity,0.7710268370017767
+earthquake,GBR,healthcare,Vulnerability curve,0.7708889750459441
+earthquake,ITA,roads,Vulnerability curve,0.7707241694989245
+earthquake,SRB,telecom,Hazard intensity,0.770657613158358
+earthquake,POL,healthcare,Vulnerability curve,0.7703330651269934
+earthquake,LUX,healthcare,Vulnerability curve,0.7698391003753481
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,telecom,Protection standard,0.769737647536048
+windstorm,NOR,healthcare,Vulnerability curve,0.7694160623447942
+earthquake,DEU,telecom,Hazard intensity,0.7686404691357093
+earthquake,CZE,healthcare,Vulnerability curve,0.7681806437826815
+windstorm,FRA,education,Vulnerability curve,0.7681040266754617
+earthquake,GRC,power,Cost / max-damage,0.7679967465465882
+earthquake,EST,healthcare,Vulnerability curve,0.767718881284396
+earthquake,LTU,healthcare,Vulnerability curve,0.7674739994156798
+earthquake,SWE,healthcare,Vulnerability curve,0.7667875712175709
+windstorm,ISL,healthcare,Vulnerability curve,0.7664674503123869
+earthquake,NOR,healthcare,Vulnerability curve,0.7663087740409447
+windstorm,SWE,healthcare,Vulnerability curve,0.7655562654168121
+flood_baseline_ds_sc0p5to2p0,NOR,telecom,Protection standard,0.7654442926188461
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,telecom,Protection standard,0.764995314048831
+windstorm,DNK,healthcare,Vulnerability curve,0.7644795208225862
+earthquake,LVA,healthcare,Vulnerability curve,0.7642334285473938
+earthquake,IRL,ports,Vulnerability curve,0.7629732729002612
+earthquake,DNK,ports,Vulnerability curve,0.7629625938625587
+earthquake,SRB,roads,Vulnerability curve,0.7624067051154965
+earthquake,AUT,telecom,Hazard intensity,0.7621740725845375
+earthquake,ESP,telecom,Hazard intensity,0.7615015327381586
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,ports,Protection standard,0.7613718499650456
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,airports,Protection standard,0.7606853411277846
+earthquake,SRB,gas,Vulnerability curve,0.7605380545947175
+windstorm,AUT,education,Vulnerability curve,0.7600342525229884
+earthquake,ROU,power,Cost / max-damage,0.75883655423508
+windstorm,FIN,telecom,Vulnerability curve,0.7587488507669149
+windstorm,CYP,telecom,Vulnerability curve,0.7578523661622302
+windstorm,HRV,healthcare,Vulnerability curve,0.7556115090009188
+windstorm,ISL,education,Vulnerability curve,0.754683290609489
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,ports,Climate warming,0.7544276265231423
+windstorm,ESP,healthcare,Vulnerability curve,0.7529647993548093
+windstorm,CZE,education,Vulnerability curve,0.7527528730610358
+earthquake,HRV,telecom,Hazard intensity,0.7526409097669453
+earthquake,CYP,power,Cost / max-damage,0.752275920351474
+earthquake,NLD,healthcare,Vulnerability curve,0.7521168738725961
+windstorm,ALB,telecom,Vulnerability curve,0.7511659837832887
+earthquake,FRA,telecom,Hazard intensity,0.7510084185877787
+windstorm,CHE,education,Vulnerability curve,0.7508901660878754
+earthquake,MKD,telecom,Hazard intensity,0.75078896051533
+earthquake,BGR,roads,Vulnerability curve,0.7504584010152319
+windstorm,SVK,telecom,Vulnerability curve,0.7503441015714051
+earthquake,ROU,roads,Vulnerability curve,0.749527065072376
+earthquake,MKD,power,Cost / max-damage,0.7494279702306763
+windstorm,ROU,telecom,Vulnerability curve,0.7493378817540317
+flood_baseline_ds_sc0p5to2p0,SVK,telecom,Protection standard,0.7486837060859233
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,gas,Climate warming,0.7477621121349746
+earthquake,BEL,healthcare,Vulnerability curve,0.7476801287577493
+windstorm,NOR,education,Vulnerability curve,0.7467996519037755
+windstorm,SVN,telecom,Vulnerability curve,0.7465692166618023
+earthquake,FRA,healthcare,Vulnerability curve,0.7463632644660679
+earthquake,BGR,telecom,Hazard intensity,0.7455026884293076
+flood_baseline_ds_sc0p5to2p0,GRC,telecom,Protection standard,0.7453256732307739
+earthquake,MKD,roads,Vulnerability curve,0.745217989898501
+windstorm,SWE,education,Vulnerability curve,0.7449387543551659
+earthquake,HUN,healthcare,Vulnerability curve,0.7437941894501994
+earthquake,CYP,telecom,Hazard intensity,0.7434427672559566
+earthquake,MLT,healthcare,Vulnerability curve,0.7434121257612852
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,telecom,Protection standard,0.742234200793192
+earthquake,LVA,telecom,Hazard intensity,0.7421351981020078
+earthquake,HRV,power,Cost / max-damage,0.7402053398033234
+earthquake,DEU,healthcare,Vulnerability curve,0.7401399244555729
+earthquake,ITA,telecom,Hazard intensity,0.7399288451559123
+earthquake,AND,healthcare,Vulnerability curve,0.7397773416519869
+earthquake,ISL,telecom,Hazard intensity,0.7396565884324738
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,oil,Climate warming,0.7394586435097468
+windstorm,DNK,education,Vulnerability curve,0.7380146480337442
+windstorm,LTU,healthcare,Vulnerability curve,0.737982145947565
+earthquake,GRC,telecom,Hazard intensity,0.7376318635886725
+earthquake,SVN,roads,Vulnerability curve,0.7368518522012657
+earthquake,SVK,healthcare,Vulnerability curve,0.7366948207032965
+earthquake,CYP,roads,Vulnerability curve,0.736593547786676
+earthquake,CHE,healthcare,Vulnerability curve,0.7365294637650196
+earthquake,NLD,telecom,Hazard intensity,0.7361362762019624
+earthquake,FIN,ports,Vulnerability curve,0.7357651351690238
+windstorm,ITA,healthcare,Vulnerability curve,0.735267101499643
+earthquake,ALB,roads,Vulnerability curve,0.7335973422469699
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,airports,Climate warming,0.7313534584806809
+windstorm,ESP,education,Vulnerability curve,0.730964234776224
+windstorm,BEL,oil,Vulnerability curve,0.7307129833397985
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,ports,Protection standard,0.7304022397508126
+windstorm,BEL,gas,Vulnerability curve,0.7301368014732869
+windstorm,LUX,gas,Vulnerability curve,0.7294461283353045
+windstorm,PRT,healthcare,Vulnerability curve,0.7294343131252964
+earthquake,ROU,telecom,Hazard intensity,0.7289466693666611
+windstorm,HUN,telecom,Vulnerability curve,0.728481999332649
+earthquake,LIE,healthcare,Vulnerability curve,0.7283580027603789
+earthquake,GRC,roads,Vulnerability curve,0.7281766729676838
+windstorm,LUX,oil,Vulnerability curve,0.7257076954698759
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,ports,Climate warming,0.7256589063918962
+earthquake,CZE,ports,Vulnerability curve,0.724815217588687
+coastal_baseline_ds_slr_sc0p5to2p0,BEL,ports,Climate warming,0.7246908810217807
+windstorm,SRB,telecom,Vulnerability curve,0.7235243774706274
+windstorm,BGR,telecom,Vulnerability curve,0.7234352259102439
+earthquake,SVN,telecom,Hazard intensity,0.7231220081614194
+windstorm,POL,oil,Vulnerability curve,0.721634939272303
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,rail,Cost / max-damage,0.7180608359461855
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,rail,Cost / max-damage,0.7178855466326279
+earthquake,AUT,healthcare,Vulnerability curve,0.7174777665349191
+earthquake,SVN,power,Cost / max-damage,0.7158171236385669
+earthquake,ALB,telecom,Hazard intensity,0.7150938887605278
+windstorm,IRL,oil,Vulnerability curve,0.7148557181727478
+earthquake,DNK,airports,Vulnerability curve,0.714028977701522
+windstorm,IRL,gas,Vulnerability curve,0.7139960877841226
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,rail,Cost / max-damage,0.7133918778075659
+earthquake,LVA,oil,Vulnerability curve,0.7132153767448791
+windstorm,LTU,education,Vulnerability curve,0.7122456722319036
+windstorm,HRV,education,Vulnerability curve,0.7122051310592176
+earthquake,ESP,healthcare,Vulnerability curve,0.712060342361892
+coastal_baseline_ds_slr_sc0p5to2p0,POL,oil,Climate warming,0.7119540453167034
+earthquake,HUN,gas,Vulnerability curve,0.711094077501808
+earthquake,POL,airports,Vulnerability curve,0.7110404330691034
+earthquake,SRB,healthcare,Vulnerability curve,0.7094448051765159
+windstorm,ITA,education,Vulnerability curve,0.7089139005686425
+earthquake,POL,ports,Vulnerability curve,0.7086873340061598
+earthquake,ITA,power,Cost / max-damage,0.7083454648977153
+earthquake,PRT,healthcare,Vulnerability curve,0.7065570206244549
+earthquake,IRL,education,Vulnerability curve,0.7061754775034437
+earthquake,DNK,education,Vulnerability curve,0.7061326897200025
+flood_baseline_ds_sc0p5to2p0,MKD,rail,Cost / max-damage,0.7060965825280039
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,airports,Protection standard,0.7056201839203442
+windstorm,LTU,oil,Vulnerability curve,0.7055407218015145
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,airports,Climate warming,0.7055212122241061
+windstorm,POL,gas,Vulnerability curve,0.7054214955152555
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,rail,Cost / max-damage,0.7048154090860569
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,telecom,Climate warming,0.7047932172422872
+flood_baseline_ds_sc0p5to2p0,GRC,rail,Cost / max-damage,0.7046924442581604
+windstorm,AUT,gas,Vulnerability curve,0.7046878009280932
+windstorm,GBR,gas,Vulnerability curve,0.7041247236437099
+earthquake,FIN,education,Vulnerability curve,0.703232824614923
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,ports,Climate warming,0.7032070841636091
+windstorm,LTU,gas,Vulnerability curve,0.7031383995009107
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,oil,Climate warming,0.7026259915689932
+windstorm,CHE,oil,Vulnerability curve,0.7025964061344482
+earthquake,GBR,education,Vulnerability curve,0.7024171192204389
+windstorm,ISL,oil,Vulnerability curve,0.701633149703339
+earthquake,ALB,rail,Cost / max-damage,0.7009003255301469
+windstorm,MLT,oil,Vulnerability curve,0.700312843786036
+windstorm,LVA,gas,Vulnerability curve,0.6990425848270888
+windstorm,DEU,gas,Vulnerability curve,0.6976623438227282
+earthquake,GBR,ports,Vulnerability curve,0.6975176132008243
+coastal_baseline_ds_slr_sc0p5to2p0,EST,rail,Cost / max-damage,0.6971203930202718
+earthquake,POL,education,Vulnerability curve,0.6969393433661875
+flood_baseline_ds_sc0p5to2p0,BGR,rail,Cost / max-damage,0.696821896804658
+earthquake,EST,education,Vulnerability curve,0.6965996650814716
+windstorm,AND,gas,Vulnerability curve,0.6964522992350601
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,rail,Cost / max-damage,0.6964268426940897
+windstorm,DNK,gas,Vulnerability curve,0.696378618538129
+windstorm,SVK,healthcare,Vulnerability curve,0.6962819900019983
+windstorm,CHE,gas,Vulnerability curve,0.6962804577315308
+windstorm,FRA,oil,Vulnerability curve,0.6955815354453173
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,rail,Cost / max-damage,0.6955747170619823
+windstorm,NOR,oil,Vulnerability curve,0.6953607497666734
+windstorm,MKD,telecom,Vulnerability curve,0.6953198864073191
+windstorm,PRT,education,Vulnerability curve,0.6953091367368939
+flood_baseline_ds_sc0p5to2p0,PRT,telecom,Protection standard,0.6947801818576628
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,healthcare,Climate warming,0.6941767276085804
+earthquake,EST,ports,Vulnerability curve,0.6938715702596151
+earthquake,CZE,education,Vulnerability curve,0.6932627538620979
+earthquake,BGR,power,Cost / max-damage,0.6931752704791408
+earthquake,LTU,education,Vulnerability curve,0.6927978484751249
+earthquake,NOR,education,Vulnerability curve,0.6923830591571959
+windstorm,LVA,healthcare,Vulnerability curve,0.6914278881623762
+windstorm,DEU,oil,Vulnerability curve,0.6909661710071598
+windstorm,AUT,oil,Vulnerability curve,0.6907683908191862
+windstorm,FRA,gas,Vulnerability curve,0.69061771191895
+windstorm,SWE,oil,Vulnerability curve,0.6901815716388258
+windstorm,LVA,education,Vulnerability curve,0.6901218042234443
+windstorm,LIE,telecom,Vulnerability curve,0.6901076621201406
+earthquake,LUX,education,Vulnerability curve,0.6896284746910373
+earthquake,ALB,oil,Cost / max-damage,0.6895929648975802
+earthquake,SWE,education,Vulnerability curve,0.6891754794933536
+windstorm,HRV,oil,Vulnerability curve,0.6891505989231117
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,airports,Climate warming,0.6886733346618542
+flood_baseline_ds_sc0p5to2p0,PRT,rail,Cost / max-damage,0.6884524651592101
+windstorm,EST,healthcare,Vulnerability curve,0.6884158127796649
+earthquake,NOR,ports,Vulnerability curve,0.6883823245758565
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,healthcare,Climate warming,0.6864688299892534
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,airports,Protection standard,0.6854578729703639
+windstorm,NLD,oil,Vulnerability curve,0.6848545775571155
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,telecom,Protection standard,0.6844039089187562
+windstorm,ITA,oil,Vulnerability curve,0.6841397939740148
+flood_baseline_ds_sc0p5to2p0,ESP,rail,Cost / max-damage,0.6837741013756655
+windstorm,GRC,healthcare,Vulnerability curve,0.6833027515173771
+windstorm,ALB,healthcare,Vulnerability curve,0.6832700319156424
+flood_baseline_ds_sc0p5to2p0,ROU,rail,Cost / max-damage,0.6819669291768794
+earthquake,LUX,ports,Vulnerability curve,0.6817065146371619
+windstorm,ESP,gas,Vulnerability curve,0.6815005412606558
+earthquake,LVA,education,Vulnerability curve,0.6811510902558753
+windstorm,GBR,oil,Vulnerability curve,0.6802178454417931
+earthquake,CZE,telecom,Hazard intensity,0.6802105048361832
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,healthcare,Protection standard,0.6801082543334663
+windstorm,EST,education,Vulnerability curve,0.6796277883433255
+earthquake,ROU,oil,Cost / max-damage,0.6794024239469284
+earthquake,ROU,rail,Cost / max-damage,0.6786203629872456
+earthquake,CZE,airports,Vulnerability curve,0.6776855580216442
+windstorm,GRC,education,Vulnerability curve,0.6770283779239809
+flood_baseline_ds_sc0p5to2p0,ALB,rail,Cost / max-damage,0.6766763503218756
+earthquake,GRC,rail,Cost / max-damage,0.6762581440499587
+earthquake,EST,telecom,Hazard intensity,0.6757693038279803
+coastal_baseline_ds_slr_sc0p5to2p0,POL,healthcare,Climate warming,0.6757366725059181
+earthquake,FIN,airports,Vulnerability curve,0.6745751205587832
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,airports,Protection standard,0.674142043322337
+earthquake,GBR,airports,Vulnerability curve,0.6740847104594715
+flood_baseline_ds_sc0p5to2p0,CZE,telecom,Protection standard,0.6729190613915427
+windstorm,ALB,education,Vulnerability curve,0.6725365775564887
+earthquake,LTU,airports,Vulnerability curve,0.6725204741574266
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,telecom,Protection standard,0.6725195063778159
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,ports,Climate warming,0.6724692123612316
+windstorm,SVN,healthcare,Vulnerability curve,0.672226949321013
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,rail,Cost / max-damage,0.6704139167517952
+earthquake,NLD,education,Vulnerability curve,0.6700955266843615
+flood_baseline_ds_sc0p5to2p0,LIE,telecom,Protection standard,0.669589654125417
+windstorm,SWE,gas,Vulnerability curve,0.6677539718968435
+windstorm,NLD,gas,Vulnerability curve,0.6674249425216385
+earthquake,SWE,ports,Vulnerability curve,0.6664333893730059
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,rail,Cost / max-damage,0.6648555702068214
+windstorm,LVA,oil,Vulnerability curve,0.6640703414919378
+flood_baseline_ds_sc0p5to2p0,FIN,telecom,Protection standard,0.6625988103740782
+earthquake,SWE,telecom,Hazard intensity,0.6622093123803621
+windstorm,FIN,healthcare,Vulnerability curve,0.6601364100099141
+windstorm,PRT,gas,Vulnerability curve,0.6591017922551725
+earthquake,LUX,airports,Vulnerability curve,0.6586462448511529
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,gas,Vulnerability curve,0.6586111924252719
+flood_baseline_ds_sc0p5to2p0,CHE,rail,Cost / max-damage,0.65787877102639
+earthquake,NOR,power,Vulnerability curve,0.657672356914213
+earthquake,DNK,telecom,Cost / max-damage,0.6574580387892416
+earthquake,IRL,telecom,Cost / max-damage,0.6574567319433123
+windstorm,DNK,oil,Vulnerability curve,0.6568752043746362
+windstorm,ROU,education,Vulnerability curve,0.6567620367165077
+windstorm,DNK,power,Cost / max-damage,0.6545267140955596
+flood_baseline_ds_sc0p5to2p0,SVN,telecom,Protection standard,0.6544612781612176
+flood_baseline_ds_sc0p5to2p0,CZE,rail,Cost / max-damage,0.6544462327020149
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,airports,Climate warming,0.651896371342978
+earthquake,IRL,gas,Vulnerability curve,0.6504924865661875
+earthquake,FRA,gas,Vulnerability curve,0.649672382031802
+earthquake,DNK,oil,Vulnerability curve,0.6494671524568985
+earthquake,IRL,oil,Vulnerability curve,0.6493645290187476
+windstorm,CYP,education,Vulnerability curve,0.649161993648534
+earthquake,DNK,gas,Vulnerability curve,0.648808009846726
+windstorm,ESP,oil,Vulnerability curve,0.6486406635058727
+windstorm,SVK,education,Vulnerability curve,0.6477152042155071
+earthquake,CYP,rail,Cost / max-damage,0.6471263879139604
+earthquake,FIN,oil,Vulnerability curve,0.6469863301799214
+flood_baseline_ds_sc0p5to2p0,HRV,rail,Cost / max-damage,0.646501720101401
+earthquake,POL,gas,Vulnerability curve,0.6462407027428327
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,airports,Climate warming,0.6456397921794478
+flood_baseline_ds_sc0p5to2p0,LVA,rail,Cost / max-damage,0.6455590357813432
+earthquake,GBR,gas,Vulnerability curve,0.6454144464011831
+earthquake,FRA,education,Vulnerability curve,0.6453959772156187
+earthquake,ITA,healthcare,Vulnerability curve,0.6453932053314856
+earthquake,POL,oil,Vulnerability curve,0.645351009556107
+earthquake,NOR,gas,Vulnerability curve,0.6453412128717083
+windstorm,HUN,healthcare,Vulnerability curve,0.6450665005835768
+earthquake,GBR,oil,Vulnerability curve,0.6447600524886711
+windstorm,ROU,healthcare,Vulnerability curve,0.6444279350219974
+earthquake,BEL,education,Vulnerability curve,0.644028551468295
+flood_baseline_ds_sc0p5to2p0,POL,rail,Cost / max-damage,0.6434558260502741
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,oil,Cost / max-damage,0.6427600686706468
+earthquake,BGR,healthcare,Vulnerability curve,0.6424879959037596
+earthquake,SVN,rail,Cost / max-damage,0.6419603174599711
+earthquake,LUX,telecom,Hazard intensity,0.6416942394342727
+flood_baseline_ds_sc0p5to2p0,ITA,rail,Cost / max-damage,0.6412732026322241
+earthquake,SWE,gas,Vulnerability curve,0.6402504771172103
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,healthcare,Climate warming,0.6397420139357847
+earthquake,LUX,oil,Vulnerability curve,0.6393444929523859
+earthquake,HRV,healthcare,Vulnerability curve,0.6391786723565506
+windstorm,PRT,oil,Vulnerability curve,0.6386907942028829
+earthquake,SWE,oil,Vulnerability curve,0.6386592489749379
+earthquake,EST,oil,Vulnerability curve,0.6384674748890213
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,airports,Climate warming,0.6383887520109781
+earthquake,GRC,gas,Cost / max-damage,0.638057212693338
+earthquake,ISL,healthcare,Vulnerability curve,0.6378836901197058
+flood_baseline_ds_sc0p5to2p0,NOR,rail,Cost / max-damage,0.6376298875343288
+windstorm,CYP,healthcare,Vulnerability curve,0.6364886237325521
+flood_baseline_ds_sc0p5to2p0,SRB,rail,Cost / max-damage,0.6363131586018119
+earthquake,IRL,airports,Vulnerability curve,0.636196445582763
+coastal_baseline_ds_slr_sc0p5to2p0,EST,oil,Cost / max-damage,0.6352965515733017
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,gas,Cost / max-damage,0.6346999602451094
+earthquake,FIN,gas,Vulnerability curve,0.6345327224039989
+windstorm,NOR,gas,Vulnerability curve,0.6345124470086375
+flood_baseline_ds_sc0p5to2p0,SWE,telecom,Climate warming,0.6339681273831811
+earthquake,HUN,education,Vulnerability curve,0.6335297104015103
+earthquake,LTU,telecom,Hazard intensity,0.6330921787708864
+earthquake,MKD,rail,Cost / max-damage,0.6328215613847855
+earthquake,NOR,telecom,Hazard intensity,0.6324755612841556
+earthquake,NLD,oil,Vulnerability curve,0.6320531631445906
+earthquake,EST,airports,Vulnerability curve,0.6314088501373023
+earthquake,NOR,oil,Vulnerability curve,0.6313569532824672
+earthquake,DEU,education,Vulnerability curve,0.6312890153049853
+earthquake,SVN,healthcare,Vulnerability curve,0.6311571090216702
+earthquake,MLT,education,Vulnerability curve,0.6305032835465103
+earthquake,SWE,airports,Vulnerability curve,0.6304885643326976
+flood_baseline_ds_sc0p5to2p0,LIE,rail,Cost / max-damage,0.6299403626160618
+windstorm,BGR,healthcare,Vulnerability curve,0.6292123474886613
+earthquake,GRC,oil,Cost / max-damage,0.6291804168039098
+earthquake,CHE,education,Vulnerability curve,0.6290353159962714
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,oil,Cost / max-damage,0.6274868314255906
+windstorm,ALB,gas,Vulnerability curve,0.6266523325454886
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,oil,Cost / max-damage,0.6261077371189516
+windstorm,ITA,gas,Vulnerability curve,0.6258775108718283
+earthquake,AND,education,Vulnerability curve,0.6250459213088977
+flood_baseline_ds_sc0p5to2p0,AUT,rail,Cost / max-damage,0.6249564620869913
+earthquake,LUX,gas,Vulnerability curve,0.6244852497688895
+earthquake,ITA,rail,Cost / max-damage,0.6242475675986077
+flood_baseline_ds_sc0p5to2p0,ITA,telecom,Protection standard,0.6242249046502355
+earthquake,AUT,power,Cost / max-damage,0.6241326813306597
+earthquake,NOR,airports,Vulnerability curve,0.6232838976091497
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,ports,Protection standard,0.6230896398469281
+windstorm,AND,power,Vulnerability curve,0.6217381690358377
+flood_baseline_ds_sc0p5to2p0,CHE,telecom,Protection standard,0.6201007965568243
+earthquake,SVK,education,Vulnerability curve,0.6200181553363158
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,rail,Cost / max-damage,0.6191369380978637
+flood_baseline_ds_sc0p5to2p0,POL,telecom,Protection standard,0.6185858051515102
+windstorm,EST,oil,Vulnerability curve,0.6185064022446487
+windstorm,HUN,education,Vulnerability curve,0.6183651276844738
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,healthcare,Climate warming,0.6183388068320502
+windstorm,HRV,gas,Vulnerability curve,0.6180961271777311
+earthquake,LTU,oil,Vulnerability curve,0.6168986542748996
+windstorm,SVN,education,Vulnerability curve,0.6165291105423542
+windstorm,CYP,oil,Vulnerability curve,0.6157761313748866
+earthquake,NLD,ports,Vulnerability curve,0.614063211777443
+windstorm,FIN,education,Vulnerability curve,0.6137568782774963
+earthquake,ISL,rail,Cost / max-damage,0.6107680517347014
+earthquake,CYP,healthcare,Vulnerability curve,0.6103661084069859
+windstorm,SVK,gas,Vulnerability curve,0.6101999214065881
+windstorm,NLD,power,Cost / max-damage,0.6098410500996738
+earthquake,BGR,rail,Cost / max-damage,0.6088393825116041
+earthquake,LVA,ports,Vulnerability curve,0.6088181514692441
+flood_baseline_ds_sc0p5to2p0,LTU,rail,Cost / max-damage,0.6084262393011222
+earthquake,HRV,rail,Cost / max-damage,0.6077583487862218
+earthquake,CYP,oil,Cost / max-damage,0.6064842165985521
+flood_baseline_ds_sc0p5to2p0,SVN,rail,Cost / max-damage,0.6057822984818023
+windstorm,FIN,oil,Vulnerability curve,0.6054009248618579
+flood_baseline_ds_sc0p5to2p0,FRA,telecom,Protection standard,0.6051840710852756
+windstorm,GRC,gas,Vulnerability curve,0.6050040937803238
+windstorm,MKD,healthcare,Vulnerability curve,0.6030991964951167
+earthquake,LIE,education,Vulnerability curve,0.6018569216532251
+flood_baseline_ds_sc0p5to2p0,FIN,rail,Cost / max-damage,0.6012675994555928
+flood_baseline_ds_sc0p5to2p0,HRV,telecom,Protection standard,0.6000708149924564
+flood_baseline_ds_sc0p5to2p0,HUN,rail,Cost / max-damage,0.6000353485698455
+earthquake,MKD,healthcare,Vulnerability curve,0.5998535585106765
+earthquake,BEL,oil,Vulnerability curve,0.5993821331239544
+earthquake,SRB,power,Cost / max-damage,0.5983743714861541
+flood_baseline_ds_sc0p5to2p0,FRA,rail,Cost / max-damage,0.597706645010918
+flood_baseline_ds_sc0p5to2p0,SVK,rail,Cost / max-damage,0.59754286346196
+windstorm,HUN,gas,Vulnerability curve,0.5974062846707867
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,airports,Protection standard,0.5959854020906501
+windstorm,GRC,oil,Vulnerability curve,0.5952398466363982
+earthquake,LVA,airports,Vulnerability curve,0.5940974642641996
+earthquake,AUT,education,Vulnerability curve,0.5939333407587589
+earthquake,NLD,gas,Vulnerability curve,0.5924504144478938
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,oil,Cost / max-damage,0.5918329425867982
+earthquake,PRT,power,Cost / max-damage,0.5915877232690957
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,ports,Protection standard,0.5912044957190187
+windstorm,HUN,power,Vulnerability curve,0.5910432409127753
+earthquake,CHE,gas,Vulnerability curve,0.590884207345081
+flood_baseline_ds_sc0p5to2p0,EST,rail,Cost / max-damage,0.5908689872854765
+earthquake,ESP,education,Vulnerability curve,0.5900388184874309
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,power,Cost / max-damage,0.5897375407145562
+earthquake,LIE,power,Cost / max-damage,0.5895281211731089
+earthquake,ROU,gas,Cost / max-damage,0.5875760247735254
+windstorm,FIN,gas,Vulnerability curve,0.5851755330218477
+coastal_baseline_ds_slr_sc0p5to2p0,CYP,telecom,Climate warming,0.5851574949546896
+flood_baseline_ds_sc0p5to2p0,DEU,rail,Cost / max-damage,0.584373886951422
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,roads,Vulnerability curve,0.5836983588007489
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,roads,Vulnerability curve,0.5834660343713254
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,rail,Cost / max-damage,0.5830228458103351
+earthquake,PRT,education,Vulnerability curve,0.582682121537417
+earthquake,AUT,gas,Vulnerability curve,0.5809295612599419
+flood_baseline_ds_sc0p5to2p0,DNK,rail,Cost / max-damage,0.5809279671121751
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,roads,Vulnerability curve,0.5801412979123474
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,oil,Cost / max-damage,0.5796199163656104
+flood_baseline_ds_sc0p5to2p0,LUX,rail,Cost / max-damage,0.5791339443698125
+flood_baseline_ds_sc0p5to2p0,IRL,telecom,Climate warming,0.5790602381137252
+flood_baseline_ds_sc0p5to2p0,HUN,telecom,Protection standard,0.5785890903539431
+windstorm,EST,gas,Vulnerability curve,0.5780406089455411
+earthquake,SRB,education,Vulnerability curve,0.5779667072781323
+windstorm,SVK,power,Vulnerability curve,0.5773117202825364
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,oil,Climate warming,0.5747962446353556
+windstorm,BGR,education,Vulnerability curve,0.5747309933779271
+windstorm,AND,healthcare,Vulnerability curve,0.5731970428423483
+earthquake,LTU,ports,Vulnerability curve,0.572960609585324
+earthquake,MLT,oil,Vulnerability curve,0.5706171615747784
+windstorm,SRB,education,Vulnerability curve,0.5705101665160679
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,education,Protection standard,0.5701921022040679
+coastal_baseline_ds_slr_sc0p5to2p0,EST,roads,Vulnerability curve,0.569836438443137
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,oil,Cost / max-damage,0.5697851958935238
+earthquake,DNK,rail,Vulnerability curve,0.5696965756194221
+windstorm,HRV,power,Cost / max-damage,0.5690605443113397
+flood_baseline_ds_sc0p5to2p0,DEU,telecom,Protection standard,0.5686043699849431
+coastal_baseline_ds_slr_sc0p5to2p0,POL,ports,Climate warming,0.5685210264596985
+earthquake,SVK,gas,Vulnerability curve,0.5683017410716468
+earthquake,ESP,power,Cost / max-damage,0.5680920785789081
+earthquake,NLD,airports,Vulnerability curve,0.5678846435125408
+earthquake,FRA,oil,Vulnerability curve,0.5659686266256938
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,power,Cost / max-damage,0.5654730850965844
+earthquake,MKD,oil,Cost / max-damage,0.5650557160199089
+earthquake,AUT,rail,Cost / max-damage,0.5645789218272224
+earthquake,SRB,rail,Cost / max-damage,0.5644481818221619
+windstorm,SRB,healthcare,Vulnerability curve,0.5637727440444966
+earthquake,AND,gas,Vulnerability curve,0.5637147969968052
+windstorm,LIE,education,Vulnerability curve,0.5637146374608824
+windstorm,HUN,oil,Vulnerability curve,0.5635655154707134
+windstorm,SWE,power,Cost / max-damage,0.5634750906430481
+coastal_baseline_ds_slr_sc0p5to2p0,POL,airports,Climate warming,0.5632778442078346
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,roads,Protection standard,0.5632076675941844
+earthquake,GBR,rail,Vulnerability curve,0.5629690534183442
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,oil,Cost / max-damage,0.5624170569733715
+earthquake,FIN,rail,Vulnerability curve,0.5624137790807233
+flood_baseline_ds_sc0p5to2p0,NLD,telecom,Protection standard,0.5618985793493669
+windstorm,ALB,oil,Vulnerability curve,0.5607014090008876
+earthquake,CHE,oil,Vulnerability curve,0.5604718238989932
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,roads,Vulnerability curve,0.5600370205898
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,ports,Climate warming,0.5595722288219432
+windstorm,BGR,gas,Vulnerability curve,0.5588691583837742
+earthquake,NOR,rail,Vulnerability curve,0.5579172256285536
+earthquake,POL,rail,Vulnerability curve,0.5573881338382112
+earthquake,GRC,healthcare,Vulnerability curve,0.5572240524178359
+earthquake,ROU,healthcare,Vulnerability curve,0.5566822885754381
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,rail,Cost / max-damage,0.5562241218779904
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,telecom,Climate warming,0.5560666891121754
+earthquake,LUX,power,Vulnerability curve,0.5555625277715236
+earthquake,IRL,rail,Vulnerability curve,0.5547839289716973
+earthquake,LUX,rail,Vulnerability curve,0.5546456752087895
+windstorm,MKD,education,Vulnerability curve,0.5546057503118538
+earthquake,HUN,oil,Vulnerability curve,0.5533972261764009
+windstorm,CZE,power,Vulnerability curve,0.5518826829061734
+windstorm,SVN,power,Vulnerability curve,0.5501685805032595
+earthquake,FRA,power,Cost / max-damage,0.5491994953768891
+earthquake,SWE,rail,Vulnerability curve,0.547435936109513
+earthquake,PRT,rail,Cost / max-damage,0.5449186627582872
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,roads,Vulnerability curve,0.5442427029471837
+flood_baseline_ds_sc0p5to2p0,BEL,rail,Cost / max-damage,0.5437731941248031
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,telecom,Protection standard,0.5432469674979237
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,rail,Climate warming,0.5428278703669653
+earthquake,POL,telecom,Hazard intensity,0.5427497694242566
+earthquake,ESP,gas,Vulnerability curve,0.542148704320117
+earthquake,LTU,rail,Vulnerability curve,0.5420175063799114
+flood_baseline_ds_sc0p5to2p0,EST,telecom,Climate warming,0.5410891901286513
+earthquake,ITA,gas,Cost / max-damage,0.5409680758596291
+flood_baseline_ds_sc0p5to2p0,GBR,rail,Cost / max-damage,0.5409046949104835
+earthquake,BEL,ports,Vulnerability curve,0.5408758127229296
+earthquake,FIN,telecom,Cost / max-damage,0.5405375830536921
+windstorm,AUT,power,Vulnerability curve,0.540121548996897
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,roads,Vulnerability curve,0.5399677000023322
+windstorm,PRT,power,Vulnerability curve,0.5390138881405038
+earthquake,EST,rail,Vulnerability curve,0.5382143201199453
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,power,Vulnerability curve,0.5367921162425615
+flood_baseline_ds_sc0p5to2p0,BGR,telecom,Protection standard,0.5365485179832856
+flood_baseline_ds_sc0p5to2p0,BEL,telecom,Protection standard,0.5356379290296688
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,oil,Climate warming,0.5333762646692444
+earthquake,SVK,power,Cost / max-damage,0.533301219887503
+coastal_baseline_ds_slr_sc0p5to2p0,BEL,roads,Climate warming,0.5327340696714188
+earthquake,ITA,education,Vulnerability curve,0.532494707537003
+earthquake,LVA,rail,Vulnerability curve,0.5321729460490155
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,roads,Vulnerability curve,0.5321669944346894
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,airports,Protection standard,0.5320471112919676
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,power,Vulnerability curve,0.5316260810576517
+windstorm,CYP,gas,Vulnerability curve,0.5312817804922356
+earthquake,ISL,education,Vulnerability curve,0.5309039845136854
+flood_baseline_ds_sc0p5to2p0,GBR,telecom,Climate warming,0.5307656331571636
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,healthcare,Climate warming,0.530326572875978
+earthquake,BEL,gas,Vulnerability curve,0.5294699097164337
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,rail,Protection standard,0.5287862519867152
+earthquake,DEU,power,Cost / max-damage,0.5277881512752203
+earthquake,BGR,education,Vulnerability curve,0.5275076668084332
+earthquake,DEU,oil,Vulnerability curve,0.5270077933884518
+earthquake,HRV,education,Vulnerability curve,0.5262062103362322
+earthquake,CZE,rail,Vulnerability curve,0.525161913675137
+windstorm,GBR,power,Vulnerability curve,0.5238383480968559
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,power,Vulnerability curve,0.5234345329154891
+windstorm,LUX,rail,Vulnerability curve,0.5220806510890438
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,roads,Vulnerability curve,0.5220698847045541
+earthquake,FIN,power,Vulnerability curve,0.521998666402101
+earthquake,HRV,oil,Cost / max-damage,0.521752930470307
+earthquake,LVA,power,Cost / max-damage,0.5214993574132802
+earthquake,LIE,rail,Cost / max-damage,0.5203562955000176
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,education,Climate warming,0.5202487444564317
+windstorm,BEL,rail,Vulnerability curve,0.520062006915667
+earthquake,ESP,rail,Cost / max-damage,0.5187861544821727
+earthquake,DEU,gas,Vulnerability curve,0.5177197707323163
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,roads,Vulnerability curve,0.5161551407469269
+windstorm,IRL,rail,Vulnerability curve,0.5161041593351139
+windstorm,IRL,power,Vulnerability curve,0.5160544799007383
+earthquake,CHE,rail,Cost / max-damage,0.5158582686877896
+earthquake,FRA,ports,Vulnerability curve,0.5156292923832991
+flood_baseline_ds_sc0p5to2p0,SWE,rail,Cost / max-damage,0.5153987265964811
+flood_baseline_ds_sc0p5to2p0,LUX,telecom,Protection standard,0.5152033704872179
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,airports,Climate warming,0.5148718444994675
+earthquake,DNK,power,Vulnerability curve,0.5140524765970117
+earthquake,PRT,oil,Vulnerability curve,0.5137758668037056
+windstorm,FRA,power,Vulnerability curve,0.5136977400139807
+earthquake,CYP,education,Vulnerability curve,0.5135233497489978
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,healthcare,Climate warming,0.5134737030356757
+earthquake,CYP,gas,Cost / max-damage,0.513027671332933
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,power,Vulnerability curve,0.5129216383501971
+flood_baseline_ds_sc0p5to2p0,GRC,roads,Vulnerability curve,0.5126028534767608
+earthquake,FRA,airports,Vulnerability curve,0.5125241052223775
+windstorm,AUT,rail,Vulnerability curve,0.5124155913043116
+windstorm,CZE,rail,Vulnerability curve,0.5119871830052914
+windstorm,FRA,rail,Vulnerability curve,0.5119381904218803
+windstorm,NOR,power,Cost / max-damage,0.5119251186592808
+earthquake,MKD,education,Vulnerability curve,0.5114452260128923
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,education,Climate warming,0.5110737965835133
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,power,Vulnerability curve,0.5108637877599659
+coastal_baseline_ds_slr_sc0p5to2p0,BEL,rail,Climate warming,0.5106040767953706
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,airports,Vulnerability curve,0.5095288552262127
+windstorm,CHE,rail,Vulnerability curve,0.5080605841171807
+earthquake,ISL,oil,Cost / max-damage,0.5078700911221127
+windstorm,POL,rail,Vulnerability curve,0.5075132599723537
+windstorm,DNK,rail,Cost / max-damage,0.5074611981794037
+flood_baseline_ds_sc0p5to2p0,DNK,telecom,Climate warming,0.5073825185867539
+flood_baseline_ds_sc0p5to2p0,SRB,telecom,Protection standard,0.5072262481813854
+earthquake,GBR,telecom,Hazard intensity,0.505697022067877
+earthquake,SVN,education,Vulnerability curve,0.5053688070591326
+windstorm,GBR,rail,Vulnerability curve,0.5047821292371177
+coastal_baseline_ds_slr_sc0p5to2p0,CYP,power,Vulnerability curve,0.5042281348086488
+earthquake,CHE,power,Cost / max-damage,0.5042089636793471
+windstorm,LTU,rail,Vulnerability curve,0.5040852064560659
+earthquake,POL,power,Cost / max-damage,0.5040271483690483
+earthquake,EST,power,Cost / max-damage,0.5037820258042985
+earthquake,ITA,oil,Cost / max-damage,0.5034027016963104
+windstorm,NOR,rail,Vulnerability curve,0.5031898247390131
+earthquake,SVK,rail,Cost / max-damage,0.5030863641958188
+windstorm,ESP,rail,Vulnerability curve,0.5029607613715394
+earthquake,LTU,power,Cost / max-damage,0.5024901475600849
+earthquake,GBR,power,Vulnerability curve,0.5018573460178134
+windstorm,NLD,rail,Vulnerability curve,0.501813876889459
+earthquake,DEU,rail,Cost / max-damage,0.501371059905397
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,roads,Vulnerability curve,0.5010111162528903
+earthquake,BEL,airports,Vulnerability curve,0.5009590070869884
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,oil,Climate warming,0.5006951080567589
+flood_baseline_ds_sc0p5to2p0,ISL,roads,Vulnerability curve,0.5004855078203502
+windstorm,BEL,power,Cost / max-damage,0.500451730866196
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,education,Climate warming,0.5003224551611073
+flood_baseline_ds_sc0p5to2p0,IRL,rail,Cost / max-damage,0.5003001802481439
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,education,Vulnerability curve,0.5002509821589217
+windstorm,ISL,rail,Vulnerability curve,0.4998524113537194
+earthquake,ROU,education,Vulnerability curve,0.49941767532990017
+earthquake,NLD,power,Cost / max-damage,0.4992052401915576
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,power,Vulnerability curve,0.49871694304126474
+earthquake,IRL,power,Cost / max-damage,0.49869976681444067
+windstorm,EST,power,Vulnerability curve,0.49866144923390765
+earthquake,HUN,power,Cost / max-damage,0.49857231478762454
+windstorm,ITA,rail,Vulnerability curve,0.4985333189320762
+windstorm,LVA,rail,Vulnerability curve,0.49848999257174254
+flood_baseline_ds_sc0p5to2p0,ALB,telecom,Climate warming,0.49824116578768807
+windstorm,HRV,rail,Vulnerability curve,0.49697902562144075
+earthquake,ALB,healthcare,Vulnerability curve,0.49688012104773327
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,gas,Climate warming,0.4965366235026471
+windstorm,ISL,power,Cost / max-damage,0.49586629894756246
+windstorm,DEU,rail,Vulnerability curve,0.495568509472585
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,gas,Climate warming,0.49543716465137927
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,power,Vulnerability curve,0.49499744382389044
+earthquake,SWE,power,Cost / max-damage,0.4947963771589674
+earthquake,HUN,rail,Cost / max-damage,0.49469213555057795
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,roads,Vulnerability curve,0.4944479973644286
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,airports,Cost / max-damage,0.49389417743841163
+earthquake,FRA,rail,Cost / max-damage,0.49376383054615314
+windstorm,SVN,rail,Vulnerability curve,0.4934627160707698
+earthquake,NLD,rail,Vulnerability curve,0.4930666466321234
+windstorm,CHE,power,Vulnerability curve,0.4928277795609866
+windstorm,SWE,rail,Vulnerability curve,0.49226301454843746
+coastal_baseline_ds_slr_sc0p5to2p0,POL,gas,Climate warming,0.4922225164931655
+windstorm,PRT,rail,Vulnerability curve,0.49157008116630035
+earthquake,GRC,education,Vulnerability curve,0.4906581142076089
+flood_baseline_ds_sc0p5to2p0,BGR,roads,Vulnerability curve,0.49036703875353965
+flood_baseline_ds_sc0p5to2p0,LTU,telecom,Climate warming,0.489489130861882
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,telecom,Protection standard,0.4886705934570236
+flood_baseline_ds_sc0p5to2p0,EST,roads,Vulnerability curve,0.48803001011221714
+earthquake,SRB,oil,Vulnerability curve,0.4872917508222889
+earthquake,ESP,oil,Vulnerability curve,0.48728035593070285
+windstorm,SRB,oil,Vulnerability curve,0.48642246260234323
+windstorm,SVK,oil,Vulnerability curve,0.4861249964109604
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,airports,Protection standard,0.48588992866338887
+windstorm,ALB,rail,Vulnerability curve,0.4848269395739921
+windstorm,EST,rail,Vulnerability curve,0.4842640761286085
+windstorm,SVN,gas,Vulnerability curve,0.4833977895371849
+earthquake,CZE,power,Cost / max-damage,0.4832086057788511
+windstorm,SVK,rail,Vulnerability curve,0.4819911273390186
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,oil,Climate warming,0.481929108864362
+windstorm,BGR,power,Vulnerability curve,0.4816126093143362
+windstorm,FIN,power,Vulnerability curve,0.48135382700220974
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,rail,Climate warming,0.4801654917340548
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,power,Climate warming,0.4799569401042149
+windstorm,POL,power,Vulnerability curve,0.4797871773515393
+earthquake,BEL,rail,Vulnerability curve,0.47961402640017614
+earthquake,BEL,power,Cost / max-damage,0.4794081366964138
+earthquake,ALB,education,Vulnerability curve,0.4791695501781773
+windstorm,FIN,rail,Vulnerability curve,0.4789208791697357
+windstorm,DEU,power,Cost / max-damage,0.47697527693086983
+earthquake,ESP,ports,Vulnerability curve,0.47637093908457007
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,power,Cost / max-damage,0.4763490341773796
+flood_baseline_ds_sc0p5to2p0,POL,roads,Vulnerability curve,0.47629674893701696
+earthquake,DEU,ports,Vulnerability curve,0.4761541599160413
+flood_baseline_ds_sc0p5to2p0,ALB,roads,Vulnerability curve,0.4758844856871972
+earthquake,SVN,ports,Vulnerability curve,0.47587516157686954
+earthquake,AUT,ports,Vulnerability curve,0.4758669700972097
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,education,Vulnerability curve,0.4757003078371372
+earthquake,MLT,power,Cost / max-damage,0.47561623177282447
+windstorm,ESP,power,Cost / max-damage,0.4751661900617161
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,power,Cost / max-damage,0.4737480570067181
+windstorm,HUN,rail,Vulnerability curve,0.473697022878391
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,education,Climate warming,0.47353598409250514
+windstorm,LVA,power,Cost / max-damage,0.4731336268572831
+windstorm,GRC,rail,Vulnerability curve,0.472861390459996
+coastal_baseline_ds_slr_sc0p5to2p0,LTU,education,Vulnerability curve,0.4718270949774668
+earthquake,PRT,gas,Vulnerability curve,0.4716528131076556
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,rail,Cost / max-damage,0.47152824240094077
+earthquake,HUN,airports,Vulnerability curve,0.47148374563388695
+windstorm,ROU,rail,Vulnerability curve,0.47110699837427344
+flood_baseline_ds_sc0p5to2p0,LIE,roads,Vulnerability curve,0.4708660017135929
+windstorm,SRB,gas,Vulnerability curve,0.4704342270002209
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,education,Vulnerability curve,0.46997888981345365
+windstorm,MKD,oil,Vulnerability curve,0.469579464383659
+windstorm,ROU,oil,Vulnerability curve,0.4690386866929685
+earthquake,AUT,oil,Cost / max-damage,0.4685288529945913
+earthquake,HUN,ports,Vulnerability curve,0.4668765769610777
+earthquake,SVN,oil,Cost / max-damage,0.46662710384932693
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,roads,Vulnerability curve,0.46640822472529175
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,education,Vulnerability curve,0.4654008633564779
+flood_baseline_ds_sc0p5to2p0,ROU,roads,Vulnerability curve,0.4650740220871541
+earthquake,SRB,ports,Vulnerability curve,0.46460501844498037
+earthquake,MLT,ports,Vulnerability curve,0.4643710896858515
+windstorm,BGR,rail,Vulnerability curve,0.4637478116886526
+flood_baseline_ds_sc0p5to2p0,CZE,roads,Vulnerability curve,0.46327346147561327
+windstorm,GRC,power,Cost / max-damage,0.46325501425505117
+earthquake,CHE,ports,Vulnerability curve,0.46302012927678365
+windstorm,SRB,rail,Vulnerability curve,0.46300240131405107
+flood_baseline_ds_sc0p5to2p0,ROU,telecom,Protection standard,0.4626987649355769
+earthquake,AND,airports,Hazard intensity,0.462040799311864
+flood_baseline_ds_sc0p5to2p0,LVA,roads,Vulnerability curve,0.4619945176187284
+flood_baseline_ds_sc0p5to2p0,MKD,roads,Vulnerability curve,0.46145012345446246
+earthquake,SVK,airports,Vulnerability curve,0.46119586192835266
+earthquake,BGR,oil,Cost / max-damage,0.46112893878605554
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,education,Vulnerability curve,0.4597601054922809
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,power,Vulnerability curve,0.4593347814157456
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,oil,Cost / max-damage,0.4582642767863679
+coastal_baseline_ds_slr_sc0p5to2p0,POL,rail,Cost / max-damage,0.4582516134659384
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,roads,Climate warming,0.4560878227343772
+earthquake,SVN,gas,Vulnerability curve,0.45554397231223887
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,gas,Climate warming,0.4554824404383648
+earthquake,DEU,airports,Vulnerability curve,0.45521056500576246
+coastal_baseline_ds_slr_sc0p5to2p0,POL,telecom,Climate warming,0.4543182559838713
+earthquake,SVK,ports,Vulnerability curve,0.4540622168336968
+flood_baseline_ds_sc0p5to2p0,LTU,roads,Vulnerability curve,0.453470802076167
+earthquake,LIE,airports,Vulnerability curve,0.4533616630192413
+windstorm,ALB,power,Cost / max-damage,0.4524416170601765
+coastal_baseline_ds_slr_sc0p5to2p0,CYP,roads,Vulnerability curve,0.4523525544456202
+windstorm,MKD,rail,Vulnerability curve,0.45219067977503274
+earthquake,BGR,ports,Hazard intensity,0.448532582764382
+windstorm,LTU,power,Cost / max-damage,0.44822374695193967
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,education,Vulnerability curve,0.44769944856490734
+windstorm,LUX,power,Vulnerability curve,0.4471669900370598
+earthquake,PRT,ports,Vulnerability curve,0.4467857200585986
+flood_baseline_ds_sc0p5to2p0,NLD,rail,Cost / max-damage,0.4464004875169659
+coastal_baseline_ds_slr_sc0p5to2p0,EST,education,Vulnerability curve,0.4460519899895347
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,healthcare,Protection standard,0.4454814977804391
+windstorm,CYP,power,Cost / max-damage,0.4449502285607173
+earthquake,HRV,ports,Vulnerability curve,0.4439661936615492
+windstorm,SVN,oil,Hazard intensity,0.44391195327941224
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,rail,Cost / max-damage,0.4427411782247403
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,telecom,Protection standard,0.44260722247413437
+windstorm,CHE,airports,Hazard intensity,0.442529639221215
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,education,Vulnerability curve,0.44181228542252965
+flood_baseline_ds_sc0p5to2p0,HUN,roads,Vulnerability curve,0.4410779184946663
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,gas,Cost / max-damage,0.44103464400846126
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,education,Vulnerability curve,0.44064759990396196
+flood_baseline_ds_sc0p5to2p0,PRT,roads,Vulnerability curve,0.4401587143418188
+earthquake,ITA,ports,Vulnerability curve,0.43990287999351324
+earthquake,ROU,ports,Hazard intensity,0.439855886657778
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,rail,Climate warming,0.4397565632707184
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,education,Vulnerability curve,0.43966551435990875
+flood_baseline_ds_sc0p5to2p0,ESP,roads,Vulnerability curve,0.43933961878388017
+coastal_baseline_ds_slr_sc0p5to2p0,POL,roads,Vulnerability curve,0.4383204932001054
+windstorm,ROU,gas,Vulnerability curve,0.4383199581257375
+windstorm,CYP,rail,Vulnerability curve,0.43734347513569194
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,rail,Climate warming,0.43718024448488946
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,gas,Climate warming,0.43683676672936766
+coastal_baseline_ds_slr_sc0p5to2p0,CYP,airports,Climate warming,0.4367310882328987
+earthquake,AND,power,Hazard intensity,0.43661039007748975
+windstorm,ITA,power,Cost / max-damage,0.4362196561962956
+windstorm,BGR,oil,Hazard intensity,0.435432434435892
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,roads,Climate warming,0.434602826405963
+earthquake,ISL,airports,Hazard intensity,0.43354065917814627
+earthquake,ISL,ports,Vulnerability curve,0.43257679392868675
+earthquake,CHE,airports,Vulnerability curve,0.4319620106549579
+flood_baseline_ds_sc0p5to2p0,FIN,roads,Vulnerability curve,0.43167701661960495
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,power,Vulnerability curve,0.4308899629838036
+earthquake,CYP,ports,Vulnerability curve,0.4294425871404189
+earthquake,GRC,ports,Vulnerability curve,0.42911614680139326
+windstorm,MLT,power,Vulnerability curve,0.42776540291013104
+windstorm,FRA,airports,Cost / max-damage,0.42727323463575667
+earthquake,ALB,ports,Vulnerability curve,0.4271903956593383
+flood_baseline_ds_sc0p5to2p0,HRV,roads,Vulnerability curve,0.42658007025348416
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,roads,Vulnerability curve,0.42588744754304153
+earthquake,ESP,airports,Vulnerability curve,0.424856746441924
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,healthcare,Climate warming,0.42472299156540827
+windstorm,DEU,airports,Cost / max-damage,0.4235331965887765
+windstorm,DNK,airports,Cost / max-damage,0.4229111983969544
+earthquake,SRB,airports,Vulnerability curve,0.42237386009917866
+windstorm,ROU,power,Cost / max-damage,0.4218100747625483
+flood_baseline_ds_sc0p5to2p0,FRA,roads,Vulnerability curve,0.4215852251184344
+windstorm,SRB,power,Cost / max-damage,0.4213278273537765
+windstorm,LIE,power,Vulnerability curve,0.4194603900375949
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,gas,Climate warming,0.4190433294254086
+flood_baseline_ds_sc0p5to2p0,NOR,roads,Protection standard,0.41837868555089636
+flood_baseline_ds_sc0p5to2p0,SRB,roads,Vulnerability curve,0.4180839114115718
+windstorm,EST,airports,Hazard intensity,0.41781950307198235
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,roads,Vulnerability curve,0.4161628924082655
+flood_baseline_ds_sc0p5to2p0,DNK,roads,Vulnerability curve,0.41525247502052104
+earthquake,BGR,airports,Hazard intensity,0.41070706187516115
+windstorm,GBR,airports,Cost / max-damage,0.4104399495612589
+windstorm,HRV,airports,Cost / max-damage,0.40956798886111184
+coastal_baseline_ds_slr_sc0p5to2p0,ITA,power,Climate warming,0.4083535365975653
+coastal_baseline_ds_slr_sc0p5to2p0,ALB,education,Vulnerability curve,0.40785116297264357
+earthquake,AUT,airports,Vulnerability curve,0.40779190086181005
+windstorm,ISL,airports,Cost / max-damage,0.4074627757795778
+windstorm,ITA,airports,Hazard intensity,0.40724931697385963
+windstorm,MKD,power,Cost / max-damage,0.4071510920856165
+coastal_baseline_ds_slr_sc0p5to2p0,POL,power,Vulnerability curve,0.4065389084264016
+coastal_baseline_ds_slr_sc0p5to2p0,POL,education,Climate warming,0.4057353209247506
+flood_baseline_ds_sc0p5to2p0,ITA,roads,Vulnerability curve,0.405609424070334
+earthquake,ITA,airports,Vulnerability curve,0.40475468234639583
+windstorm,LIE,rail,Vulnerability curve,0.4036863440807314
+windstorm,NOR,airports,Cost / max-damage,0.4030907726457825
+windstorm,IRL,airports,Cost / max-damage,0.4029828165014192
+windstorm,LUX,airports,Hazard intensity,0.4014944139502517
+coastal_baseline_ds_slr_sc0p5to2p0,SVN,healthcare,Climate warming,0.3993306552202216
+earthquake,CYP,airports,Vulnerability curve,0.3983521444952136
+windstorm,AUT,airports,Hazard intensity,0.39612457769451853
+flood_baseline_ds_sc0p5to2p0,CHE,roads,Vulnerability curve,0.3958035993562038
+earthquake,MLT,airports,Hazard intensity,0.3943089332505839
+earthquake,ROU,airports,Vulnerability curve,0.394164337037604
+coastal_baseline_ds_slr_sc0p5to2p0,NOR,healthcare,Protection standard,0.3927407585219711
+earthquake,SVN,airports,Vulnerability curve,0.39224427202211637
+coastal_baseline_ds_slr_sc0p5to2p0,ESP,power,Vulnerability curve,0.39096568179377594
+flood_baseline_ds_sc0p5to2p0,SVN,roads,Vulnerability curve,0.3907520317858302
+flood_baseline_ds_sc0p5to2p0,DEU,roads,Vulnerability curve,0.3897280370524466
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,education,Climate warming,0.38943738515011717
+flood_baseline_ds_sc0p5to2p0,AUT,roads,Protection standard,0.38929730348521824
+earthquake,MKD,airports,Vulnerability curve,0.38896315425680755
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,education,Vulnerability curve,0.38856792560903974
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,gas,Cost / max-damage,0.38765134074674074
+coastal_baseline_ds_slr_sc0p5to2p0,MLT,healthcare,Protection standard,0.3865924860420614
+earthquake,GRC,airports,Vulnerability curve,0.38656489714462394
+coastal_baseline_ds_slr_sc0p5to2p0,FRA,roads,Climate warming,0.38654989899764475
+earthquake,PRT,airports,Hazard intensity,0.3841887401519245
+flood_baseline_ds_sc0p5to2p0,SVK,roads,Vulnerability curve,0.3838691776918996
+flood_baseline_ds_sc0p5to2p0,LVA,telecom,Vulnerability curve,0.3829623734618002
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,healthcare,Cost / max-damage,0.38152865792717766
+coastal_baseline_ds_slr_sc0p5to2p0,GRC,healthcare,Protection standard,0.38092346533951077
+earthquake,HRV,airports,Vulnerability curve,0.37965785019395415
+windstorm,LTU,airports,Cost / max-damage,0.3794992230785149
+windstorm,LVA,airports,Cost / max-damage,0.37637346124826976
+flood_baseline_ds_sc0p5to2p0,LUX,roads,Protection standard,0.3751351276271887
+windstorm,POL,airports,Hazard intensity,0.37325890690080826
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,roads,Climate warming,0.3730107247580093
+coastal_baseline_ds_slr_sc0p5to2p0,IRL,power,Vulnerability curve,0.37285902605614296
+coastal_baseline_ds_slr_sc0p5to2p0,HRV,healthcare,Protection standard,0.37227679163277966
+windstorm,NLD,airports,Hazard intensity,0.3698808776221081
+coastal_baseline_ds_slr_sc0p5to2p0,DEU,education,Cost / max-damage,0.36956200174143583
+flood_baseline_ds_sc0p5to2p0,IRL,roads,Vulnerability curve,0.36726693480833705
+windstorm,ESP,airports,Cost / max-damage,0.36416339546586507
+coastal_baseline_ds_slr_sc0p5to2p0,SWE,healthcare,Cost / max-damage,0.3640011623787598
+coastal_baseline_ds_slr_sc0p5to2p0,LVA,healthcare,Cost / max-damage,0.3618162036926914
+windstorm,BEL,airports,Cost / max-damage,0.36173063611822687
+windstorm,SWE,airports,Hazard intensity,0.3608657246786387
+coastal_baseline_ds_slr_sc0p5to2p0,EST,power,Cost / max-damage,0.36034949292622287
+flood_baseline_ds_sc0p5to2p0,NLD,roads,Protection standard,0.3561550240721017
+earthquake,ALB,airports,Vulnerability curve,0.3545109953153872
+coastal_baseline_ds_slr_sc0p5to2p0,GBR,power,Vulnerability curve,0.34818664358828866
+coastal_baseline_ds_slr_sc0p5to2p0,PRT,healthcare,Climate warming,0.3461467723730805
+flood_baseline_ds_sc0p5to2p0,GBR,roads,Vulnerability curve,0.34112709140425923
+flood_baseline_ds_sc0p5to2p0,SWE,roads,Climate warming,0.3378602538121029
+flood_baseline_ds_sc0p5to2p0,BEL,roads,Vulnerability curve,0.3343951764122591
+coastal_baseline_ds_slr_sc0p5to2p0,DNK,healthcare,Protection standard,0.3274486855760018
+coastal_baseline_ds_slr_sc0p5to2p0,EST,airports,Protection standard,0.3132563560955841
+coastal_baseline_ds_slr_sc0p5to2p0,NLD,power,Protection standard,0.29905595831781984
+coastal_baseline_ds_slr_sc0p5to2p0,FIN,gas,Climate warming,0.25358635417984926

@@ -7,6 +7,8 @@ for both the first-order (S1) and the total-order (ST) index:
 
   value         index values: the widest 95% bootstrap CI across all factors
                 is below 0.05 (their Eq. 1)
+  halfwidth     index values, looser: the largest 95% CI half width across all
+                factors is below 0.10 (not from Sarrazin)
   rank-rho      ranking: the 95th percentile, over every pair of bootstrap
                 resamples, of the sensitivity-weighted rank distance is
                 below 1 (Eqs. 2-3)
@@ -64,6 +66,7 @@ BLOCK = 100            # resamples per bootstrap block; bounds memory at N=32768
 CONF_LO, CONF_HI = 2.5, 97.5
 
 VALUE_TOL = 0.05       # Sarrazin Eq. 1 and Eq. 5 threshold on CI width
+HALF_WIDTH_TOL = 0.10  # on CI half width, in index units: 10 percentage points of output variance
 RHO_TOL = 1.0          # Sarrazin Eq. 3: under one rank position
 SCREEN_T = (0.05, 0.01)  # the screening threshold T; only T moves, the width cut stays VALUE_TOL
 
@@ -84,10 +87,18 @@ SCEN_SHORT = {
     "coastal_noprot_ds_slr": "CO-rec-SLR",
     "coastal_absprot_ds_rp10to100": "CO-RP10-100",
     "coastal_baseline_ds_sc0p5to1p5": "CO-x0.5-1.5",
+    "flood_baseline_ds_sc0p5to2p0": "FL-x0.5-2",
+    "coastal_baseline_ds_sc0p5to2p0": "CO-x0.5-2",
+    "coastal_baseline_ds_slr_sc0p5to2p0": "CO-x0.5-2-SLR",
+    "coastal_baseline_ds_slr_sc0p75to1p33": "CO-x0.75-1.33-SLR",
+    "coastal_absprot_ds_slr_rp10to100": "CO-RP10-100-SLR",
+    "flood_absprot_ds_rp25to200": "FL-RP25-200",
+    "coastal_absprot_ds_slr_rp25to200": "CO-RP25-200-SLR",
     "earthquake": "EQ",
     "earthquake_pga0p9to1p1": "EQ-x0.9-1.1",
     "windstorm": "WS",
     "windstorm_absprot": "WS-abs",
+    "windstorm_unprotected": "WS-none",
 }
 
 # code, title, what the cell shows, converged-if, stat column, verdict column, number format
@@ -95,6 +106,9 @@ CRITERIA = [
     ("value", "Index values",
      "widest 95% CI across all factors", f"< {VALUE_TOL}",
      "value_stat", "value_conv", "0.000"),
+    ("halfwidth", "Index values, CI half width",
+     "largest 95% CI half width across all factors", f"< {HALF_WIDTH_TOL:.2f}",
+     "halfwidth_stat", "halfwidth_conv", "0.000"),
     ("rank-rho", "Ranking (weighted rank distance)",
      "95th percentile of rho over all pairs of bootstrap resamples", f"< {RHO_TOL:g}",
      "rho_q95", "rho_conv", "0.00"),
@@ -217,6 +231,14 @@ def index_stats(point: np.ndarray, boot: np.ndarray) -> tuple[dict, pd.DataFrame
     factors = pd.DataFrame({"point": point, "boot_mean": mean, "ci_lb": lb, "ci_ub": ub,
                             "ci_width": width, "rank": rank})
     return stats, factors
+
+
+def add_halfwidth(stats: pd.DataFrame) -> pd.DataFrame:
+    """The half-width criterion, derived from value_stat so archives need no re-test."""
+    stats = stats.copy()
+    stats["halfwidth_stat"] = stats["value_stat"] / 2
+    stats["halfwidth_conv"] = stats["halfwidth_stat"] < HALF_WIDTH_TOL
+    return stats
 
 
 def read_outcome(path: str, name: str) -> np.ndarray:
@@ -361,6 +383,7 @@ def compute(args, out_dir: Path) -> None:
         stats = pd.concat([kept_stats, stats], ignore_index=True)
         factors = pd.concat([kept_factors, factors], ignore_index=True)
     out_dir.mkdir(parents=True, exist_ok=True)
+    stats = add_halfwidth(stats)
     stats.to_csv(out_dir / "convergence_stats.csv", index=False)
     factors.to_csv(out_dir / "bootstrap_factors.csv", index=False)
     other.to_csv(out_dir / "archives_not_tested.csv", index=False)
@@ -440,15 +463,33 @@ def tally(df: pd.DataFrame, conv_col: str) -> tuple[int, int]:
     return int(ok[conv_col].astype(bool).sum()), len(ok)
 
 
-def pct_fill(frac: float) -> PatternFill:
-    """Red -> amber -> green by share converged."""
-    stops = [(0.0, (0xF8, 0x69, 0x6B)), (0.5, (0xFF, 0xEB, 0x84)), (1.0, (0x63, 0xBE, 0x7B))]
+DONE_FILL = PatternFill("solid", fgColor="1E7B3C")
+DONE_FONT = Font(bold=True, color="FFFFFF")
+NEAR_FILL = PatternFill("solid", fgColor="C6EFCE")
+NEAR_FRAC = 0.9
+
+
+def pct_style(k: int, n: int) -> tuple[PatternFill, Font | None]:
+    """(fill, font) for k of n converged. Dark green only when all n converged,
+    light green from 90%; below that red -> amber -> yellow, with no green in
+    it, so the finished cells stand out."""
+    if k == n:
+        return DONE_FILL, DONE_FONT
+    frac = k / n
+    if frac >= NEAR_FRAC:
+        return NEAR_FILL, None
+    stops = [(0.0, (0xF8, 0x69, 0x6B)), (0.5, (0xFF, 0xB6, 0x6B)), (NEAR_FRAC, (0xFF, 0xEB, 0x84))]
     for (x0, c0), (x1, c1) in zip(stops, stops[1:]):
         if frac <= x1:
             t = (frac - x0) / (x1 - x0)
             rgb = [round(p + (q - p) * t) for p, q in zip(c0, c1)]
-            return PatternFill("solid", fgColor="%02X%02X%02X" % tuple(rgb))
-    return PatternFill("solid", fgColor="63BE7B")
+            return PatternFill("solid", fgColor="%02X%02X%02X" % tuple(rgb)), None
+    raise AssertionError("unreachable: frac < NEAR_FRAC")
+
+
+def pct_text(k: int, n: int) -> str:
+    """Share rounded DOWN, so 99.6% reads 99% and only a complete set says 100%."""
+    return f"{100 * k // n}%"
 
 
 def _put(ws, r, c, v, bold=False, fill=None, font=None, fmt=None, align=None, border=True):
@@ -550,6 +591,10 @@ def write_overview(ws, stats: pd.DataFrame, scenarios) -> None:
             value=f"Each cell: converged / tested (share). Tested excludes zero-variance "
                   f"combinations. Outcome {OUTCOME}; {RESAMPLES} bootstrap resamples. "
                   "Definitions on the Notes sheet.")
+    ws.cell(row=3, column=1,
+            value="Dark green: every tested combination converged. Light green: 90% or more. "
+                  "Red -> amber -> yellow: share converged below 90%. Shares are rounded down, "
+                  "so only a complete set reads 100%.").font = Font(italic=True, color="595959")
 
     def header(r: int, first: list[str]) -> int:
         for i, h in enumerate(first, 1):
@@ -587,9 +632,9 @@ def write_overview(ws, stats: pd.DataFrame, scenarios) -> None:
             for *_, conv_col, _ in CRITERIA:
                 for ix in INDICES:
                     k, n = tally(sub[sub["index"] == ix], conv_col)
-                    frac = k / n if n else 0.0
-                    _put(ws, r, c, f"{k} / {n} ({frac:.0%})" if n else "–",
-                         fill=pct_fill(frac) if n else None, align=CENTER, bold=scen is None)
+                    fill, font = pct_style(k, n) if n else (None, None)
+                    _put(ws, r, c, f"{k} / {n} ({pct_text(k, n)})" if n else "–",
+                         fill=fill, font=font, align=CENTER, bold=scen is None)
                     c += 1
             r += 1
         return r
@@ -636,8 +681,9 @@ def write_overview(ws, stats: pd.DataFrame, scenarios) -> None:
                     n = len(s)
                     k_new = int(s[conv_col].astype(bool).sum())
                     k_old = int(s[f"{conv_col}_base"].astype(bool).sum())
+                    fill, font = pct_style(k_new, n) if n else (None, None)
                     _put(ws, r, c, f"{k_old} -> {k_new} / {n}" if n else "–",
-                         fill=pct_fill(k_new / n) if n else None, align=CENTER, bold=scen is None)
+                         fill=fill, font=font, align=CENTER, bold=scen is None)
                     c += 1
             r += 1
 
@@ -679,6 +725,10 @@ NOTES = [
             "membership of X0."),
     ("value", f"Index values (Eq. 1): Stat = max over all factors of the CI width (ub - lb). "
               f"Converged if Stat < {VALUE_TOL}."),
+    ("halfwidth", "Index values, looser than Sarrazin: Stat = max over all factors of the CI half "
+                  f"width, (ub - lb) / 2, from the same {RESAMPLES} resamples. Converged if Stat < "
+                  f"{HALF_WIDTH_TOL:.2f}, in index units: 10 percentage points of output variance, "
+                  "not 10% of each factor's own index."),
     ("rank-rho", "Ranking (Eqs. 2-3): rho(j,k) = sum_i |R_i^j - R_i^k| * max(S_i^j, S_i^k)^2 / "
                  "sum_i max(S_i^j, S_i^k)^2 for every pair of resamples j < k (499,500 pairs); "
                  f"Stat = 95th percentile of rho. Converged if Stat < {RHO_TOL:g}, i.e. the ranking "
@@ -728,7 +778,7 @@ def write_notes(wb, other: pd.DataFrame) -> None:
 
 
 def write_workbook(out_dir: Path) -> Path:
-    stats = pd.read_csv(out_dir / "convergence_stats.csv")
+    stats = add_halfwidth(pd.read_csv(out_dir / "convergence_stats.csv"))
     other_path = out_dir / "archives_not_tested.csv"
     other = pd.read_csv(other_path) if other_path.exists() else pd.DataFrame()
     for _, _, _, _, _, conv_col, _ in CRITERIA:

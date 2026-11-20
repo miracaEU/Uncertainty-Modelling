@@ -24,6 +24,11 @@ fragility_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/EQ_fragility.
 protection_standard_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/floodProtection_v2019_paper3.tif"
 basin_data_path: "/scistor/ivm/eks510/projects/AssetRisk_PanEU/data/basins_abs_shift_return_periods.parquet"
 
+# River flood protection per asset; see config.yml for the methods.
+river_protection:
+  method: block5km_fill
+  fill_km: 5
+
 # --- hazards -----------------------------------------------------------------
 # Which hazards apply to a given asset/country is decided by
 # src/curves.py::applicable_hazards, NOT here - listing a hazard here only says

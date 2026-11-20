@@ -1,0 +1,343 @@
+asset,scenario,top1,top3,present,countries,driver,share_top1,share_top3,hazard,treatment,n_curves,cost_range,n_subtypes,curves_per_subtype,protection_span
+airports,coastal_absprot_ds_slr,0.0,18.0,20.0,20,Vulnerability curve,0.0,0.9,Coastal flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,coastal_absprot_ds_slr_rp25to200,0.0,17.0,20.0,20,Vulnerability curve,0.0,0.85,Coastal flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,coastal_baseline_ds_slr_sc0p5to2p0,1.0,19.0,20.0,20,Vulnerability curve,0.05,0.95,Coastal flood,Recorded × 0.5–2,7,0.6412407508215892,3,2.6666666666666665,4.0
+airports,coastal_baseline_ds_slr_sc0p75to1p33,1.0,19.0,20.0,20,Vulnerability curve,0.05,0.95,Coastal flood,Recorded × 0.75–1.33,7,0.6412407508215892,3,2.6666666666666665,1.7777777777777777
+airports,coastal_noprot_ds_slr,2.0,18.0,19.0,19,Vulnerability curve,0.10526315789473684,0.9473684210526315,Coastal flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,earthquake,31.0,36.0,36.0,36,Vulnerability curve,0.8611111111111112,1.0,Earthquake,No protection,12,0.6412407508215892,2,6.0,
+airports,flood_absprot_ds,0.0,19.0,32.0,32,Vulnerability curve,0.0,0.59375,River flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,flood_absprot_ds_rp25to200,0.0,16.0,32.0,32,Vulnerability curve,0.0,0.5,River flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,flood_noprot_ds,5.0,31.0,31.0,31,Vulnerability curve,0.16129032258064516,1.0,River flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,windstorm,0.0,20.0,20.0,20,Vulnerability curve,0.0,1.0,Windstorm,Recorded / fixed RP50,2,0.6412407508215892,1,2.0,
+airports,windstorm_absprot,0.0,20.0,20.0,20,Vulnerability curve,0.0,1.0,Windstorm,"Sampled, RP 25–200",2,0.6412407508215892,1,2.0,8.0
+education,coastal_absprot_ds_slr,0.0,21.0,21.0,21,Vulnerability curve,0.0,1.0,Coastal flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,coastal_absprot_ds_slr_rp25to200,6.0,21.0,21.0,21,Vulnerability curve,0.2857142857142857,1.0,Coastal flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,coastal_baseline_ds_slr_sc0p5to2p0,13.0,21.0,21.0,21,Vulnerability curve,0.6190476190476191,1.0,Coastal flood,Recorded × 0.5–2,6,1.4403927068723703,1,6.0,4.0
+education,coastal_baseline_ds_slr_sc0p75to1p33,13.0,21.0,21.0,21,Vulnerability curve,0.6190476190476191,1.0,Coastal flood,Recorded × 0.75–1.33,6,1.4403927068723703,1,6.0,1.7777777777777777
+education,coastal_noprot_ds_slr,13.0,20.0,20.0,20,Vulnerability curve,0.65,1.0,Coastal flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,earthquake,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Earthquake,No protection,31,1.4403927068723703,1,31.0,
+education,flood_absprot_ds,0.0,29.0,33.0,33,Vulnerability curve,0.0,0.8787878787878788,River flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,flood_absprot_ds_rp25to200,0.0,28.0,33.0,33,Vulnerability curve,0.0,0.8484848484848485,River flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,flood_noprot_ds,16.0,33.0,33.0,33,Vulnerability curve,0.48484848484848486,1.0,River flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,windstorm,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Windstorm,Recorded / fixed RP50,4,1.4403927068723703,1,4.0,
+education,windstorm_absprot,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Windstorm,"Sampled, RP 25–200",4,1.4403927068723703,1,4.0,8.0
+gas,coastal_absprot_ds_slr,2.0,7.0,14.0,14,Vulnerability curve,0.14285714285714285,0.5,Coastal flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,coastal_absprot_ds_slr_rp25to200,1.0,7.0,14.0,14,Vulnerability curve,0.07142857142857142,0.5,Coastal flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,coastal_baseline_ds_slr_sc0p5to2p0,1.0,7.0,14.0,14,Vulnerability curve,0.07142857142857142,0.5,Coastal flood,Recorded × 0.5–2,10,1.8375545851528385,3,3.3333333333333335,4.0
+gas,coastal_baseline_ds_slr_sc0p75to1p33,1.0,7.0,14.0,14,Vulnerability curve,0.07142857142857142,0.5,Coastal flood,Recorded × 0.75–1.33,10,1.8375545851528385,3,3.3333333333333335,1.7777777777777777
+gas,coastal_noprot_ds_slr,1.0,7.0,13.0,13,Vulnerability curve,0.07692307692307693,0.5384615384615384,Coastal flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,earthquake,29.0,33.0,33.0,33,Vulnerability curve,0.8787878787878788,1.0,Earthquake,No protection,12,1.8375545851528385,2,6.0,
+gas,flood_absprot_ds,10.0,16.0,27.0,27,Vulnerability curve,0.37037037037037035,0.5925925925925926,River flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,flood_absprot_ds_rp25to200,14.0,15.0,27.0,27,Vulnerability curve,0.5185185185185185,0.5555555555555556,River flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,flood_noprot_ds,14.0,19.0,27.0,27,Vulnerability curve,0.5185185185185185,0.7037037037037037,River flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,windstorm,31.0,31.0,31.0,31,Vulnerability curve,1.0,1.0,Windstorm,Recorded / fixed RP50,4,1.8375545851528385,1,4.0,
+gas,windstorm_absprot,31.0,31.0,31.0,31,Vulnerability curve,1.0,1.0,Windstorm,"Sampled, RP 25–200",4,1.8375545851528385,1,4.0,8.0
+healthcare,coastal_absprot_ds_slr,0.0,10.0,20.0,20,Vulnerability curve,0.0,0.5,Coastal flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,coastal_absprot_ds_slr_rp25to200,0.0,11.0,20.0,20,Vulnerability curve,0.0,0.55,Coastal flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,coastal_baseline_ds_slr_sc0p5to2p0,0.0,13.0,20.0,20,Vulnerability curve,0.0,0.65,Coastal flood,Recorded × 0.5–2,4,1.2642967542503865,1,4.0,4.0
+healthcare,coastal_baseline_ds_slr_sc0p75to1p33,0.0,19.0,20.0,20,Vulnerability curve,0.0,0.95,Coastal flood,Recorded × 0.75–1.33,4,1.2642967542503865,1,4.0,1.7777777777777777
+healthcare,coastal_noprot_ds_slr,0.0,19.0,19.0,19,Vulnerability curve,0.0,1.0,Coastal flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,earthquake,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Earthquake,No protection,6,1.2642967542503865,1,6.0,
+healthcare,flood_absprot_ds,0.0,12.0,33.0,33,Vulnerability curve,0.0,0.36363636363636365,River flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,flood_absprot_ds_rp25to200,0.0,9.0,33.0,33,Vulnerability curve,0.0,0.2727272727272727,River flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,flood_noprot_ds,0.0,33.0,33.0,33,Vulnerability curve,0.0,1.0,River flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm,35.0,35.0,35.0,35,Vulnerability curve,1.0,1.0,Windstorm,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm_absprot,35.0,35.0,35.0,35,Vulnerability curve,1.0,1.0,Windstorm,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+oil,coastal_absprot_ds_slr,0.0,0.0,16.0,16,Vulnerability curve,0.0,0.0,Coastal flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,coastal_absprot_ds_slr_rp25to200,0.0,0.0,16.0,16,Vulnerability curve,0.0,0.0,Coastal flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,coastal_baseline_ds_slr_sc0p5to2p0,0.0,0.0,16.0,16,Vulnerability curve,0.0,0.0,Coastal flood,Recorded × 0.5–2,6,1.0756620754017943,2,3.0,4.0
+oil,coastal_baseline_ds_slr_sc0p75to1p33,0.0,0.0,16.0,16,Vulnerability curve,0.0,0.0,Coastal flood,Recorded × 0.75–1.33,6,1.0756620754017943,2,3.0,1.7777777777777777
+oil,coastal_noprot_ds_slr,0.0,0.0,15.0,15,Vulnerability curve,0.0,0.0,Coastal flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,earthquake,22.0,33.0,33.0,33,Vulnerability curve,0.6666666666666666,1.0,Earthquake,No protection,12,1.0756620754017943,2,6.0,
+oil,flood_absprot_ds,0.0,0.0,27.0,27,Vulnerability curve,0.0,0.0,River flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,flood_absprot_ds_rp25to200,0.0,0.0,27.0,27,Vulnerability curve,0.0,0.0,River flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,flood_noprot_ds,0.0,0.0,27.0,27,Vulnerability curve,0.0,0.0,River flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,windstorm,31.0,33.0,33.0,33,Vulnerability curve,0.9393939393939394,1.0,Windstorm,Recorded / fixed RP50,4,1.0756620754017943,1,4.0,
+oil,windstorm_absprot,31.0,33.0,33.0,33,Vulnerability curve,0.9393939393939394,1.0,Windstorm,"Sampled, RP 25–200",4,1.0756620754017943,1,4.0,8.0
+ports,coastal_absprot_ds_slr,0.0,0.0,0.0,23,Vulnerability curve,0.0,0.0,Coastal flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,coastal_absprot_ds_slr_rp25to200,0.0,0.0,0.0,23,Vulnerability curve,0.0,0.0,Coastal flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,coastal_baseline_ds_slr_sc0p5to2p0,0.0,0.0,0.0,23,Vulnerability curve,0.0,0.0,Coastal flood,Recorded × 0.5–2,1,0.3851851851851852,1,1.0,4.0
+ports,coastal_baseline_ds_slr_sc0p75to1p33,0.0,0.0,0.0,23,Vulnerability curve,0.0,0.0,Coastal flood,Recorded × 0.75–1.33,1,0.3851851851851852,1,1.0,1.7777777777777777
+ports,coastal_noprot_ds_slr,0.0,0.0,0.0,22,Vulnerability curve,0.0,0.0,Coastal flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+ports,earthquake,31.0,33.0,33.0,33,Vulnerability curve,0.9393939393939394,1.0,Earthquake,No protection,3,0.3851851851851852,1,3.0,
+ports,flood_absprot_ds,0.0,0.0,0.0,31,Vulnerability curve,0.0,0.0,River flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,flood_absprot_ds_rp25to200,0.0,0.0,0.0,31,Vulnerability curve,0.0,0.0,River flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,flood_noprot_ds,0.0,0.0,0.0,31,Vulnerability curve,0.0,0.0,River flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+power,coastal_absprot_ds_slr,9.0,19.0,22.0,22,Vulnerability curve,0.4090909090909091,0.8636363636363636,Coastal flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,coastal_absprot_ds_slr_rp25to200,15.0,20.0,22.0,22,Vulnerability curve,0.6818181818181818,0.9090909090909091,Coastal flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,coastal_baseline_ds_slr_sc0p5to2p0,14.0,20.0,22.0,22,Vulnerability curve,0.6363636363636364,0.9090909090909091,Coastal flood,Recorded × 0.5–2,15,2.652310924369748,6,2.5,4.0
+power,coastal_baseline_ds_slr_sc0p75to1p33,14.0,21.0,22.0,22,Vulnerability curve,0.6363636363636364,0.9545454545454546,Coastal flood,Recorded × 0.75–1.33,15,2.652310924369748,6,2.5,1.7777777777777777
+power,coastal_noprot_ds_slr,14.0,20.0,21.0,21,Vulnerability curve,0.6666666666666666,0.9523809523809523,Coastal flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,earthquake,5.0,36.0,36.0,36,Vulnerability curve,0.1388888888888889,1.0,Earthquake,No protection,27,2.652310924369748,5,5.4,
+power,flood_absprot_ds,12.0,33.0,33.0,33,Vulnerability curve,0.36363636363636365,1.0,River flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,flood_absprot_ds_rp25to200,28.0,33.0,33.0,33,Vulnerability curve,0.8484848484848485,1.0,River flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,flood_noprot_ds,27.0,33.0,33.0,33,Vulnerability curve,0.8181818181818182,1.0,River flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,windstorm,18.0,36.0,36.0,36,Vulnerability curve,0.5,1.0,Windstorm,Recorded / fixed RP50,18,2.652310924369748,3,6.0,
+power,windstorm_absprot,17.0,36.0,36.0,36,Vulnerability curve,0.4722222222222222,1.0,Windstorm,"Sampled, RP 25–200",18,2.652310924369748,3,6.0,8.0
+rail,coastal_absprot_ds_slr,0.0,7.0,21.0,21,Vulnerability curve,0.0,0.3333333333333333,Coastal flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,coastal_absprot_ds_slr_rp25to200,0.0,8.0,21.0,21,Vulnerability curve,0.0,0.38095238095238093,Coastal flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,coastal_baseline_ds_slr_sc0p5to2p0,0.0,8.0,21.0,21,Vulnerability curve,0.0,0.38095238095238093,Coastal flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,coastal_baseline_ds_slr_sc0p75to1p33,0.0,20.0,21.0,21,Vulnerability curve,0.0,0.9523809523809523,Coastal flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,coastal_noprot_ds_slr,0.0,20.0,20.0,20,Vulnerability curve,0.0,1.0,Coastal flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,earthquake,14.0,34.0,34.0,34,Vulnerability curve,0.4117647058823529,1.0,Earthquake,No protection,20,4.791812456263121,1,20.0,
+rail,flood_absprot_ds,0.0,2.0,32.0,32,Vulnerability curve,0.0,0.0625,River flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,flood_absprot_ds_rp25to200,0.0,1.0,32.0,32,Vulnerability curve,0.0,0.03125,River flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,flood_baseline_ds_sc0p5to2p0,0.0,1.0,32.0,32,Vulnerability curve,0.0,0.03125,River flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,flood_baseline_ds_sc0p75to1p33,0.0,3.0,32.0,32,Vulnerability curve,0.0,0.09375,River flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,flood_noprot_ds,0.0,32.0,32.0,32,Vulnerability curve,0.0,1.0,River flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,windstorm,33.0,34.0,34.0,34,Vulnerability curve,0.9705882352941176,1.0,Windstorm,Recorded / fixed RP50,3,4.791812456263121,1,3.0,
+rail,windstorm_absprot,33.0,34.0,34.0,34,Vulnerability curve,0.9705882352941176,1.0,Windstorm,"Sampled, RP 25–200",3,4.791812456263121,1,3.0,8.0
+rail,windstorm_unprotected,34.0,34.0,34.0,34,Vulnerability curve,1.0,1.0,Windstorm,No protection,3,4.791812456263121,1,3.0,
+roads,coastal_absprot_ds_slr,0.0,24.0,24.0,24,Vulnerability curve,0.0,1.0,Coastal flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,coastal_absprot_ds_slr_rp25to200,15.0,24.0,24.0,24,Vulnerability curve,0.625,1.0,Coastal flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,coastal_baseline_ds_slr_sc0p5to2p0,18.0,24.0,24.0,24,Vulnerability curve,0.75,1.0,Coastal flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,coastal_baseline_ds_slr_sc0p75to1p33,19.0,24.0,24.0,24,Vulnerability curve,0.7916666666666666,1.0,Coastal flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,coastal_noprot_ds_slr,20.0,24.0,24.0,24,Vulnerability curve,0.8333333333333334,1.0,Coastal flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+roads,earthquake,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Earthquake,No protection,9,0.9314159292035398,1,9.0,
+roads,flood_absprot_ds,0.0,33.0,33.0,33,Vulnerability curve,0.0,1.0,River flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,flood_absprot_ds_rp25to200,1.0,33.0,33.0,33,Vulnerability curve,0.030303030303030304,1.0,River flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,flood_baseline_ds_sc0p5to2p0,28.0,33.0,33.0,33,Vulnerability curve,0.8484848484848485,1.0,River flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,flood_baseline_ds_sc0p75to1p33,32.0,33.0,33.0,33,Vulnerability curve,0.9696969696969697,1.0,River flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,flood_noprot_ds,32.0,33.0,33.0,33,Vulnerability curve,0.9696969696969697,1.0,River flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+telecom,coastal_absprot_ds_slr,0.0,2.0,18.0,18,Vulnerability curve,0.0,0.1111111111111111,Coastal flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,coastal_absprot_ds_slr_rp25to200,0.0,2.0,18.0,18,Vulnerability curve,0.0,0.1111111111111111,Coastal flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,coastal_baseline_ds_slr_sc0p5to2p0,0.0,2.0,18.0,18,Vulnerability curve,0.0,0.1111111111111111,Coastal flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,coastal_baseline_ds_slr_sc0p75to1p33,0.0,2.0,18.0,18,Vulnerability curve,0.0,0.1111111111111111,Coastal flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,coastal_noprot_ds_slr,0.0,3.0,17.0,17,Vulnerability curve,0.0,0.17647058823529413,Coastal flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,earthquake,0.0,32.0,36.0,36,Vulnerability curve,0.0,0.8888888888888888,Earthquake,No protection,3,0.5887530498202902,2,1.5,
+telecom,flood_absprot_ds,0.0,2.0,31.0,31,Vulnerability curve,0.0,0.06451612903225806,River flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,flood_absprot_ds_rp25to200,0.0,2.0,31.0,31,Vulnerability curve,0.0,0.06451612903225806,River flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,flood_baseline_ds_sc0p5to2p0,1.0,2.0,31.0,31,Vulnerability curve,0.03225806451612903,0.06451612903225806,River flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,flood_baseline_ds_sc0p75to1p33,2.0,2.0,31.0,31,Vulnerability curve,0.06451612903225806,0.06451612903225806,River flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,flood_noprot_ds,2.0,7.0,31.0,31,Vulnerability curve,0.06451612903225806,0.22580645161290322,River flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,windstorm,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Windstorm,Recorded / fixed RP50,17,0.5887530498202902,2,8.5,
+telecom,windstorm_absprot,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Windstorm,"Sampled, RP 25–200",17,0.5887530498202902,2,8.5,8.0
+telecom,windstorm_unprotected,36.0,36.0,36.0,36,Vulnerability curve,1.0,1.0,Windstorm,No protection,17,0.5887530498202902,2,8.5,
+airports,coastal_absprot_ds_slr,0.0,4.0,20.0,20,Cost / max-damage,0.0,0.2,Coastal flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,coastal_absprot_ds_slr_rp25to200,1.0,6.0,20.0,20,Cost / max-damage,0.05,0.3,Coastal flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,coastal_baseline_ds_slr_sc0p5to2p0,1.0,4.0,20.0,20,Cost / max-damage,0.05,0.2,Coastal flood,Recorded × 0.5–2,7,0.6412407508215892,3,2.6666666666666665,4.0
+airports,coastal_baseline_ds_slr_sc0p75to1p33,1.0,9.0,20.0,20,Cost / max-damage,0.05,0.45,Coastal flood,Recorded × 0.75–1.33,7,0.6412407508215892,3,2.6666666666666665,1.7777777777777777
+airports,coastal_noprot_ds_slr,4.0,19.0,19.0,19,Cost / max-damage,0.21052631578947367,1.0,Coastal flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,earthquake,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Earthquake,No protection,12,0.6412407508215892,2,6.0,
+airports,flood_absprot_ds,0.0,17.0,32.0,32,Cost / max-damage,0.0,0.53125,River flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,flood_absprot_ds_rp25to200,0.0,18.0,32.0,32,Cost / max-damage,0.0,0.5625,River flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,flood_noprot_ds,3.0,31.0,31.0,31,Cost / max-damage,0.0967741935483871,1.0,River flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,windstorm,12.0,20.0,20.0,20,Cost / max-damage,0.6,1.0,Windstorm,Recorded / fixed RP50,2,0.6412407508215892,1,2.0,
+airports,windstorm_absprot,13.0,20.0,20.0,20,Cost / max-damage,0.65,1.0,Windstorm,"Sampled, RP 25–200",2,0.6412407508215892,1,2.0,8.0
+education,coastal_absprot_ds_slr,0.0,12.0,21.0,21,Cost / max-damage,0.0,0.5714285714285714,Coastal flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,coastal_absprot_ds_slr_rp25to200,0.0,13.0,21.0,21,Cost / max-damage,0.0,0.6190476190476191,Coastal flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,coastal_baseline_ds_slr_sc0p5to2p0,1.0,20.0,21.0,21,Cost / max-damage,0.047619047619047616,0.9523809523809523,Coastal flood,Recorded × 0.5–2,6,1.4403927068723703,1,6.0,4.0
+education,coastal_baseline_ds_slr_sc0p75to1p33,1.0,20.0,21.0,21,Cost / max-damage,0.047619047619047616,0.9523809523809523,Coastal flood,Recorded × 0.75–1.33,6,1.4403927068723703,1,6.0,1.7777777777777777
+education,coastal_noprot_ds_slr,1.0,20.0,20.0,20,Cost / max-damage,0.05,1.0,Coastal flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,earthquake,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Earthquake,No protection,31,1.4403927068723703,1,31.0,
+education,flood_absprot_ds,0.0,30.0,33.0,33,Cost / max-damage,0.0,0.9090909090909091,River flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,flood_absprot_ds_rp25to200,0.0,30.0,33.0,33,Cost / max-damage,0.0,0.9090909090909091,River flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,flood_noprot_ds,12.0,33.0,33.0,33,Cost / max-damage,0.36363636363636365,1.0,River flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,windstorm,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Windstorm,Recorded / fixed RP50,4,1.4403927068723703,1,4.0,
+education,windstorm_absprot,0.0,34.0,36.0,36,Cost / max-damage,0.0,0.9444444444444444,Windstorm,"Sampled, RP 25–200",4,1.4403927068723703,1,4.0,8.0
+gas,coastal_absprot_ds_slr,0.0,10.0,14.0,14,Cost / max-damage,0.0,0.7142857142857143,Coastal flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,coastal_absprot_ds_slr_rp25to200,0.0,11.0,14.0,14,Cost / max-damage,0.0,0.7857142857142857,Coastal flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,coastal_baseline_ds_slr_sc0p5to2p0,3.0,13.0,14.0,14,Cost / max-damage,0.21428571428571427,0.9285714285714286,Coastal flood,Recorded × 0.5–2,10,1.8375545851528385,3,3.3333333333333335,4.0
+gas,coastal_baseline_ds_slr_sc0p75to1p33,3.0,13.0,14.0,14,Cost / max-damage,0.21428571428571427,0.9285714285714286,Coastal flood,Recorded × 0.75–1.33,10,1.8375545851528385,3,3.3333333333333335,1.7777777777777777
+gas,coastal_noprot_ds_slr,3.0,12.0,13.0,13,Cost / max-damage,0.23076923076923078,0.9230769230769231,Coastal flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,earthquake,4.0,33.0,33.0,33,Cost / max-damage,0.12121212121212122,1.0,Earthquake,No protection,12,1.8375545851528385,2,6.0,
+gas,flood_absprot_ds,2.0,26.0,27.0,27,Cost / max-damage,0.07407407407407407,0.9629629629629629,River flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,flood_absprot_ds_rp25to200,2.0,26.0,27.0,27,Cost / max-damage,0.07407407407407407,0.9629629629629629,River flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,flood_noprot_ds,13.0,27.0,27.0,27,Cost / max-damage,0.48148148148148145,1.0,River flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,windstorm,0.0,31.0,31.0,31,Cost / max-damage,0.0,1.0,Windstorm,Recorded / fixed RP50,4,1.8375545851528385,1,4.0,
+gas,windstorm_absprot,0.0,31.0,31.0,31,Cost / max-damage,0.0,1.0,Windstorm,"Sampled, RP 25–200",4,1.8375545851528385,1,4.0,8.0
+healthcare,coastal_absprot_ds_slr,0.0,18.0,20.0,20,Cost / max-damage,0.0,0.9,Coastal flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,coastal_absprot_ds_slr_rp25to200,0.0,19.0,20.0,20,Cost / max-damage,0.0,0.95,Coastal flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,coastal_baseline_ds_slr_sc0p5to2p0,3.0,20.0,20.0,20,Cost / max-damage,0.15,1.0,Coastal flood,Recorded × 0.5–2,4,1.2642967542503865,1,4.0,4.0
+healthcare,coastal_baseline_ds_slr_sc0p75to1p33,9.0,20.0,20.0,20,Cost / max-damage,0.45,1.0,Coastal flood,Recorded × 0.75–1.33,4,1.2642967542503865,1,4.0,1.7777777777777777
+healthcare,coastal_noprot_ds_slr,9.0,19.0,19.0,19,Cost / max-damage,0.47368421052631576,1.0,Coastal flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,earthquake,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Earthquake,No protection,6,1.2642967542503865,1,6.0,
+healthcare,flood_absprot_ds,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,flood_absprot_ds_rp25to200,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,flood_noprot_ds,25.0,33.0,33.0,33,Cost / max-damage,0.7575757575757576,1.0,River flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm,0.0,35.0,35.0,35,Cost / max-damage,0.0,1.0,Windstorm,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm_absprot,0.0,26.0,35.0,35,Cost / max-damage,0.0,0.7428571428571429,Windstorm,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+oil,coastal_absprot_ds_slr,0.0,16.0,16.0,16,Cost / max-damage,0.0,1.0,Coastal flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,coastal_absprot_ds_slr_rp25to200,1.0,16.0,16.0,16,Cost / max-damage,0.0625,1.0,Coastal flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,coastal_baseline_ds_slr_sc0p5to2p0,9.0,16.0,16.0,16,Cost / max-damage,0.5625,1.0,Coastal flood,Recorded × 0.5–2,6,1.0756620754017943,2,3.0,4.0
+oil,coastal_baseline_ds_slr_sc0p75to1p33,9.0,16.0,16.0,16,Cost / max-damage,0.5625,1.0,Coastal flood,Recorded × 0.75–1.33,6,1.0756620754017943,2,3.0,1.7777777777777777
+oil,coastal_noprot_ds_slr,9.0,15.0,15.0,15,Cost / max-damage,0.6,1.0,Coastal flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,earthquake,11.0,33.0,33.0,33,Cost / max-damage,0.3333333333333333,1.0,Earthquake,No protection,12,1.0756620754017943,2,6.0,
+oil,flood_absprot_ds,2.0,27.0,27.0,27,Cost / max-damage,0.07407407407407407,1.0,River flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,flood_absprot_ds_rp25to200,6.0,27.0,27.0,27,Cost / max-damage,0.2222222222222222,1.0,River flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,flood_noprot_ds,26.0,27.0,27.0,27,Cost / max-damage,0.9629629629629629,1.0,River flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,windstorm,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,Windstorm,Recorded / fixed RP50,4,1.0756620754017943,1,4.0,
+oil,windstorm_absprot,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,Windstorm,"Sampled, RP 25–200",4,1.0756620754017943,1,4.0,8.0
+ports,coastal_absprot_ds_slr,0.0,23.0,23.0,23,Cost / max-damage,0.0,1.0,Coastal flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,coastal_absprot_ds_slr_rp25to200,0.0,23.0,23.0,23,Cost / max-damage,0.0,1.0,Coastal flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,coastal_baseline_ds_slr_sc0p5to2p0,0.0,23.0,23.0,23,Cost / max-damage,0.0,1.0,Coastal flood,Recorded × 0.5–2,1,0.3851851851851852,1,1.0,4.0
+ports,coastal_baseline_ds_slr_sc0p75to1p33,0.0,23.0,23.0,23,Cost / max-damage,0.0,1.0,Coastal flood,Recorded × 0.75–1.33,1,0.3851851851851852,1,1.0,1.7777777777777777
+ports,coastal_noprot_ds_slr,7.0,22.0,22.0,22,Cost / max-damage,0.3181818181818182,1.0,Coastal flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+ports,earthquake,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,Earthquake,No protection,3,0.3851851851851852,1,3.0,
+ports,flood_absprot_ds,0.0,31.0,31.0,31,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,flood_absprot_ds_rp25to200,0.0,31.0,31.0,31,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,flood_noprot_ds,2.0,31.0,31.0,31,Cost / max-damage,0.06451612903225806,1.0,River flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+power,coastal_absprot_ds_slr,0.0,19.0,22.0,22,Cost / max-damage,0.0,0.8636363636363636,Coastal flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,coastal_absprot_ds_slr_rp25to200,2.0,22.0,22.0,22,Cost / max-damage,0.09090909090909091,1.0,Coastal flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,coastal_baseline_ds_slr_sc0p5to2p0,5.0,22.0,22.0,22,Cost / max-damage,0.22727272727272727,1.0,Coastal flood,Recorded × 0.5–2,15,2.652310924369748,6,2.5,4.0
+power,coastal_baseline_ds_slr_sc0p75to1p33,5.0,22.0,22.0,22,Cost / max-damage,0.22727272727272727,1.0,Coastal flood,Recorded × 0.75–1.33,15,2.652310924369748,6,2.5,1.7777777777777777
+power,coastal_noprot_ds_slr,5.0,21.0,21.0,21,Cost / max-damage,0.23809523809523808,1.0,Coastal flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,earthquake,30.0,36.0,36.0,36,Cost / max-damage,0.8333333333333334,1.0,Earthquake,No protection,27,2.652310924369748,5,5.4,
+power,flood_absprot_ds,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,flood_absprot_ds_rp25to200,4.0,33.0,33.0,33,Cost / max-damage,0.12121212121212122,1.0,River flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,flood_noprot_ds,6.0,33.0,33.0,33,Cost / max-damage,0.18181818181818182,1.0,River flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,windstorm,18.0,36.0,36.0,36,Cost / max-damage,0.5,1.0,Windstorm,Recorded / fixed RP50,18,2.652310924369748,3,6.0,
+power,windstorm_absprot,19.0,36.0,36.0,36,Cost / max-damage,0.5277777777777778,1.0,Windstorm,"Sampled, RP 25–200",18,2.652310924369748,3,6.0,8.0
+rail,coastal_absprot_ds_slr,1.0,21.0,21.0,21,Cost / max-damage,0.047619047619047616,1.0,Coastal flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,coastal_absprot_ds_slr_rp25to200,17.0,21.0,21.0,21,Cost / max-damage,0.8095238095238095,1.0,Coastal flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,coastal_baseline_ds_slr_sc0p5to2p0,15.0,21.0,21.0,21,Cost / max-damage,0.7142857142857143,1.0,Coastal flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,coastal_baseline_ds_slr_sc0p75to1p33,15.0,21.0,21.0,21,Cost / max-damage,0.7142857142857143,1.0,Coastal flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,coastal_noprot_ds_slr,15.0,20.0,20.0,20,Cost / max-damage,0.75,1.0,Coastal flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,earthquake,20.0,34.0,34.0,34,Cost / max-damage,0.5882352941176471,1.0,Earthquake,No protection,20,4.791812456263121,1,20.0,
+rail,flood_absprot_ds,0.0,32.0,32.0,32,Cost / max-damage,0.0,1.0,River flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,flood_absprot_ds_rp25to200,32.0,32.0,32.0,32,Cost / max-damage,1.0,1.0,River flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,flood_baseline_ds_sc0p5to2p0,32.0,32.0,32.0,32,Cost / max-damage,1.0,1.0,River flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,flood_baseline_ds_sc0p75to1p33,32.0,32.0,32.0,32,Cost / max-damage,1.0,1.0,River flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,flood_noprot_ds,32.0,32.0,32.0,32,Cost / max-damage,1.0,1.0,River flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,windstorm,1.0,34.0,34.0,34,Cost / max-damage,0.029411764705882353,1.0,Windstorm,Recorded / fixed RP50,3,4.791812456263121,1,3.0,
+rail,windstorm_absprot,1.0,34.0,34.0,34,Cost / max-damage,0.029411764705882353,1.0,Windstorm,"Sampled, RP 25–200",3,4.791812456263121,1,3.0,8.0
+rail,windstorm_unprotected,0.0,34.0,34.0,34,Cost / max-damage,0.0,1.0,Windstorm,No protection,3,4.791812456263121,1,3.0,
+roads,coastal_absprot_ds_slr,0.0,14.0,24.0,24,Cost / max-damage,0.0,0.5833333333333334,Coastal flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,coastal_absprot_ds_slr_rp25to200,0.0,14.0,24.0,24,Cost / max-damage,0.0,0.5833333333333334,Coastal flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,coastal_baseline_ds_slr_sc0p5to2p0,0.0,21.0,24.0,24,Cost / max-damage,0.0,0.875,Coastal flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,coastal_baseline_ds_slr_sc0p75to1p33,0.0,23.0,24.0,24,Cost / max-damage,0.0,0.9583333333333334,Coastal flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,coastal_noprot_ds_slr,0.0,24.0,24.0,24,Cost / max-damage,0.0,1.0,Coastal flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+roads,earthquake,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Earthquake,No protection,9,0.9314159292035398,1,9.0,
+roads,flood_absprot_ds,0.0,26.0,33.0,33,Cost / max-damage,0.0,0.7878787878787878,River flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,flood_absprot_ds_rp25to200,0.0,24.0,33.0,33,Cost / max-damage,0.0,0.7272727272727273,River flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,flood_baseline_ds_sc0p5to2p0,0.0,24.0,33.0,33,Cost / max-damage,0.0,0.7272727272727273,River flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,flood_baseline_ds_sc0p75to1p33,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,River flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,flood_noprot_ds,0.0,33.0,33.0,33,Cost / max-damage,0.0,1.0,River flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+telecom,coastal_absprot_ds_slr,0.0,16.0,18.0,18,Cost / max-damage,0.0,0.8888888888888888,Coastal flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,coastal_absprot_ds_slr_rp25to200,0.0,16.0,18.0,18,Cost / max-damage,0.0,0.8888888888888888,Coastal flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,coastal_baseline_ds_slr_sc0p5to2p0,0.0,16.0,18.0,18,Cost / max-damage,0.0,0.8888888888888888,Coastal flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,coastal_baseline_ds_slr_sc0p75to1p33,5.0,18.0,18.0,18,Cost / max-damage,0.2777777777777778,1.0,Coastal flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,coastal_noprot_ds_slr,6.0,17.0,17.0,17,Cost / max-damage,0.35294117647058826,1.0,Coastal flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,earthquake,3.0,36.0,36.0,36,Cost / max-damage,0.08333333333333333,1.0,Earthquake,No protection,3,0.5887530498202902,2,1.5,
+telecom,flood_absprot_ds,0.0,29.0,31.0,31,Cost / max-damage,0.0,0.9354838709677419,River flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,flood_absprot_ds_rp25to200,0.0,29.0,31.0,31,Cost / max-damage,0.0,0.9354838709677419,River flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,flood_baseline_ds_sc0p5to2p0,0.0,29.0,31.0,31,Cost / max-damage,0.0,0.9354838709677419,River flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,flood_baseline_ds_sc0p75to1p33,0.0,29.0,31.0,31,Cost / max-damage,0.0,0.9354838709677419,River flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,flood_noprot_ds,3.0,31.0,31.0,31,Cost / max-damage,0.0967741935483871,1.0,River flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,windstorm,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Windstorm,Recorded / fixed RP50,17,0.5887530498202902,2,8.5,
+telecom,windstorm_absprot,0.0,0.0,36.0,36,Cost / max-damage,0.0,0.0,Windstorm,"Sampled, RP 25–200",17,0.5887530498202902,2,8.5,8.0
+telecom,windstorm_unprotected,0.0,36.0,36.0,36,Cost / max-damage,0.0,1.0,Windstorm,No protection,17,0.5887530498202902,2,8.5,
+airports,coastal_absprot_ds_slr,16.0,20.0,20.0,20,Protection standard,0.8,1.0,Coastal flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,coastal_absprot_ds_slr_rp25to200,12.0,20.0,20.0,20,Protection standard,0.6,1.0,Coastal flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,coastal_baseline_ds_slr_sc0p5to2p0,9.0,20.0,20.0,20,Protection standard,0.45,1.0,Coastal flood,Recorded × 0.5–2,7,0.6412407508215892,3,2.6666666666666665,4.0
+airports,coastal_baseline_ds_slr_sc0p75to1p33,5.0,16.0,20.0,20,Protection standard,0.25,0.8,Coastal flood,Recorded × 0.75–1.33,7,0.6412407508215892,3,2.6666666666666665,1.7777777777777777
+airports,coastal_noprot_ds_slr,0.0,0.0,0.0,19,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,12,0.6412407508215892,2,6.0,
+airports,flood_absprot_ds,32.0,32.0,32.0,32,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",7,0.6412407508215892,3,2.6666666666666665,40.0
+airports,flood_absprot_ds_rp25to200,32.0,32.0,32.0,32,Protection standard,1.0,1.0,River flood,"Sampled, RP 25–200",7,0.6412407508215892,3,2.6666666666666665,8.0
+airports,flood_noprot_ds,0.0,0.0,0.0,31,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,7,0.6412407508215892,3,2.6666666666666665,
+airports,windstorm,0.0,0.0,0.0,20,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,2,0.6412407508215892,1,2.0,
+airports,windstorm_absprot,0.0,0.0,20.0,20,Protection standard,0.0,0.0,Windstorm,"Sampled, RP 25–200",2,0.6412407508215892,1,2.0,8.0
+education,coastal_absprot_ds_slr,16.0,21.0,21.0,21,Protection standard,0.7619047619047619,1.0,Coastal flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,coastal_absprot_ds_slr_rp25to200,8.0,21.0,21.0,21,Protection standard,0.38095238095238093,1.0,Coastal flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,coastal_baseline_ds_slr_sc0p5to2p0,1.0,11.0,21.0,21,Protection standard,0.047619047619047616,0.5238095238095238,Coastal flood,Recorded × 0.5–2,6,1.4403927068723703,1,6.0,4.0
+education,coastal_baseline_ds_slr_sc0p75to1p33,1.0,6.0,21.0,21,Protection standard,0.047619047619047616,0.2857142857142857,Coastal flood,Recorded × 0.75–1.33,6,1.4403927068723703,1,6.0,1.7777777777777777
+education,coastal_noprot_ds_slr,0.0,0.0,0.0,20,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,31,1.4403927068723703,1,31.0,
+education,flood_absprot_ds,33.0,33.0,33.0,33,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",6,1.4403927068723703,1,6.0,40.0
+education,flood_absprot_ds_rp25to200,33.0,33.0,33.0,33,Protection standard,1.0,1.0,River flood,"Sampled, RP 25–200",6,1.4403927068723703,1,6.0,8.0
+education,flood_noprot_ds,0.0,0.0,0.0,33,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,6,1.4403927068723703,1,6.0,
+education,windstorm,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,4,1.4403927068723703,1,4.0,
+education,windstorm_absprot,0.0,20.0,36.0,36,Protection standard,0.0,0.5555555555555556,Windstorm,"Sampled, RP 25–200",4,1.4403927068723703,1,4.0,8.0
+gas,coastal_absprot_ds_slr,4.0,11.0,14.0,14,Protection standard,0.2857142857142857,0.7857142857142857,Coastal flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,coastal_absprot_ds_slr_rp25to200,3.0,10.0,14.0,14,Protection standard,0.21428571428571427,0.7142857142857143,Coastal flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,coastal_baseline_ds_slr_sc0p5to2p0,0.0,7.0,14.0,14,Protection standard,0.0,0.5,Coastal flood,Recorded × 0.5–2,10,1.8375545851528385,3,3.3333333333333335,4.0
+gas,coastal_baseline_ds_slr_sc0p75to1p33,0.0,5.0,14.0,14,Protection standard,0.0,0.35714285714285715,Coastal flood,Recorded × 0.75–1.33,10,1.8375545851528385,3,3.3333333333333335,1.7777777777777777
+gas,coastal_noprot_ds_slr,0.0,0.0,0.0,13,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,earthquake,0.0,0.0,0.0,33,Protection standard,0.0,0.0,Earthquake,No protection,12,1.8375545851528385,2,6.0,
+gas,flood_absprot_ds,15.0,26.0,27.0,27,Protection standard,0.5555555555555556,0.9629629629629629,River flood,"Sampled, RP 5–200",10,1.8375545851528385,3,3.3333333333333335,40.0
+gas,flood_absprot_ds_rp25to200,11.0,26.0,27.0,27,Protection standard,0.4074074074074074,0.9629629629629629,River flood,"Sampled, RP 25–200",10,1.8375545851528385,3,3.3333333333333335,8.0
+gas,flood_noprot_ds,0.0,0.0,0.0,27,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,10,1.8375545851528385,3,3.3333333333333335,
+gas,windstorm,0.0,0.0,0.0,31,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,4,1.8375545851528385,1,4.0,
+gas,windstorm_absprot,0.0,16.0,31.0,31,Protection standard,0.0,0.5161290322580645,Windstorm,"Sampled, RP 25–200",4,1.8375545851528385,1,4.0,8.0
+healthcare,coastal_absprot_ds_slr,15.0,20.0,20.0,20,Protection standard,0.75,1.0,Coastal flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,coastal_absprot_ds_slr_rp25to200,12.0,19.0,20.0,20,Protection standard,0.6,0.95,Coastal flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,coastal_baseline_ds_slr_sc0p5to2p0,7.0,15.0,20.0,20,Protection standard,0.35,0.75,Coastal flood,Recorded × 0.5–2,4,1.2642967542503865,1,4.0,4.0
+healthcare,coastal_baseline_ds_slr_sc0p75to1p33,1.0,3.0,20.0,20,Protection standard,0.05,0.15,Coastal flood,Recorded × 0.75–1.33,4,1.2642967542503865,1,4.0,1.7777777777777777
+healthcare,coastal_noprot_ds_slr,0.0,0.0,0.0,19,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,6,1.2642967542503865,1,6.0,
+healthcare,flood_absprot_ds,33.0,33.0,33.0,33,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",4,1.2642967542503865,1,4.0,40.0
+healthcare,flood_absprot_ds_rp25to200,33.0,33.0,33.0,33,Protection standard,1.0,1.0,River flood,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+healthcare,flood_noprot_ds,0.0,0.0,0.0,33,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm,0.0,0.0,0.0,35,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,4,1.2642967542503865,1,4.0,
+healthcare,windstorm_absprot,0.0,25.0,35.0,35,Protection standard,0.0,0.7142857142857143,Windstorm,"Sampled, RP 25–200",4,1.2642967542503865,1,4.0,8.0
+oil,coastal_absprot_ds_slr,11.0,16.0,16.0,16,Protection standard,0.6875,1.0,Coastal flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,coastal_absprot_ds_slr_rp25to200,8.0,16.0,16.0,16,Protection standard,0.5,1.0,Coastal flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,coastal_baseline_ds_slr_sc0p5to2p0,0.0,16.0,16.0,16,Protection standard,0.0,1.0,Coastal flood,Recorded × 0.5–2,6,1.0756620754017943,2,3.0,4.0
+oil,coastal_baseline_ds_slr_sc0p75to1p33,0.0,16.0,16.0,16,Protection standard,0.0,1.0,Coastal flood,Recorded × 0.75–1.33,6,1.0756620754017943,2,3.0,1.7777777777777777
+oil,coastal_noprot_ds_slr,0.0,0.0,0.0,15,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,earthquake,0.0,0.0,0.0,33,Protection standard,0.0,0.0,Earthquake,No protection,12,1.0756620754017943,2,6.0,
+oil,flood_absprot_ds,25.0,27.0,27.0,27,Protection standard,0.9259259259259259,1.0,River flood,"Sampled, RP 5–200",6,1.0756620754017943,2,3.0,40.0
+oil,flood_absprot_ds_rp25to200,20.0,27.0,27.0,27,Protection standard,0.7407407407407407,1.0,River flood,"Sampled, RP 25–200",6,1.0756620754017943,2,3.0,8.0
+oil,flood_noprot_ds,0.0,0.0,0.0,27,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,6,1.0756620754017943,2,3.0,
+oil,windstorm,0.0,0.0,0.0,33,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,4,1.0756620754017943,1,4.0,
+oil,windstorm_absprot,0.0,19.0,33.0,33,Protection standard,0.0,0.5757575757575758,Windstorm,"Sampled, RP 25–200",4,1.0756620754017943,1,4.0,8.0
+ports,coastal_absprot_ds_slr,21.0,23.0,23.0,23,Protection standard,0.9130434782608695,1.0,Coastal flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,coastal_absprot_ds_slr_rp25to200,16.0,23.0,23.0,23,Protection standard,0.6956521739130435,1.0,Coastal flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,coastal_baseline_ds_slr_sc0p5to2p0,15.0,23.0,23.0,23,Protection standard,0.6521739130434783,1.0,Coastal flood,Recorded × 0.5–2,1,0.3851851851851852,1,1.0,4.0
+ports,coastal_baseline_ds_slr_sc0p75to1p33,13.0,23.0,23.0,23,Protection standard,0.5652173913043478,1.0,Coastal flood,Recorded × 0.75–1.33,1,0.3851851851851852,1,1.0,1.7777777777777777
+ports,coastal_noprot_ds_slr,0.0,0.0,0.0,22,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+ports,earthquake,0.0,0.0,0.0,33,Protection standard,0.0,0.0,Earthquake,No protection,3,0.3851851851851852,1,3.0,
+ports,flood_absprot_ds,31.0,31.0,31.0,31,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",1,0.3851851851851852,1,1.0,40.0
+ports,flood_absprot_ds_rp25to200,31.0,31.0,31.0,31,Protection standard,1.0,1.0,River flood,"Sampled, RP 25–200",1,0.3851851851851852,1,1.0,8.0
+ports,flood_noprot_ds,0.0,0.0,0.0,31,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,1,0.3851851851851852,1,1.0,
+power,coastal_absprot_ds_slr,9.0,19.0,22.0,22,Protection standard,0.4090909090909091,0.8636363636363636,Coastal flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,coastal_absprot_ds_slr_rp25to200,3.0,14.0,22.0,22,Protection standard,0.13636363636363635,0.6363636363636364,Coastal flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,coastal_baseline_ds_slr_sc0p5to2p0,1.0,14.0,22.0,22,Protection standard,0.045454545454545456,0.6363636363636364,Coastal flood,Recorded × 0.5–2,15,2.652310924369748,6,2.5,4.0
+power,coastal_baseline_ds_slr_sc0p75to1p33,1.0,5.0,22.0,22,Protection standard,0.045454545454545456,0.22727272727272727,Coastal flood,Recorded × 0.75–1.33,15,2.652310924369748,6,2.5,1.7777777777777777
+power,coastal_noprot_ds_slr,0.0,0.0,0.0,21,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,27,2.652310924369748,5,5.4,
+power,flood_absprot_ds,21.0,33.0,33.0,33,Protection standard,0.6363636363636364,1.0,River flood,"Sampled, RP 5–200",15,2.652310924369748,6,2.5,40.0
+power,flood_absprot_ds_rp25to200,1.0,32.0,33.0,33,Protection standard,0.030303030303030304,0.9696969696969697,River flood,"Sampled, RP 25–200",15,2.652310924369748,6,2.5,8.0
+power,flood_noprot_ds,0.0,0.0,0.0,33,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,15,2.652310924369748,6,2.5,
+power,windstorm,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,18,2.652310924369748,3,6.0,
+power,windstorm_absprot,0.0,30.0,36.0,36,Protection standard,0.0,0.8333333333333334,Windstorm,"Sampled, RP 25–200",18,2.652310924369748,3,6.0,8.0
+rail,coastal_absprot_ds_slr,16.0,21.0,21.0,21,Protection standard,0.7619047619047619,1.0,Coastal flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,coastal_absprot_ds_slr_rp25to200,0.0,21.0,21.0,21,Protection standard,0.0,1.0,Coastal flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,coastal_baseline_ds_slr_sc0p5to2p0,1.0,21.0,21.0,21,Protection standard,0.047619047619047616,1.0,Coastal flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,coastal_baseline_ds_slr_sc0p75to1p33,1.0,5.0,21.0,21,Protection standard,0.047619047619047616,0.23809523809523808,Coastal flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,coastal_noprot_ds_slr,0.0,0.0,0.0,20,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,earthquake,0.0,0.0,0.0,34,Protection standard,0.0,0.0,Earthquake,No protection,20,4.791812456263121,1,20.0,
+rail,flood_absprot_ds,32.0,32.0,32.0,32,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",7,4.791812456263121,1,7.0,40.0
+rail,flood_absprot_ds_rp25to200,0.0,32.0,32.0,32,Protection standard,0.0,1.0,River flood,"Sampled, RP 25–200",7,4.791812456263121,1,7.0,8.0
+rail,flood_baseline_ds_sc0p5to2p0,0.0,32.0,32.0,32,Protection standard,0.0,1.0,River flood,Recorded × 0.5–2,7,4.791812456263121,1,7.0,4.0
+rail,flood_baseline_ds_sc0p75to1p33,0.0,29.0,32.0,32,Protection standard,0.0,0.90625,River flood,Recorded × 0.75–1.33,7,4.791812456263121,1,7.0,1.7777777777777777
+rail,flood_noprot_ds,0.0,0.0,0.0,32,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,7,4.791812456263121,1,7.0,
+rail,windstorm,0.0,0.0,0.0,34,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,3,4.791812456263121,1,3.0,
+rail,windstorm_absprot,0.0,17.0,34.0,34,Protection standard,0.0,0.5,Windstorm,"Sampled, RP 25–200",3,4.791812456263121,1,3.0,8.0
+rail,windstorm_unprotected,0.0,0.0,0.0,34,Protection standard,0.0,0.0,Windstorm,No protection,3,4.791812456263121,1,3.0,
+roads,coastal_absprot_ds_slr,22.0,24.0,24.0,24,Protection standard,0.9166666666666666,1.0,Coastal flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,coastal_absprot_ds_slr_rp25to200,4.0,24.0,24.0,24,Protection standard,0.16666666666666666,1.0,Coastal flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,coastal_baseline_ds_slr_sc0p5to2p0,1.0,16.0,24.0,24,Protection standard,0.041666666666666664,0.6666666666666666,Coastal flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,coastal_baseline_ds_slr_sc0p75to1p33,1.0,6.0,24.0,24,Protection standard,0.041666666666666664,0.25,Coastal flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,coastal_noprot_ds_slr,0.0,0.0,0.0,24,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+roads,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,9,0.9314159292035398,1,9.0,
+roads,flood_absprot_ds,33.0,33.0,33.0,33,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",6,0.9314159292035398,2,3.0,40.0
+roads,flood_absprot_ds_rp25to200,32.0,33.0,33.0,33,Protection standard,0.9696969696969697,1.0,River flood,"Sampled, RP 25–200",6,0.9314159292035398,2,3.0,8.0
+roads,flood_baseline_ds_sc0p5to2p0,4.0,33.0,33.0,33,Protection standard,0.12121212121212122,1.0,River flood,Recorded × 0.5–2,6,0.9314159292035398,2,3.0,4.0
+roads,flood_baseline_ds_sc0p75to1p33,0.0,5.0,33.0,33,Protection standard,0.0,0.15151515151515152,River flood,Recorded × 0.75–1.33,6,0.9314159292035398,2,3.0,1.7777777777777777
+roads,flood_noprot_ds,0.0,0.0,0.0,33,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,6,0.9314159292035398,2,3.0,
+telecom,coastal_absprot_ds_slr,13.0,18.0,18.0,18,Protection standard,0.7222222222222222,1.0,Coastal flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,coastal_absprot_ds_slr_rp25to200,10.0,18.0,18.0,18,Protection standard,0.5555555555555556,1.0,Coastal flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,coastal_baseline_ds_slr_sc0p5to2p0,10.0,18.0,18.0,18,Protection standard,0.5555555555555556,1.0,Coastal flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,coastal_baseline_ds_slr_sc0p75to1p33,2.0,16.0,18.0,18,Protection standard,0.1111111111111111,0.8888888888888888,Coastal flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,coastal_noprot_ds_slr,0.0,0.0,0.0,17,Protection standard,0.0,0.0,Coastal flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,earthquake,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Earthquake,No protection,3,0.5887530498202902,2,1.5,
+telecom,flood_absprot_ds,31.0,31.0,31.0,31,Protection standard,1.0,1.0,River flood,"Sampled, RP 5–200",3,0.5887530498202902,2,1.5,40.0
+telecom,flood_absprot_ds_rp25to200,30.0,31.0,31.0,31,Protection standard,0.967741935483871,1.0,River flood,"Sampled, RP 25–200",3,0.5887530498202902,2,1.5,8.0
+telecom,flood_baseline_ds_sc0p5to2p0,23.0,31.0,31.0,31,Protection standard,0.7419354838709677,1.0,River flood,Recorded × 0.5–2,3,0.5887530498202902,2,1.5,4.0
+telecom,flood_baseline_ds_sc0p75to1p33,5.0,31.0,31.0,31,Protection standard,0.16129032258064516,1.0,River flood,Recorded × 0.75–1.33,3,0.5887530498202902,2,1.5,1.7777777777777777
+telecom,flood_noprot_ds,0.0,0.0,0.0,31,Protection standard,0.0,0.0,River flood,Recorded / fixed RP50,3,0.5887530498202902,2,1.5,
+telecom,windstorm,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Windstorm,Recorded / fixed RP50,17,0.5887530498202902,2,8.5,
+telecom,windstorm_absprot,0.0,36.0,36.0,36,Protection standard,0.0,1.0,Windstorm,"Sampled, RP 25–200",17,0.5887530498202902,2,8.5,8.0
+telecom,windstorm_unprotected,0.0,0.0,0.0,36,Protection standard,0.0,0.0,Windstorm,No protection,17,0.5887530498202902,2,8.5,

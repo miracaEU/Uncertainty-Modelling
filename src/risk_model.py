@@ -85,6 +85,15 @@ from .curves import (
 from .paths import base_stem, hazard_stem, load_config
 
 WARMING_LEVELS = {"current": None, "1.5C": "15", "2.0C": "20", "3.0C": "30", "4.0C": "40"}
+
+
+def is_slr(scenario: str) -> bool:
+    """True for a coastal sea-level-rise scenario, with or without a range suffix.
+
+    Tested on the name's tokens rather than its ending, because a range twin puts
+    its bracket last: coastal_absprot_ds_slr_rp10to100.
+    """
+    return "slr" in str(scenario).split("_")
 # Clip bounds for shifted anchor RPs, mirroring _safe_rp() in AssetRisk_PanEU
 ANCHOR_CLIPS = {10: (1.0, 99.0), 100: (1.0, 499.0), 500: (1.0, 1000.0)}
 # Windstorm design standard: RP50 for every asset type (IEC 60826 lower
@@ -272,7 +281,7 @@ def load_model_data(cfg: dict | None = None, asset_cfg: AssetConfig | None = Non
     # rather than a finding. Checked here because this runs once per worker,
     # whereas build_model also serves planning code that must work before
     # Stage 1 exists.
-    if str(cfg.get("scenario", "")).endswith("_slr") and len(coastal_slr) < 2:
+    if is_slr(str(cfg.get("scenario", ""))) and len(coastal_slr) < 2:
         raise SystemExit(
             f"{base_stem(cfg)} / {cfg.get('scenario')}: only {len(coastal_slr)} "
             f"sea-level-rise state(s) available in {cfg['intermediate_dir']}. "

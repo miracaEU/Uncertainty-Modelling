@@ -16,8 +16,11 @@ point features can coexist within one asset, e.g. power has all three):
      already in metres for lines (VectorExposure converts it), a 0-1 fraction
      of one raster cell for polygons (multiplied here by cell_area_m2), and a
      fixed 1 for points.
-  2. Per feature: FLOPROS flood protection standard (design return period),
-     sampled at the feature centroid from the 500 m protection raster.
+  2. Per feature: FLOPROS flood protection standard (design return period) at
+     the feature centroid, by the config's river_protection method: the 5 km
+     block mean as MIRACA reads it, with 0-blocks filled from the nearest
+     protected block within fill_km (src/river_protection.py), or the 500 m
+     pixel as before November 2026.
   3. Per feature: HydroBASINS basin id + the basin-level "new return period"
      anchors for RP10/100/500 under 1.5/2.0/3.0/4.0 degC warming
      (river flood only - absolute shifted RPs, as in AssetRisk_PanEU).
@@ -54,6 +57,7 @@ from .curves import (
     report_class_for,
 )
 from .paths import base_stem, hazard_stem, load_config, set_asset_override, set_country_override
+from .river_protection import FROM_BLOCK, NONE, assign_river_protection
 
 WARMING_CODES = ("15", "20", "30", "40")
 ANCHOR_RPS = (10, 100, 500)
@@ -175,13 +179,44 @@ def extract_hazard_profiles(
     return profiles, exposed_qty_per_rp, cell_area_m2
 
 
-def sample_protection_standards(features: gpd.GeoDataFrame, cfg: dict) -> np.ndarray:
-    """Sample the FLOPROS-based protection raster (EPSG:3035, 500 m) at centroids.
+PROTECTION_METHODS = ("block5km_fill", "pixel")
 
-    Note: AssetRisk_PanEU coarsens this raster 10x (to 5 km, mean) before the
-    overlay for memory reasons; for a single country we sample at native
-    resolution instead, which is more precise.
-    """
+
+def river_protection_settings(cfg: dict) -> dict:
+    """The configured river protection method; 'pixel' when the config predates it."""
+    rp = dict(cfg.get("river_protection") or {"method": "pixel"})
+    if rp.get("method") not in PROTECTION_METHODS:
+        raise SystemExit(f"river_protection.method must be one of {PROTECTION_METHODS}, "
+                         f"not {rp.get('method')!r}")
+    if rp["method"] == "block5km_fill":
+        rp["fill_km"] = float(rp.get("fill_km", 5.0))
+    return rp
+
+
+def river_protection(features: gpd.GeoDataFrame, cfg: dict) -> pd.DataFrame:
+    """prot_rp per feature, plus where it came from (prot_source, prot_fill_km)."""
+    rp = river_protection_settings(cfg)
+    if rp["method"] == "pixel":
+        vals = sample_protection_standards(features, cfg)
+        return pd.DataFrame({"prot_rp": vals,
+                             "prot_source": np.where(vals > 0, FROM_BLOCK, NONE).astype(np.int8),
+                             "prot_fill_km": np.full(len(vals), np.nan, np.float32)})
+    print(f"Assigning protection standards: 5 km FLOPROS blocks, 0-blocks filled within "
+          f"{rp['fill_km']:g} km...")
+    cent = features.to_crs(3035).geometry.centroid
+    a = assign_river_protection(cent.x.to_numpy(), cent.y.to_numpy(),
+                                cfg["protection_standard_path"], rp["fill_km"])
+    n = len(a)
+    print(f"  protection RP: mean {a.prot_rp.mean():.0f} yr, max {a.prot_rp.max():.0f} yr; "
+          f"from block {(a.source == 1).mean() * 100:.1f}%, filled {(a.source == 2).mean() * 100:.1f}%, "
+          f"unprotected {(a.prot_rp == 0).mean() * 100:.1f}% of {n}")
+    return pd.DataFrame({"prot_rp": a.prot_rp.to_numpy(np.float32),
+                         "prot_source": a.source.to_numpy(np.int8),
+                         "prot_fill_km": a.fill_km.to_numpy(np.float32)})
+
+
+def sample_protection_standards(features: gpd.GeoDataFrame, cfg: dict) -> np.ndarray:
+    """The 500 m FLOPROS pixel at each centroid: the 'pixel' method, used until November 2026."""
     print("Sampling protection standards at feature centroids...")
     ds = xr.open_dataset(cfg["protection_standard_path"], engine="rasterio")
     ds = ds.rio.write_crs("EPSG:3035")
@@ -323,7 +358,9 @@ def build_segments(features: gpd.GeoDataFrame, geom_kind: np.ndarray, cfg: dict)
                 f"object_type(s): {unknown}. Add them to WIND_CURVES_RAW in src/curves.py."
             )
 
-    segments["prot_rp"] = sample_protection_standards(features, cfg)
+    prot = river_protection(features, cfg)
+    for col in prot.columns:
+        segments[col] = prot[col].to_numpy()
 
     # Coastal design standard (COASTPROS x NUTS2) - only for coastal countries
     # with the coastal hazard configured. No network needed for this part.
@@ -451,6 +488,8 @@ def main() -> None:
             "asset_type": cfg["asset_type"],
             "n_segments": int(len(segments)),
             "geometry_mix": kind_counts.to_dict(),
+            # Absent in segments built before November 2026, which all used 'pixel'.
+            "river_protection": river_protection_settings(cfg),
         }
     )
 

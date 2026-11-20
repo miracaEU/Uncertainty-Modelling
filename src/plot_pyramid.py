@@ -150,6 +150,7 @@ SCENARIO_LABEL = {
     "earthquake": "Earthquake",
     "windstorm": "Windstorm - design standard RP50",
     "windstorm_absprot": "Windstorm - design standard sampled, RP 25-200",
+    "windstorm_unprotected": "Windstorm - no design standard",
     # Protection-range tests: same model, different sampling bracket for the
     # protection factor. The bracket is in the label because it is the variable
     # under test - without it two pies in one figure look like duplicates.
@@ -157,8 +158,16 @@ SCENARIO_LABEL = {
     "coastal_absprot_ds_rp10to100": "Coastal flood - protection sampled, RP 10-100",
     "flood_baseline_ds_sc0p5to1p5": "River flood - protection scaled, x0.5-1.5",
     "coastal_baseline_ds_sc0p5to1p5": "Coastal flood - protection scaled, x0.5-1.5",
-    "coastal_absprot_ds_slr": "Coastal flood - protection sampled + sea-level rise",
+    "coastal_absprot_ds_slr": "Coastal flood - protection sampled, RP 5-200 + sea-level rise",
     "coastal_noprot_ds_slr": "Coastal flood - protection as recorded + sea-level rise",
+    # November 2026 range tests: x0.5-2 is sampled log-uniformly (median x1).
+    "flood_absprot_ds_rp25to200": "River flood - protection sampled, RP 25-200",
+    "flood_baseline_ds_sc0p5to2p0": "River flood - protection scaled, x0.5-2",
+    "coastal_absprot_ds_rp25to200": "Coastal flood - protection sampled, RP 25-200",
+    "coastal_baseline_ds_sc0p5to2p0": "Coastal flood - protection scaled, x0.5-2",
+    "coastal_absprot_ds_slr_rp25to200": "Coastal flood - protection sampled, RP 25-200 + sea-level rise",
+    "coastal_baseline_ds_slr_sc0p5to2p0": "Coastal flood - protection scaled, x0.5-2 + sea-level rise",
+    "coastal_baseline_ds_slr_sc0p75to1p33": "Coastal flood - protection scaled, x0.75-1.33 + sea-level rise",
     # Intensity-range test: the PGA bias narrowed from x0.8-1.2.
     "earthquake_pga0p9to1p1": "Earthquake - PGA scaled, x0.9-1.1",
 }
@@ -181,12 +190,20 @@ SCENARIO_LABEL_SHORT = {
     "earthquake": "Earthquake",
     "windstorm": "Windstorm (design RP50)",
     "windstorm_absprot": "Windstorm (design sampled, RP 25-200)",
+    "windstorm_unprotected": "Windstorm (no design standard)",
     "flood_absprot_ds_rp10to100": "River flood (protection sampled, RP 10-100)",
     "coastal_absprot_ds_rp10to100": "Coastal flood (protection sampled, RP 10-100)",
     "flood_baseline_ds_sc0p5to1p5": "River flood (protection scaled, x0.5-1.5)",
     "coastal_baseline_ds_sc0p5to1p5": "Coastal flood (protection scaled, x0.5-1.5)",
-    "coastal_absprot_ds_slr": "Coastal flood (protection sampled + SLR)",
+    "coastal_absprot_ds_slr": "Coastal flood (protection sampled, RP 5-200 + SLR)",
     "coastal_noprot_ds_slr": "Coastal flood (protection as recorded + SLR)",
+    "flood_absprot_ds_rp25to200": "River flood (protection sampled, RP 25-200)",
+    "flood_baseline_ds_sc0p5to2p0": "River flood (protection scaled, x0.5-2)",
+    "coastal_absprot_ds_rp25to200": "Coastal flood (protection sampled, RP 25-200)",
+    "coastal_baseline_ds_sc0p5to2p0": "Coastal flood (protection scaled, x0.5-2)",
+    "coastal_absprot_ds_slr_rp25to200": "Coastal flood (protection sampled, RP 25-200 + SLR)",
+    "coastal_baseline_ds_slr_sc0p5to2p0": "Coastal flood (protection scaled, x0.5-2 + SLR)",
+    "coastal_baseline_ds_slr_sc0p75to1p33": "Coastal flood (protection scaled, x0.75-1.33 + SLR)",
     "earthquake_pga0p9to1p1": "Earthquake (PGA x0.9-1.1)",
 }
 
@@ -198,15 +215,16 @@ SCENARIO_LABEL_SHORT = {
 # merely perturbed, then held fixed. Reading left to right the protection factor
 # is progressively constrained, which is the story these figures tell.
 SCENARIO_ORDER = [
-    "flood_absprot", "flood_absprot_ds", "flood_absprot_ds_rp10to100",
-    "flood_baseline", "flood_baseline_ds", "flood_baseline_ds_sc0p5to1p5",
+    "flood_absprot", "flood_absprot_ds", "flood_absprot_ds_rp25to200", "flood_absprot_ds_rp10to100",
+    "flood_baseline", "flood_baseline_ds", "flood_baseline_ds_sc0p5to2p0", "flood_baseline_ds_sc0p5to1p5",
     "flood_noprot", "flood_noprot_ds",
-    "coastal_absprot", "coastal_absprot_ds", "coastal_absprot_ds_rp10to100",
-    "coastal_baseline", "coastal_baseline_ds", "coastal_baseline_ds_sc0p5to1p5",
+    "coastal_absprot", "coastal_absprot_ds", "coastal_absprot_ds_rp25to200", "coastal_absprot_ds_rp10to100",
+    "coastal_baseline", "coastal_baseline_ds", "coastal_baseline_ds_sc0p5to2p0", "coastal_baseline_ds_sc0p5to1p5",
     "coastal_noprot", "coastal_noprot_ds",
-    "coastal_absprot_ds_slr", "coastal_noprot_ds_slr",
+    "coastal_absprot_ds_slr", "coastal_absprot_ds_slr_rp25to200",
+    "coastal_baseline_ds_slr_sc0p5to2p0", "coastal_baseline_ds_slr_sc0p75to1p33", "coastal_noprot_ds_slr",
     "earthquake", "earthquake_pga0p9to1p1",
-    "windstorm", "windstorm_absprot",
+    "windstorm", "windstorm_absprot", "windstorm_unprotected",
 ]
 
 
@@ -771,7 +789,8 @@ def draw_pyramid(stats: pd.DataFrame, title: str, subtitle: str, out: Path, log_
 # exactly that.
 PROTECTION_PAIRS = [
     ("flood_absprot_ds", "flood_noprot_ds"),
-    ("coastal_absprot_ds", "coastal_noprot_ds"),
+    # Coastal is reported with sea-level rise only (ema_model.REPORT_SCENARIOS).
+    ("coastal_absprot_ds_slr", "coastal_noprot_ds_slr"),
     ("windstorm_absprot", "windstorm"),
 ]
 
@@ -1010,6 +1029,9 @@ def main() -> None:
     files = sorted(cdir.glob("*_cascade.parquet"))
     if not files:
         raise SystemExit(f"No *_cascade.parquet in {cdir} - run `python -m src.cascade` first.")
+    # Imported here, not at module level: eu_totals and the other figure scripts
+    # import this module for its palette and labels and should not pull in the model.
+    from .ema_model import is_reported
 
     if args.pair_protection:
         n = build_pairs(cdir, odir, args.assets, args.scopes, args.countries, args.log_x)
@@ -1031,6 +1053,11 @@ def main() -> None:
         if args.assets and asset not in args.assets:
             continue
         if args.scenarios and scenario not in args.scenarios:
+            continue
+        # Present-day coastal cascades stay on disk but are not reported; name them
+        # in --scenarios to draw them anyway.
+        if not args.scenarios and not is_reported(scenario):
+            print(f"{asset} / {scenario}: skipped (coastal without sea-level rise)")
             continue
 
         meta_path = path.with_name(path.name.replace(".parquet", "_meta.json"))

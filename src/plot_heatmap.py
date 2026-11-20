@@ -139,19 +139,29 @@ SCENARIO_BAND_LABEL = {
     "coastal_absprot_ds": ("Coastal flood (protection sampled)", "no sea-level rise"),
     "coastal_absprot_ds_rp10to100": ("Coastal flood (protection sampled)",
                                      "RP 10-100, no sea-level rise"),
-    "coastal_absprot_ds_slr": ("Coastal flood (protection sampled)", "with sea-level rise"),
+    "coastal_absprot_ds_slr": ("Coastal flood (protection sampled)", "RP 5-200, with sea-level rise"),
     "coastal_baseline": ("Coastal flood (protection scaled)", "no depth error"),
     "coastal_baseline_ds": ("Coastal flood (protection scaled)", "x0-2"),
     "coastal_baseline_ds_sc0p5to1p5": ("Coastal flood (protection scaled)", "x0.5-1.5"),
     "coastal_noprot": ("Coastal flood (protection fixed)", "no depth error"),
     "coastal_noprot_ds": ("Coastal flood (protection fixed)", "no sea-level rise"),
     "coastal_noprot_ds_slr": ("Coastal flood (protection fixed)", "with sea-level rise"),
+    "flood_absprot_ds_rp25to200": ("River flood (protection sampled)", "RP 25-200"),
+    "flood_baseline_ds_sc0p5to2p0": ("River flood (protection scaled)", "x0.5-2"),
+    "flood_baseline_ds_sc0p75to1p33": ("River flood (protection scaled)", "x0.75-1.33"),
+    "coastal_absprot_ds_slr_rp25to200": ("Coastal flood (protection sampled)",
+                                         "RP 25-200, with sea-level rise"),
+    "coastal_baseline_ds_slr_sc0p5to2p0": ("Coastal flood (protection scaled)",
+                                           "x0.5-2, with sea-level rise"),
+    "coastal_baseline_ds_slr_sc0p75to1p33": ("Coastal flood (protection scaled)",
+                                             "x0.75-1.33, with sea-level rise"),
     "earthquake": ("Earthquake", "PGA x0.8-1.2"),
     "earthquake_pga0p9to1p1": ("Earthquake", "PGA x0.9-1.1"),
     # Windstorm's factor is a design standard rather than a flood protection
     # standard, so the noun differs; the sentence shape does not.
     "windstorm": ("Windstorm (design fixed)", "RP50"),
     "windstorm_absprot": ("Windstorm (design sampled)", "RP 25-200"),
+    "windstorm_unprotected": ("Windstorm (no design standard)", "RP 0"),
 }
 
 
@@ -169,6 +179,12 @@ def band_labels(scenarios) -> dict[str, str]:
 
 
 ASSET_GAP = 0.9  # columns of blank space between one asset block and the next
+# Optional {scenario: assets} for group_by="hazard": the rows of each scenario band.
+# Set by a caller that wants a band to list every asset PLANNED for the scenario,
+# so a not-yet-run one shows as blank cells instead of dropping out of the band.
+BAND_ASSETS: dict[str, list[str]] | None = None
+# Legend entry for blank cells, for a caller whose blanks include planned runs.
+MISSING_LABEL: str | None = None
 
 # zero_fraction bins. 0 and 1 are their own classes, not ends of a ramp: "damage
 # in every single draw" and "damage in not one draw" are qualitative states, and
@@ -204,7 +220,8 @@ def column_layout(ranges: pd.DataFrame, group_by: str = "asset") -> tuple[list, 
         outer = sorted(ranges["scenario"].unique(), key=scenario_sort_key)
         labels = band_labels(outer)
         inner_of = lambda scen: sorted(  # noqa: E731
-            ranges.loc[ranges["scenario"] == scen, "asset"].unique())
+            BAND_ASSETS[scen] if BAND_ASSETS and scen in BAND_ASSETS
+            else ranges.loc[ranges["scenario"] == scen, "asset"].unique())
         key_of = lambda scen, asset: (asset, scen)  # noqa: E731
         label_of = lambda scen: labels[scen]  # noqa: E731
     else:
@@ -424,7 +441,8 @@ def _legend(fig, handles, ncol, subtitle):
         t.set_color(INK if PLAIN else INK_2)
 
 
-def plot_spread_heatmap(ranges: pd.DataFrame, out: Path, group_by: str = "asset") -> None:
+def plot_spread_heatmap(ranges: pd.DataFrame, out: Path, group_by: str = "asset",
+                        title: str | None = None) -> None:
     countries = row_order(ranges)
     columns, blocks, x_of = column_layout(ranges, group_by)
     # The whole row, because which statistics spread_class needs depends on
@@ -449,11 +467,14 @@ def plot_spread_heatmap(ranges: pd.DataFrame, out: Path, group_by: str = "asset"
                hatch_code=CLS_DEGENERATE, group_by=group_by)
 
     n = int((codes != CLS_MISSING).sum())
-    fig.suptitle("How wide is the plausible range? - every combination in the study",
+    fig.suptitle(title or "How wide is the plausible range? - every combination in the study",
                  fontsize=13 * TEXT_SCALE)
     grouped = "hazard, infrastructure within" if group_by == "hazard" else \
               "infrastructure, hazard within"
-    _legend(fig, spread_legend_handles(include_missing=False), 8,
+    handles = spread_legend_handles(include_missing=False)
+    if MISSING_LABEL:
+        handles.append(Patch(facecolor=MISSING_FILL, edgecolor=BORDER, linewidth=0.4, label=MISSING_LABEL))
+    _legend(fig, handles, 8,
             f"{pm.SPREAD_SUBTITLE}  |  {n:,} combinations, "
             f"{len(countries)} countries x {len(columns)} columns grouped by {grouped}"
             f"  |  blank = not run  |  countries ordered by total median EAD")
@@ -576,6 +597,11 @@ def main() -> None:
         ranges = ranges[ranges["scenario"].isin(HEADLINE_SCENARIOS)]
     if args.scenarios:
         ranges = ranges[ranges["scenario"].isin(args.scenarios)]
+    else:
+        # Coastal is reported with sea-level rise only; name a present-day coastal
+        # scenario in --scenarios to show it anyway.
+        from .ema_model import is_reported
+        ranges = ranges[ranges["scenario"].map(is_reported)]
     if not (args.allow_partial or args.scenarios):
         ranges = drop_partial_scenarios(ranges)
     if ranges.empty:
