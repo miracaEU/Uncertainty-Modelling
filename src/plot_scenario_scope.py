@@ -58,10 +58,10 @@ DESIGN = [
          "Supporting sensitivity, with protection and sea level both unknown. Read "
          "with care: 30% of its combinations did not resolve, and the 5-200 yr range "
          "sits below the recorded coastal standard in the most exposed country."),
-        ("earthquake", "none (as in reference)", "-",
+        ("earthquake_pga0p9to1p1", "none (as in reference)", "-",
          "Headline seismic estimate. No design standard is applied, matching the "
          "reference assessment, so damage is driven by curves, cost and "
-         "ground-motion bias."),
+         "ground-motion bias, sampled x0.9-1.1 like the flood depth and gust factors."),
         ("windstorm", "fixed RP50 design", "-",
          "Headline wind estimate at the IEC design standard. Skipped for roads and "
          "ports, whose only wind curve is identically zero."),
@@ -91,10 +91,10 @@ DESIGN = [
          "same question with a treatment anchored to values countries have built."),
         ("coastal_baseline_ds_sc0p5to1p5", "scaled 0.5-1.5x recorded", "-",
          "The anchored treatment applied to the coastal protection standard."),
-        ("earthquake_pga0p9to1p1", "none (as in reference)", "-",
-         "Narrows the ground-motion bias from x0.8-1.2 to x0.9-1.1, the band the "
-         "flood depth and gust factors use. Tests how much of pga_scale's influence "
-         "comes from being given the widest intensity range."),
+        ("earthquake", "none (as in reference)", "-",
+         "Widens the ground-motion bias from x0.9-1.1 to x0.8-1.2, for the larger "
+         "uncertainty of extrapolated PGA maps. Tests how much pga_scale's influence "
+         "grows when it is given the widest intensity range. Run on every combination."),
     ]),
 ]
 

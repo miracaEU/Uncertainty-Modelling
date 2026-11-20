@@ -58,7 +58,7 @@ SHEET = "All_Sobol_Indices"
 OUTCOME = "total_EAD_MEUR"
 
 # Protection is held fixed in these, so curve and cost compete on equal terms.
-SCENARIOS = ["flood_noprot_ds", "coastal_noprot_ds", "earthquake", "windstorm"]
+SCENARIOS = ["flood_noprot_ds", "coastal_noprot_ds", "earthquake_pga0p9to1p1", "windstorm"]
 
 # Above this many profile rows, sample instead of reading all of them. The
 # weighted dispersion is a mean over the intensity distribution, which a large

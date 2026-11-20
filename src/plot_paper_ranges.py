@@ -68,7 +68,7 @@ TREATMENT_SCENARIOS = {
 }
 PANEL_SCENARIOS = {"River flood": TREATMENT_SCENARIOS["River flood"],
                    "Coastal flood": TREATMENT_SCENARIOS["Coastal flood"],
-                   "Earthquake": ["earthquake"],
+                   "Earthquake": ["earthquake_pga0p9to1p1"],
                    "Windstorm": TREATMENT_SCENARIOS["Windstorm"]}
 # rail and telecom are the only types run under every treatment; education is the social example
 PANEL_EXAMPLES = [("DEU", "rail"), ("ITA", "telecom"), ("GBR", "education")]

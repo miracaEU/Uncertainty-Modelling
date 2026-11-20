@@ -41,6 +41,7 @@ Run:  python -m src.validate --country LUX --asset roads
 """
 
 import argparse
+import sys
 
 import numpy as np
 import pandas as pd
@@ -50,6 +51,7 @@ from scipy.interpolate import interp1d
 
 from damagescanner.core import VectorScanner, VectorExposure
 
+from . import ds_version
 from .curves import (
     get_asset_config,
     is_mapped,
@@ -306,7 +308,7 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
     hazard = _clip_hazard(hcfg["dir"] / hcfg["filename_template"].format(rp=rp), features)
 
     print("Running fresh VectorExposure overlay + EDR lookup (reference-style)...")
-    exposed, _, _, _ = VectorExposure(
+    exposed, _, _, cell_area_m2 = VectorExposure(
         hazard_file=hazard,
         feature_file=features[["object_type", "geometry"]],
         hazard_value_col="band_data",
@@ -329,13 +331,11 @@ def check_earthquake_recomputation(cfg: dict, data: ModelData) -> bool:
         group = asset_cfg.eq_object_group[obj]
         pga_x, edr_y = edr_tables[curve_choices[group]]
         maxdam = asset_cfg.maxdam.get(obj, asset_cfg.default_maxdam)[1]
-        # polygon area conversion mirrors preprocess.py's extract_hazard_profiles
+        # polygon area conversion mirrors preprocess.py's extract_hazard_profiles:
+        # coverage x the cell area VectorExposure returned (a cell's m2 with 1.0.1,
+        # 1 with the polygon fix, whose coverage is already in m2)
         geom_kind = features.geometry.iloc[seg_idx].geom_type
         if geom_kind in ("Polygon", "MultiPolygon"):
-            from damagescanner.vector import _get_cell_area_m2
-            cell_area_m2 = _get_cell_area_m2(
-                features, hazard.rio.crs, abs(hazard.rio.resolution()[0])
-            )
             q = c[keep] * cell_area_m2
         else:
             q = c[keep]
@@ -382,7 +382,7 @@ def check_windstorm_recomputation(cfg: dict, data: ModelData) -> bool:
     hazard = _clip_hazard(hcfg["dir"] / hcfg["filename_template"].format(rp=rp), features)
 
     print("Running fresh VectorExposure overlay + wind curve interp (reference-style)...")
-    exposed, _, _, _ = VectorExposure(
+    exposed, _, _, cell_area_m2 = VectorExposure(
         hazard_file=hazard,
         feature_file=features[["object_type", "geometry"]],
         hazard_value_col="band_data",
@@ -407,11 +407,7 @@ def check_windstorm_recomputation(cfg: dict, data: ModelData) -> bool:
         speed_x, frac_y = wind_tables[curve_choices[group]]
         maxdam = asset_cfg.maxdam.get(obj, asset_cfg.default_maxdam)[1]
         geom_kind = features.geometry.iloc[seg_idx].geom_type
-        if geom_kind in ("Polygon", "MultiPolygon"):
-            from damagescanner.vector import _get_cell_area_m2
-            cell_area_m2 = _get_cell_area_m2(
-                features, hazard.rio.crs, abs(hazard.rio.resolution()[0])
-            )
+        if geom_kind in ("Polygon", "MultiPolygon"):  # as in Check C
             q = c[keep] * cell_area_m2
         else:
             q = c[keep]
@@ -470,6 +466,9 @@ def main() -> None:
 
     cfg = load_config()
     print(f"Validating {cfg['country']} {cfg['asset_type']}")
+    # The reference side runs DamageScanner, so it must be the version this asset
+    # type's Stage 1 used (src/ds_version.py).
+    ds_version.check(cfg["asset_type"], "Validation")
     data = load_model_data(cfg)
     ok_a = check_river_vs_vectorscanner(cfg, data)
     ok_b = check_ead_integration(cfg, data)
@@ -480,6 +479,10 @@ def main() -> None:
     all_ok = ok_a and ok_b and ok_c and ok_d and ok_e
     print(f"Overall: {'ALL CHECKS PASSED' if all_ok else 'CHECKS FAILED'}")
     print("=" * 70)
+    # Non-zero on failure, so callers (run_study, the Stage 1 rerun jobs) see it.
+    # Before 2026-11-20 this always exited 0 and run_study logged every run as passed.
+    if not all_ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

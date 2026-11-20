@@ -102,11 +102,16 @@ DEFAULT_SCENARIOS = [
     "flood_noprot_ds",
     "coastal_absprot_ds",
     "coastal_noprot_ds",
-    "earthquake",
+    "earthquake_pga0p9to1p1",
     "windstorm",
     "windstorm_absprot",
 ]
 
+# The default earthquake scenario is the narrower PGA range, earthquake_pga0p9to1p1
+# (x0.9-1.1, the +/-10% that depth_scale and gust_scale use), decided 2026-11-20 for
+# comparability across hazards. The base "earthquake" keeps x0.8-1.2 (its archives
+# carry that name) and is run as a sensitivity alongside it.
+#
 # What the report shows. Coastal flood is reported ONLY with sea-level rise
 # (decided November 2026): river flood samples `warming`, so a present-day-only
 # coastal result beside it would compare a warmed river world with an unwarmed
@@ -119,7 +124,7 @@ REPORT_SCENARIOS = [
     "flood_noprot_ds",
     "coastal_absprot_ds_slr",
     "coastal_noprot_ds_slr",
-    "earthquake",
+    "earthquake_pga0p9to1p1",
     "windstorm",
     "windstorm_absprot",
 ]
@@ -466,6 +471,10 @@ def _build_water_model(cfg: dict, asset_cfg: AssetConfig, scenario: str, hazard:
     # The asymmetry is not cosmetic: pga_scale is the top driver in 12% of earthquake
     # combinations, while neither depth factor leads anywhere. Widening or narrowing
     # it would move real results, so it should be changed only with a reason.
+    #
+    # Since 2026-11-20 the default earthquake scenario is earthquake_pga0p9to1p1, at
+    # the same +/-10% as depth and gust, so the hazards compare on equal terms; the
+    # +/-20% above stays as the base "earthquake", reported as a sensitivity.
 
     # depth-error treatment: additive offset OR multiplicative scale
     if depth_kind == "offset":
@@ -499,7 +508,8 @@ def _build_earthquake_model(cfg: dict, asset_cfg: AssetConfig, scenario: str) ->
         RealParameter("cost_level", -1.0, 1.0),
         # +/-20%, wider than the +/-10% used for depth and gust; see the
         # hazard-map intensity note above _build_water_model's depth block.
-        # earthquake_pga0p9to1p1 narrows it to +/-10% (INTENSITY_RANGES).
+        # earthquake_pga0p9to1p1, the default scenario, narrows it to +/-10%
+        # (INTENSITY_RANGES).
         RealParameter("pga_scale", *intensity_range(scenario, "pga")),
         CategoricalParameter("aggregation", ["per_cell", "mean_depth"]),
     ]

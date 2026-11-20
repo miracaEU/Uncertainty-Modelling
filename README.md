@@ -82,7 +82,7 @@ their uncertainty structures do not mix. All 15 are built from the same
 |---|---|---|---|
 | River flood | `flood_baseline`, `flood_absprot`, `flood_noprot`, each with a `_ds` twin | scale / abs / fixed | additive `depth_offset`, or multiplicative `depth_scale` in the `_ds` twin |
 | Coastal flood | `coastal_*`, the same six mirrored | same, against COASTPROS instead of FLOPROS | same |
-| Earthquake | `earthquake` | none (as in the reference) | n/a |
+| Earthquake | `earthquake_pga0p9to1p1` (default, PGA x0.9-1.1), `earthquake` (PGA x0.8-1.2) | none (as in the reference) | n/a |
 | Windstorm | `windstorm`, `windstorm_absprot` | fixed RP50 design standard, or sampled absolute RP | n/a |
 
 The three protection treatments:
@@ -104,7 +104,7 @@ mechanism and is not modelled here.
 
 `run_study.py` runs a default subset of 7 (`DEFAULT_SCENARIOS`) - for each flood
 type the absolute-protection and no-protection `_ds` variants, plus earthquake
-and the two windstorm scenarios. The rest stay available via `--scenarios`.
+(`earthquake_pga0p9to1p1`) and the two windstorm scenarios. The rest stay available via `--scenarios`.
 
 ## Uncertainty factors
 
@@ -118,15 +118,17 @@ and the two windstorm scenarios. The rest stay available via `--scenarios`.
 | `protection_abs_rp` | real | [5, 200] yr; [25, 200] for wind | river, coastal, windstorm | `*_absprot` |
 | `depth_offset` | real | [-0.5, 0.5] m | river, coastal | additive variants |
 | `depth_scale` | real | [0.9, 1.1] | river, coastal | `_ds` variants |
-| `pga_scale` | real | [0.8, 1.2] | earthquake | `earthquake` |
+| `pga_scale` | real | [0.9, 1.1]; [0.8, 1.2] in `earthquake` | earthquake | `earthquake_pga0p9to1p1` (default), `earthquake` |
 | `gust_scale` | real | [0.9, 1.1] | windstorm | both windstorm scenarios |
 
-The intensity-bias factors are not all the same width. `pga_scale` spans +/-20%
-where `depth_scale` and `gust_scale` span +/-10%, because damaging ground motion
+The default earthquake scenario, `earthquake_pga0p9to1p1`, samples `pga_scale` at
+the same +/-10% as `depth_scale` and `gust_scale`, so the hazards compare on equal
+terms (default since 2026-11-20). The `earthquake` sensitivity widens it to +/-20%,
+because damaging ground motion
 recurs rarely enough in Europe that a PGA map at a given return period is
 extrapolated well beyond the instrumental record, while flood depth and gust
 speed at a comparable return period rest on far longer observational series. The
-asymmetry has consequences: `pga_scale` is the top driver in about 12% of
+asymmetry has consequences: at +/-20% `pga_scale` is the top driver in about 12% of
 earthquake combinations, whereas neither depth factor leads anywhere. See the
 note above the depth block in `src/ema_model.py` for the full reasoning,
 including why the +/-10% figure is not an independent estimate of depth error.

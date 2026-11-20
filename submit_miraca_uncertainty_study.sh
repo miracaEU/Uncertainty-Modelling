@@ -40,6 +40,9 @@
 #   addscen     back-fill newly-added scenarios (default the FLOPROS-fixed
 #               flood_noprot_ds / coastal_noprot_ds) across all combos, Stage 2
 #               only; override the set with SCEN="..."
+#   restage1    redo Stage 1 for listed combos that already have results:
+#               backup, chosen hazards only, segments check, validation,
+#               then a gate job that Stage 2 can wait on (see the mode)
 #   aggregate   build the summary workbook (`all` chains this for you)
 #   status      show this user's queued/running jobs
 #
@@ -354,6 +357,13 @@ do_setup() {
     }
 
     uv python install "${UV_PYTHON}"
+    # Never wipe an existing venv by accident: there are two now (1.0.1 and the
+    # DamageScanner polygon fix, see setup_dsfix_venv.sh), and a VENV= typo here
+    # would silently rebuild the wrong one.
+    if [[ -e "$VENV" && -z "${REBUILD_VENV:-}" ]]; then
+        echo "$VENV exists. Set REBUILD_VENV=1 to delete and rebuild it." >&2
+        exit 1
+    fi
     rm -rf "$VENV"
     uv venv "$VENV" --python "${UV_PYTHON}" --python-preference only-managed
 
@@ -696,6 +706,95 @@ SLURM
     echo "When drained, build the workbook with:  $0 aggregate"
     ;;
 
+restage1)
+    # ── Redo Stage 1 for listed combos that already have results, then a gate ─
+    # One job per combo (memory by tier, as in submit_combo), each:
+    #   1. backs up the files it rewrites (src.stage1_rerun backup; never overwrites)
+    #   2. preprocess --hazards ${RESTAGE_HAZARDS} only - the other hazards'
+    #      profiles stay as they are (coastal is never re-streamed unless listed)
+    #   3. checks the rebuilt segments against the backup: only the columns in
+    #      RESTAGE_ALLOW may change
+    #   4. validates and writes the marker, so Stage 2 skips validation
+    # A gate job (afterany all of them) then runs `stage1_rerun gate` and fails
+    # unless every combo got through; Stage 2 submitted with DEPEND=afterok:<gate>
+    # waits on it. The gate's job id goes to RESTAGE_GATE_FILE.
+    #   RESTAGE_LIST=... RESTAGE_HAZARDS="river earthquake windstorm" \
+    #   RESTAGE_BACKUP=data/intermediate_x_backup RESTAGE_STATUS=reruns/x/status \
+    #   RESTAGE_GATE_FILE=reruns/x/gate_job.txt ./submit_miraca_uncertainty_study.sh restage1
+    : "${RESTAGE_LIST:?set RESTAGE_LIST}" "${RESTAGE_HAZARDS:?set RESTAGE_HAZARDS}"
+    : "${RESTAGE_BACKUP:?set RESTAGE_BACKUP}" "${RESTAGE_STATUS:?set RESTAGE_STATUS}"
+    RESTAGE_ALLOW=${RESTAGE_ALLOW:-"prot_rp prot_source prot_fill_km"}
+    S1_TIME=${S1_TIME:-120:00:00}
+    [[ -f "$RESTAGE_LIST" ]] || { echo "No combo list at '$RESTAGE_LIST'." >&2; exit 1; }
+    [[ -x "$PYTHON" ]] || { echo "No venv python at $PYTHON." >&2; exit 1; }
+    mkdir -p "$LOG_DIR"
+    tag=${SCEN_TAG:-restage1}
+    S1_IDS=()
+    while read -r C A _; do
+        [[ -z "${C:-}" || "$C" == \#* ]] && continue
+        tier=$(tier_of "$C")
+        if is_heavy "$A"; then heavy=1; else heavy=0; fi
+        read -r p_mem _ <<<"$(prep_res "$tier" "$heavy")"
+        label="${C}_${A}"
+        jid=$(sbatch --parsable <<SLURM
+#!/bin/bash -l
+#SBATCH --job-name=s1_${label}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_NICE}
+${SB_ACCOUNT}
+${SB_DEPEND}
+#SBATCH --mem=${p_mem}
+#SBATCH --time=${S1_TIME}
+#SBATCH --output=${LOG_DIR}/out_s1_${tag}_${label}
+#SBATCH --error=${LOG_DIR}/err_s1_${tag}_${label}
+set -euo pipefail
+export MIRACA_CONFIG=${MIRACA_CONFIG}
+export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+module load ${MODULES}
+cd ${REPO}
+${PYTHON} -m src.stage1_rerun backup --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS} --dest ${RESTAGE_BACKUP}
+${PYTHON} -m src.preprocess --country ${C} --asset ${A} --hazards ${RESTAGE_HAZARDS}
+${PYTHON} -m src.stage1_rerun check-segments --country ${C} --asset ${A} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} --allow ${RESTAGE_ALLOW}
+${PYTHON} -m src.validate --country ${C} --asset ${A}
+${PYTHON} -m src.stage1_rerun mark-validated --country ${C} --asset ${A}
+SLURM
+)
+        echo "submitted ${label}: s1=${jid} (tier ${tier}, ${p_mem})"
+        S1_IDS+=("$jid")
+    done < "$RESTAGE_LIST"
+    [[ ${#S1_IDS[@]} -gt 0 ]] || { echo "Nothing in $RESTAGE_LIST." >&2; exit 1; }
+    barriers=$(submit_barriers "${S1_IDS[@]}")
+    gate=$(sbatch --parsable --dependency="afterany:${barriers}" <<SLURM
+#!/bin/bash -l
+#SBATCH --job-name=s1_gate_${tag}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+${SB_PARTITION}
+${SB_EXCLUDE}
+${SB_ACCOUNT}
+#SBATCH --mem=8G
+#SBATCH --time=02:00:00
+#SBATCH --output=${LOG_DIR}/out_s1_gate_${tag}
+#SBATCH --error=${LOG_DIR}/err_s1_gate_${tag}
+set -euo pipefail
+export MIRACA_CONFIG=${MIRACA_CONFIG}
+module load ${MODULES}
+cd ${REPO}
+${PYTHON} -m src.stage1_rerun gate --list ${RESTAGE_LIST} --hazards ${RESTAGE_HAZARDS} --backup ${RESTAGE_BACKUP} --status ${RESTAGE_STATUS} ${RESTAGE_GATE_ARGS:-}
+SLURM
+)
+    [[ -n "${RESTAGE_GATE_FILE:-}" ]] && echo "$gate" > "$RESTAGE_GATE_FILE"
+    echo
+    echo "Submitted ${#S1_IDS[@]} Stage 1 jobs; gate ${gate} (afterany all of them)."
+    echo "Gate verdict afterwards:  cat ${LOG_DIR}/out_s1_gate_${tag}"
+    ;;
+
 dry)
     DRY=1
     echo "Submission plan (nothing submitted):"
@@ -768,7 +867,7 @@ status)
 
 *)
     echo "Unknown mode '$MODE'." >&2
-    echo "Use: all | setup | dry | pilot | submit | resubmit | recoastal | addscen | aggregate | status" >&2
+    echo "Use: all | setup | dry | pilot | submit | resubmit | recoastal | addscen | restage1 | aggregate | status" >&2
     exit 1
     ;;
 esac

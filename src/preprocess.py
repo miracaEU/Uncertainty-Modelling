@@ -47,6 +47,7 @@ import xarray as xr
 
 from damagescanner.core import VectorExposure
 
+from . import ds_version
 from .coastal import extract_coastal_profiles, sample_coastal_protection
 from .curves import (
     applicable_hazards,
@@ -110,11 +111,13 @@ def extract_hazard_profiles(
     seg_parts, rp_parts, val_parts, qty_parts = [], [], [], []
     exposed_qty_per_rp = {}
     cell_area_m2 = None
+    has_polygons = bool((geom_kind == 1).any())
 
     for rp in hazard_cfg["return_periods"]:
         t0 = time.time()
         path = hazard_cfg["dir"] / hazard_cfg["filename_template"].format(rp=rp)
         hazard = xr.open_dataset(path, engine="rasterio").rio.clip_box(**clip_kw)
+        geographic = bool(hazard.rio.crs is not None and hazard.rio.crs.is_geographic)
 
         exposed, _, _, rp_cell_area_m2 = VectorExposure(
             hazard_file=hazard,
@@ -124,6 +127,11 @@ def extract_hazard_profiles(
             return_full=False,
         )
         hazard.close()
+        # With the polygon fix the coverage of a polygon is already in m2 and the
+        # returned cell area is 1; with 1.0.1 it is a fraction of one cell and the
+        # cell area is that cell's m2. Either way q = coverage x cell area below, but
+        # the value must match the version ds_version detected.
+        ds_version.check_cell_area(rp_cell_area_m2, geographic, has_polygons)
         if rp_cell_area_m2 is not None:
             cell_area_m2 = rp_cell_area_m2
 
@@ -138,7 +146,7 @@ def extract_hazard_profiles(
             if not keep.any():
                 continue
             v, c = v[keep], c[keep]
-            if geom_kind[seg_idx] == 1:  # polygon: fraction-of-cell -> m^2
+            if geom_kind[seg_idx] == 1:  # polygon: fraction-of-cell (1.0.1) or m^2 (fix) -> m^2
                 q = c * cell_area_m2
             else:  # line: already metres: point: already 1
                 q = c
@@ -463,6 +471,9 @@ def main() -> None:
         hazards = [h for h in hazards if h in applicable]
 
     print(f"Country: {cfg['country']}  Asset: {cfg['asset_type']}")
+    # Refuse before anything is written: each asset type runs on one DamageScanner
+    # (src/ds_version.py). Rebuilding segments alone never calls it.
+    ds_info = None if args.segments_only else ds_version.check(cfg["asset_type"], "Stage 1")
     t_start = time.time()
 
     features = load_exposure(cfg)
@@ -505,6 +516,9 @@ def main() -> None:
         )
         return
 
+    # Which DamageScanner the hazards extracted by THIS run used. Per hazard below
+    # too, because a later --hazards or --slr-only run redoes only some of them.
+    meta["damagescanner_last_run"] = ds_info | {"hazards": hazards, "at": meta["created"]}
     for hazard in hazards:
         print(f"\nExtracting {hazard} profiles (the expensive step)...")
         if hazard == "coastal":
@@ -533,6 +547,7 @@ def main() -> None:
             "n_segments_exposed": int(profiles["seg"].nunique()),
             "cell_area_m2": cell_area_m2,
             "exposed_quantity_per_rp": exposed_per_rp,
+            "damagescanner": ds_info,
         }
 
     meta["elapsed_s"] = round(time.time() - t_start, 1)

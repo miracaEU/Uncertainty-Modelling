@@ -60,12 +60,12 @@ from .plot_paper_ranges import QUANTILES, legend_above
 FOLDER = OUT / "scenario_sets"
 FACTORS = PROJECT_ROOT / "convergence" / "bootstrap_factors.csv"
 
-DEFAULT = ["flood_baseline_ds_sc0p5to2p0", "coastal_baseline_ds_slr_sc0p5to2p0", "earthquake", "windstorm"]
+DEFAULT = ["flood_baseline_ds_sc0p5to2p0", "coastal_baseline_ds_slr_sc0p5to2p0", "earthquake_pga0p9to1p1", "windstorm"]
 ALL = ["flood_absprot_ds", "flood_absprot_ds_rp25to200", "flood_baseline_ds_sc0p5to2p0",
        "flood_baseline_ds_sc0p75to1p33", "flood_noprot_ds",
        "coastal_absprot_ds_slr", "coastal_absprot_ds_slr_rp25to200", "coastal_baseline_ds_slr_sc0p5to2p0",
        "coastal_baseline_ds_slr_sc0p75to1p33", "coastal_noprot_ds_slr",
-       "earthquake",
+       "earthquake_pga0p9to1p1",
        "windstorm_absprot", "windstorm", "windstorm_unprotected"]
 SETS = {"default": DEFAULT, "all_treatments": ALL}
 
@@ -78,7 +78,7 @@ TREATMENT = {
     "coastal_absprot_ds_slr": "sampled, RP 5–200", "coastal_absprot_ds_slr_rp25to200": "sampled, RP 25–200",
     "coastal_baseline_ds_slr_sc0p5to2p0": "recorded × 0.5–2",
     "coastal_baseline_ds_slr_sc0p75to1p33": "recorded × 0.75–1.33", "coastal_noprot_ds_slr": "as recorded",
-    "earthquake": "",
+    "earthquake": "", "earthquake_pga0p9to1p1": "",
     "windstorm_absprot": "sampled, RP 25–200", "windstorm": "fixed, RP 50",
     "windstorm_unprotected": "no design standard",
 }

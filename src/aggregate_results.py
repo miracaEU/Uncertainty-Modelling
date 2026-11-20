@@ -229,11 +229,13 @@ SCENARIO_DESCRIPTIONS = [
                      "are the earlier subset tests, superseded. Coastal range tests are run with "
                      "sea-level rise: coastal_absprot_ds_slr_rp25to200, "
                      "coastal_baseline_ds_slr_sc0p5to2p0, coastal_baseline_ds_slr_sc0p75to1p33."),
-    ("earthquake", "Earthquake only. No protection standard (as in the reference). Factors: eq "
-                    "curve choice(s), cost_level, pga_scale (x0.8-1.2), aggregation."),
-    ("earthquake_pga0p9to1p1", "Range test: as earthquake, but pga_scale is sampled from "
-                               "x0.9-1.1 instead of x0.8-1.2 - the +/-10% band depth_scale and "
-                               "gust_scale use. Run on the range-test country subset only."),
+    ("earthquake", "Earthquake only, wider PGA range: a sensitivity to the default "
+                    "earthquake_pga0p9to1p1. No protection standard (as in the reference). Factors: "
+                    "eq curve choice(s), cost_level, pga_scale (x0.8-1.2), aggregation."),
+    ("earthquake_pga0p9to1p1", "DEFAULT earthquake scenario. As earthquake, but pga_scale is "
+                               "sampled from x0.9-1.1 instead of x0.8-1.2 - the +/-10% band "
+                               "depth_scale and gust_scale use, so the hazards compare on equal "
+                               "terms."),
     ("windstorm", "Windstorm only. Fixed RP50 design-standard protection (IEC 60826), not sampled. "
                    "Factors: wind curve choice(s), cost_level, gust_scale, aggregation. Only defined "
                    "for wind-damaging assets - roads/ports carry no windstorm damage (their only wind "
@@ -279,14 +281,15 @@ FACTOR_DESCRIPTIONS = [
     ("depth_scale", "Multiplicative factor on river flood water depth, [0.9, 1.1] (i.e. +/-10%). The "
                      "'_ds' flood scenarios use this INSTEAD of depth_offset, to test whether a "
                      "proportional depth error changes the sensitivity picture versus an additive one."),
-    ("pga_scale", "Multiplier on earthquake ground motion (PGA), [0.8, 1.2] - a hazard-map "
-                  "uncertainty factor, distinct from the fragility curve choice itself. The band is "
-                  "WIDER than the +/-10% used for flood depth and gust speed: damaging ground motion "
+    ("pga_scale", "Multiplier on earthquake ground motion (PGA) - a hazard-map uncertainty "
+                  "factor, distinct from the fragility curve choice itself. [0.9, 1.1] in the default "
+                  "earthquake_pga0p9to1p1, the same +/-10% as flood depth and gust speed, for "
+                  "comparability. [0.8, 1.2] in the 'earthquake' sensitivity: damaging ground motion "
                   "is rare in Europe, so a PGA map at a given return period is extrapolated well "
-                  "beyond the observational record and carries correspondingly larger uncertainty."),
+                  "beyond the observational record and may carry larger uncertainty."),
     ("gust_scale", "Multiplier on windstorm 3-sec gust speed, [0.9, 1.1] - the windstorm hazard-map "
-                    "uncertainty factor. Plays the same role as pga_scale for earthquake, but over a "
-                    "narrower band; see the pga_scale entry for why the two differ."),
+                    "uncertainty factor. Plays the same role as pga_scale for earthquake, over the same "
+                    "band as the default earthquake scenario; see the pga_scale entry."),
     ("aggregation", "Exposure aggregation order: 'per_cell' applies the damage curve to each "
                     "raster cell then sums (damagescanner's own approach); 'mean_depth' averages "
                     "intensity over the feature first, then applies the curve once."),

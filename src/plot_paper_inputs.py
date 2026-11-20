@@ -76,7 +76,7 @@ TREATMENTS = {
     "Recorded × 0.5–2": ("^", ["flood_baseline_ds_sc0p5to2p0", "coastal_baseline_ds_slr_sc0p5to2p0"]),
     "Recorded × 0.75–1.33": ("v", ["flood_baseline_ds_sc0p75to1p33", "coastal_baseline_ds_slr_sc0p75to1p33"]),
     "Recorded / fixed RP50": ("D", ["flood_noprot_ds", "coastal_noprot_ds_slr", "windstorm"]),
-    "No protection": ("P", ["earthquake", "windstorm_unprotected"]),
+    "No protection": ("P", ["earthquake_pga0p9to1p1", "earthquake", "windstorm_unprotected"]),
 }
 # Design c: treatments on one blue ramp (reference palette steps 250-700), darker = wider
 # protection range; "no protection" is off that scale, so neutral grey.

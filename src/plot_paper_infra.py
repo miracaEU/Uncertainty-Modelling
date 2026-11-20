@@ -71,7 +71,7 @@ ASSET_LABEL = {a: a.capitalize() for a in ASSETS}
 HAZARDS = {
     "River flood": "flood_absprot_ds",
     "Coastal flood": "coastal_absprot_ds_slr",
-    "Earthquake": "earthquake",
+    "Earthquake": "earthquake_pga0p9to1p1",
     "Windstorm": "windstorm_absprot",
 }
 NOPROT = {

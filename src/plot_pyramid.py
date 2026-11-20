@@ -147,7 +147,7 @@ SCENARIO_LABEL = {
     "coastal_noprot": "Coastal flood - protection as recorded (add. depth err.)",
     "coastal_baseline_ds": "Coastal flood - protection scaled, x0-2",
     "coastal_baseline": "Coastal flood - protection scaled (add. depth err.)",
-    "earthquake": "Earthquake",
+    "earthquake": "Earthquake - PGA scaled, x0.8-1.2",
     "windstorm": "Windstorm - design standard RP50",
     "windstorm_absprot": "Windstorm - design standard sampled, RP 25-200",
     "windstorm_unprotected": "Windstorm - no design standard",
@@ -168,7 +168,7 @@ SCENARIO_LABEL = {
     "coastal_absprot_ds_slr_rp25to200": "Coastal flood - protection sampled, RP 25-200 + sea-level rise",
     "coastal_baseline_ds_slr_sc0p5to2p0": "Coastal flood - protection scaled, x0.5-2 + sea-level rise",
     "coastal_baseline_ds_slr_sc0p75to1p33": "Coastal flood - protection scaled, x0.75-1.33 + sea-level rise",
-    # Intensity-range test: the PGA bias narrowed from x0.8-1.2.
+    # The default earthquake scenario (since 2026-11-20): PGA bias x0.9-1.1, as for depth and gust.
     "earthquake_pga0p9to1p1": "Earthquake - PGA scaled, x0.9-1.1",
 }
 
@@ -187,7 +187,7 @@ SCENARIO_LABEL_SHORT = {
     "coastal_noprot": "Coastal flood (protection as recorded)",
     "coastal_baseline_ds": "Coastal flood (protection scaled, x0-2)",
     "coastal_baseline": "Coastal flood (protection scaled)",
-    "earthquake": "Earthquake",
+    "earthquake": "Earthquake (PGA x0.8-1.2)",
     "windstorm": "Windstorm (design RP50)",
     "windstorm_absprot": "Windstorm (design sampled, RP 25-200)",
     "windstorm_unprotected": "Windstorm (no design standard)",
@@ -223,7 +223,7 @@ SCENARIO_ORDER = [
     "coastal_noprot", "coastal_noprot_ds",
     "coastal_absprot_ds_slr", "coastal_absprot_ds_slr_rp25to200",
     "coastal_baseline_ds_slr_sc0p5to2p0", "coastal_baseline_ds_slr_sc0p75to1p33", "coastal_noprot_ds_slr",
-    "earthquake", "earthquake_pga0p9to1p1",
+    "earthquake_pga0p9to1p1", "earthquake",
     "windstorm", "windstorm_absprot", "windstorm_unprotected",
 ]
 

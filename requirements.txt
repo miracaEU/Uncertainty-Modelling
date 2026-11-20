@@ -1,7 +1,10 @@
 # Install into a venv OUTSIDE OneDrive, e.g.:
 #   uv venv %USERPROFILE%\.venvs\miraca_uq --python 3.12
 #   uv pip install --python %USERPROFILE%\.venvs\miraca_uq\Scripts\python.exe -r requirements.txt
-damagescanner
+# Pinned: line and point asset types (roads, rail, telecom) stay on 1.0.1 for good.
+# The polygon types run in a second venv with the polygon fix; see
+# setup_dsfix_venv.sh and src/ds_version.py. Never loosen this pin.
+damagescanner==1.0.1
 ema_workbench
 geopandas
 rasterio

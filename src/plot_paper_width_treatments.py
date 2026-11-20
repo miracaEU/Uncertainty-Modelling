@@ -38,13 +38,13 @@ SETS = {
     "two": {
         "River flood": ["flood_noprot_ds", "flood_baseline_ds_sc0p5to2p0"],
         "Coastal flood": ["coastal_noprot_ds_slr", "coastal_baseline_ds_slr_sc0p5to2p0"],
-        "Earthquake": ["earthquake"],
+        "Earthquake": ["earthquake_pga0p9to1p1"],
         "Windstorm": ["windstorm", "windstorm_absprot"],
     },
     "three": {
         "River flood": ["flood_noprot_ds", "flood_baseline_ds_sc0p5to2p0", "flood_absprot_ds"],
         "Coastal flood": ["coastal_noprot_ds_slr", "coastal_baseline_ds_slr_sc0p5to2p0", "coastal_absprot_ds_slr"],
-        "Earthquake": ["earthquake"],
+        "Earthquake": ["earthquake_pga0p9to1p1"],
         "Windstorm": ["windstorm", "windstorm_absprot", "windstorm_unprotected"],
     },
 }
@@ -52,7 +52,7 @@ LABEL = {
     "flood_noprot_ds": "As recorded (floods)", "flood_baseline_ds_sc0p5to2p0": "Recorded × 0.5–2 (floods)",
     "flood_absprot_ds": "Sampled, RP 5–200 (floods)", "windstorm": "Fixed, RP 50 (wind)",
     "windstorm_absprot": "Sampled, RP 25–200 (wind)", "windstorm_unprotected": "No design standard (wind)",
-    "earthquake": "Earthquake",
+    "earthquake": "Earthquake", "earthquake_pga0p9to1p1": "Earthquake",
 }
 LABEL |= {"coastal_" + k.split("_", 1)[1].replace("_ds", "_ds_slr", 1): v for k, v in LABEL.items()
           if k.startswith("flood_")}
