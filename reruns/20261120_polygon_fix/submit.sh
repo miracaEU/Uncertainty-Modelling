@@ -74,6 +74,7 @@ mkdir -p "$HERE/n32768_single"
 for f in "$HERE"/n32768_*.txt; do
     scen=$(basename "$f" .txt); scen=${scen#n32768_}
     grep -v '^#' "$f" | while read -r C A; do
+        A=${A%$'\r'}
         jid=$(grep -oP "^submitted ${C}_${A}: run=\K[0-9]+" "$HERE/jobs_${scen}.log" | tail -1)
         [[ -n "$jid" ]] || { echo "!! no N = 8192 job for $C $A $scen; submit its N = 32768 run by hand" >&2; continue; }
         one="$HERE/n32768_single/${scen}_${C}_${A}.txt"

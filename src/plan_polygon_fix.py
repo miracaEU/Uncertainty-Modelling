@@ -66,6 +66,9 @@ NEW = {
     "flood_baseline_ds_sc0p75to1p33": ("flood_noprot_ds", 1),
     "windstorm_unprotected": ("windstorm", 0),
 }
+# Every list is read by bash on the cluster, so it is written with Unix line ends even
+# when planned on Windows (a "\r" would end up inside each sbatch script).
+LF = "\n"
 ARCH = re.compile(r"experiments_([A-Z]{3})_([a-z]+)_(.+)_(lhs|sobol)_n(\d+)_(\d{8}_\d{6})\.tar\.gz$")
 
 
@@ -162,7 +165,7 @@ def main() -> None:
     (out / "stage1_combos.txt").write_text(
         f"# Stage 1 for the DamageScanner polygon fix: {len(s1)} combinations, hazards {' '.join(HAZARDS)}, "
         f"longest first (about {s1.s.sum() / 3600:.0f} h in all, at most {s1.s.max() / 3600:.1f} h each)\n"
-        + "".join(f"{c} {a}\n" for c, a in s1[["country", "asset"]].itertuples(index=False)))
+        + "".join(f"{c} {a}\n" for c, a in s1[["country", "asset"]].itertuples(index=False)), newline=LF)
 
     # --- Stage 2 jobs at N = 8192
     conv, lhs = timings(results)
@@ -195,7 +198,7 @@ def main() -> None:
         name, what = (f"extra_{scen}", "extra") if wave == 3 else (f"wave{wave}_{scen}", f"wave {wave}")
         (out / f"{name}.txt").write_text(
             f"# {scen}, {what}: {len(g)} combinations, longest first ({g.est_h.sum():.0f} job-h estimated)\n"
-            + "".join(f"{c} {a}\n" for c, a in g[["country", "asset"]].itertuples(index=False)))
+            + "".join(f"{c} {a}\n" for c, a in g[["country", "asset"]].itertuples(index=False)), newline=LF)
 
     # --- the N = 32768 convergence reruns of the same combinations
     c32 = conv[conv.max_n > 8192].groupby(key).tail(1).set_index(key)
@@ -213,16 +216,17 @@ def main() -> None:
         g = g.sort_values("est_h", ascending=False)
         (out / f"n32768_{scen}.txt").write_text(
             f"# {scen} at N = 32768, after its N = 8192 rerun: {len(g)} combinations ({g.est_h.sum():.0f} job-h)\n"
-            + "".join(f"{c} {a}\n" for c, a in g[["country", "asset"]].itertuples(index=False)))
+            + "".join(f"{c} {a}\n" for c, a in g[["country", "asset"]].itertuples(index=False)), newline=LF)
 
     plan = pd.concat([jobs, big32], ignore_index=True)
-    plan.sort_values(["wave", "est_h"], ascending=[True, False]).to_csv(out / "plan.csv", index=False)
+    plan.sort_values(["wave", "est_h"], ascending=[True, False]).to_csv(out / "plan.csv", index=False,
+                                                                         lineterminator=LF)
 
     # --- what the forced reruns overwrite, and what exists now
     rerun = plan[plan.rerun][key].drop_duplicates()
-    rerun.to_csv(out / "snapshot.csv", index=False)
+    rerun.to_csv(out / "snapshot.csv", index=False, lineterminator=LF)
     before = arch.merge(rerun, on=key)
-    (out / "archives_before.txt").write_text("".join(f"{p}\n" for p in sorted(before.path)))
+    (out / "archives_before.txt").write_text("".join(f"{p}\n" for p in sorted(before.path)), newline=LF)
 
     print(f"Stage 1: {len(s1)} combinations ({s1.s.sum() / 3600:.0f} h, longest {s1.s.max() / 3600:.1f} h)")
     summary = plan.groupby(["wave", "scenario"]).agg(jobs=("country", "size"), job_h=("est_h", "sum"),

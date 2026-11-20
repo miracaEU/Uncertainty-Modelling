@@ -9,3 +9,9 @@
 
 # Read by Python on the cluster; keep it LF for consistency.
 config.cluster.yml text eol=lf
+
+# Rerun job lists are read line by line by the submit scripts on the cluster. A CRLF
+# list puts "\r" inside every generated sbatch script, which sbatch then refuses
+# ("Batch script contains DOS line breaks"), as it did on 2026-11-20.
+reruns/**/*.txt text eol=lf
+reruns/**/*.csv text eol=lf

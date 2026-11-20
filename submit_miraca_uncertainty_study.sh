@@ -513,6 +513,7 @@ resubmit)
     RUN_IDS=()
     total=0
     while read -r C A _; do
+        C=${C%$'\r'}; A=${A%$'\r'}   # lists written on Windows
         [[ -z "${C:-}" || "$C" == \#* ]] && continue
         submit_combo "$C" "$A"
         RUN_IDS+=("$LAST_RUN_ID")
@@ -558,6 +559,7 @@ recoastal)
     echo "== recomputing coastal_absprot_ds from ${LIST} =="
     total=0
     while read -r C A _; do
+        C=${C%$'\r'}; A=${A%$'\r'}   # lists written on Windows
         [[ -z "${C:-}" || "$C" == \#* ]] && continue
         tier=$(tier_of "$C")
         if is_heavy "$A"; then heavy=1; else heavy=0; fi
@@ -637,6 +639,7 @@ addscen)
     if [[ -n "${ADDSCEN_LIST:-}" ]]; then
         [[ -f "$ADDSCEN_LIST" ]] || { echo "No combo list at '$ADDSCEN_LIST'." >&2; exit 1; }
         while read -r C A _; do
+            C=${C%$'\r'}; A=${A%$'\r'}   # lists written on Windows
             [[ -z "${C:-}" || "$C" == \#* ]] && continue
             COMBOS+=("$C $A")
         done < "$ADDSCEN_LIST"
@@ -731,6 +734,7 @@ restage1)
     tag=${SCEN_TAG:-restage1}
     S1_IDS=()
     while read -r C A _; do
+        C=${C%$'\r'}; A=${A%$'\r'}   # lists written on Windows
         [[ -z "${C:-}" || "$C" == \#* ]] && continue
         tier=$(tier_of "$C")
         if is_heavy "$A"; then heavy=1; else heavy=0; fi
