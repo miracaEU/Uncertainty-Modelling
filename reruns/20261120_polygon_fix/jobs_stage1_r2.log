@@ -1,0 +1,6 @@
+submitted GBR_power: s1=1249356 (tier XL, 64G)
+submitted GBR_ports: s1=1249357 (tier XL, 24G)
+submitted GBR_education: s1=1249358 (tier XL, 24G)
+
+Submitted 3 Stage 1 jobs; gate 1249360 (afterany all of them).
+Gate verdict afterwards:  cat /scistor/ivm/yma794/MIRACA_UQ/logs/out_s1_gate_dsfix_r2

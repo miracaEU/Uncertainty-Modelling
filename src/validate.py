@@ -20,9 +20,12 @@ Check B - EAD integration vs a scalar port of AssetRisk_PanEU's
     integrate_ead()/_apply_protection_standard()/adjust_return_periods_climate(),
     evaluated per feature on a random sample, for several combinations of
     protection scaling and warming level. Skipped for assets/scenarios with
-    no river hazard. One deliberate difference from the reference: protection
-    at or above the largest return period gives 0, not the reference's
-    (1/protection) * damage at that RP (see _ref_integrate_ead).
+    no river hazard. Two deliberate differences from the reference, both at
+    the ends of the modelled RP range (see _ref_integrate_ead): protection at or
+    above the largest return period gives 0, not the reference's
+    (1/protection) * damage at that RP; protection below the smallest return
+    period counts as unprotected, without the reference's extra slice from
+    1/protection to 1/smallest RP.
 
 Check C - earthquake damage at a representative RP recomputed independently:
     fresh VectorExposure overlay of the PGA raster + EDR lookup + mean costs,
@@ -177,16 +180,23 @@ def check_river_vs_vectorscanner(cfg: dict, data: ModelData) -> bool:
 
 
 def _ref_integrate_ead(rps, damages, protection_standard):
-    """Scalar port of AssetRisk_PanEU integrate_ead (mean stat only), with one
-    deliberate difference.
+    """Scalar port of AssetRisk_PanEU integrate_ead (mean stat only), with two
+    deliberate differences, both where the protection standard lies outside the
+    modelled return periods. The port follows the model's rules
+    (risk_model._integrate_ead) so that Check B tests the integration itself.
 
-    Protection at or above the largest modelled return period: the reference keeps
-    a single point and returns (1/protection) * damage at the largest RP; this model
-    returns 0 - every modelled event is below the standard, and no tail beyond the
-    largest RP is added, as for lower standards (risk_model._integrate_ead). The
-    reference's rule jumps at that point (protection 499 -> about 0, 500 ->
-    damage_500 / 500). Decided 2026-11-20 to keep the model's rule; the port
-    follows it so that Check B tests the integration itself.
+    At or above the largest RP: the reference keeps a single point and returns
+    (1/protection) * damage at the largest RP; this model returns 0 - every
+    modelled event is below the standard, and no tail beyond the largest RP is
+    added, as for lower standards. The reference's rule jumps at that point
+    (protection 499 -> about 0, 500 -> damage_500 / 500). Decided 2026-11-20.
+
+    Below the smallest RP (e.g. FLOPROS's 2-yr standards in GBR, smallest river RP
+    10): the reference inserts a point at the standard carrying the smallest RP's
+    damage and integrates down to it, adding (1/protection - 1/RP_min) * damage at
+    RP_min - more than an unprotected feature gets, since no tail below the
+    smallest RP is added at protection 0. This model treats the standard as no
+    protection. Decided 2026-11-21.
     """
     sorted_pairs = sorted(zip(rps, damages))
     srps = [p[0] for p in sorted_pairs]
@@ -194,6 +204,8 @@ def _ref_integrate_ead(rps, damages, protection_standard):
 
     if protection_standard > 0 and protection_standard >= srps[-1]:
         return 0.0
+    if protection_standard < srps[0]:
+        protection_standard = 0.0
 
     if protection_standard > 0:
         if protection_standard not in srps:
@@ -285,7 +297,7 @@ def check_ead_integration(cfg: dict, data: ModelData, n_sample: int = 3000) -> b
             fast = _integrate_ead(dmg_used, rp_adj, prot_used)
 
             max_rel = 0.0
-            n_above = 0
+            n_above = n_below = 0
             for i in sample:
                 if code is None:
                     ref_rps, ref_prot = list(hz.rps), float(prot_eff[i])
@@ -294,17 +306,22 @@ def check_ead_integration(cfg: dict, data: ModelData, n_sample: int = 3000) -> b
                         list(hz.rps), float(prot_eff[i]), data.anchors[code][i]
                     )
                 n_above += ref_prot > 0 and ref_prot >= max(ref_rps)
+                n_below += 0 < ref_prot < min(ref_rps)
                 ref = _ref_integrate_ead(ref_rps, list(damage[i]), ref_prot)
                 denom = max(abs(ref), 1.0)
                 max_rel = max(max_rel, abs(fast[i] - ref) / denom)
 
             ok = max_rel < 1e-6
             all_ok &= ok
+            notes = []
+            if n_above:
+                notes.append(f"{n_above} at or above the largest RP: 0 by design")
+            if n_below:
+                notes.append(f"{n_below} below the smallest RP: unprotected by design")
             print(
                 f"  warming={warming:8s} prot_scale={prot_scale:.1f} "
                 f"max rel diff = {max_rel:.2e}  -> {'PASS' if ok else 'FAIL'}"
-                + (f"  ({n_above} of {len(sample)} protected at or above the largest RP: 0 by design)"
-                   if n_above else "")
+                + (f"  (of {len(sample)} sampled: {'; '.join(notes)})" if notes else "")
             )
     return all_ok
 

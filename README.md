@@ -319,6 +319,17 @@ is visible.
   roughly doubles, and Dutch airports go from about 0 to 0.13 MEUR (recorded
   standards, representative curves). `src/validate.py` Check B follows the
   model's rule and reports how many sampled features it applied to.
+- **Protection below the smallest RP counts as unprotected** (river: below 10 yr).
+  Nothing more frequent than the smallest RP is modelled, so such a standard
+  removes no modelled event. Here too this model departs from AssetRisk_PanEU:
+  their `integrate_ead` inserts a point at the standard carrying the RP-10 damage
+  and integrates down to it, adding (1/protection - 1/10) x damage_10. A 2-yr
+  standard then carries more risk than no protection (0.4 x damage_10 extra),
+  and that extra falls away as the standard approaches 10 yr. Kept deliberately (2026-11-21), as
+  the rule above. Only GBR has such standards: FLOPROS gives 2 yr for 1,581
+  power features, 20 education, 5 gas, and 2 each for ports and healthcare. Under their rule,
+  GBR ports' river EAD would rise by 4.1 MEUR (+27%) and education's by 0.3%
+  (recorded standards, representative curves). Check B follows the model here as well.
 - **Earthquake damage** uses the reference's damage-state model: exceedance
   probabilities per state are collapsed into an expected damage ratio (loss
   weights 0.05 / 0.20 / 0.70 / 0.85 / 1.00) and applied like a vulnerability
